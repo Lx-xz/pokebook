@@ -1,0 +1,13 @@
+{
+	"variants": {
+		"facing=north,lit=false": { "model": "pokebook:block/pokebook" },
+		"facing=east,lit=false":  { "model": "pokebook:block/pokebook", "y": 90 },
+		"facing=south,lit=false": { "model": "pokebook:block/pokebook", "y": 180 },
+		"facing=west,lit=false":  { "model": "pokebook:block/pokebook", "y": 270 },
+
+		"facing=north,lit=true": { "model": "pokebook:block/pokebook_on" },
+		"facing=east,lit=true":  { "model": "pokebook:block/pokebook_on", "y": 90 },
+		"facing=south,lit=true": { "model": "pokebook:block/pokebook_on", "y": 180 },
+		"facing=west,lit=true":  { "model": "pokebook:block/pokebook_on", "y": 270 }
+	}
+}
