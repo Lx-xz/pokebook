@@ -29,11 +29,13 @@ Fechar o ciclo básico do mod, sem nenhuma dependência externa.
 
 ### v2 — missões
 
-- [ ] Persistência de progresso por jogador
+- [x] Interface gráfica ao clicar no bloco, com menu e navegação
+- [x] Persistência de progresso por jogador
+- [x] Missões com objetivo, alvo, quantidade e recompensa
+- [x] Resgate por botão, com recusa quando o inventário está cheio
+- [x] Animação de acender e apagar a tela
 - [ ] Definição de missões via datapack
-- [ ] Interface gráfica ao clicar no bloco
-- [ ] Integração com o evento `POKEMON_CAPTURED` do Cobblemon
-- [ ] Sistema de recompensas
+- [ ] Integração com o Cobblemon: capturar e vencer batalhas
 
 ### v3 — social e comunicação
 

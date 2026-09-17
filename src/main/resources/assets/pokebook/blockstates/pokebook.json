@@ -1,13 +1,64 @@
 {
 	"variants": {
-		"facing=north,lit=false": { "model": "pokebook:block/pokebook" },
-		"facing=east,lit=false":  { "model": "pokebook:block/pokebook", "y": 90 },
-		"facing=south,lit=false": { "model": "pokebook:block/pokebook", "y": 180 },
-		"facing=west,lit=false":  { "model": "pokebook:block/pokebook", "y": 270 },
-
-		"facing=north,lit=true": { "model": "pokebook:block/pokebook_on" },
-		"facing=east,lit=true":  { "model": "pokebook:block/pokebook_on", "y": 90 },
-		"facing=south,lit=true": { "model": "pokebook:block/pokebook_on", "y": 180 },
-		"facing=west,lit=true":  { "model": "pokebook:block/pokebook_on", "y": 270 }
+		"facing=north,screen=0": {
+			"model": "pokebook:block/pokebook"
+		},
+		"facing=east,screen=0": {
+			"model": "pokebook:block/pokebook",
+			"y": 90
+		},
+		"facing=south,screen=0": {
+			"model": "pokebook:block/pokebook",
+			"y": 180
+		},
+		"facing=west,screen=0": {
+			"model": "pokebook:block/pokebook",
+			"y": 270
+		},
+		"facing=north,screen=1": {
+			"model": "pokebook:block/pokebook_1"
+		},
+		"facing=east,screen=1": {
+			"model": "pokebook:block/pokebook_1",
+			"y": 90
+		},
+		"facing=south,screen=1": {
+			"model": "pokebook:block/pokebook_1",
+			"y": 180
+		},
+		"facing=west,screen=1": {
+			"model": "pokebook:block/pokebook_1",
+			"y": 270
+		},
+		"facing=north,screen=2": {
+			"model": "pokebook:block/pokebook_2"
+		},
+		"facing=east,screen=2": {
+			"model": "pokebook:block/pokebook_2",
+			"y": 90
+		},
+		"facing=south,screen=2": {
+			"model": "pokebook:block/pokebook_2",
+			"y": 180
+		},
+		"facing=west,screen=2": {
+			"model": "pokebook:block/pokebook_2",
+			"y": 270
+		},
+		"facing=north,screen=3": {
+			"model": "pokebook:block/pokebook_on"
+		},
+		"facing=east,screen=3": {
+			"model": "pokebook:block/pokebook_on",
+			"y": 90
+		},
+		"facing=south,screen=3": {
+			"model": "pokebook:block/pokebook_on",
+			"y": 180
+		},
+		"facing=west,screen=3": {
+			"model": "pokebook:block/pokebook_on",
+			"y": 270
+		}
 	}
 }

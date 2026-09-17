@@ -8,8 +8,8 @@ Mod de Minecraft chamado **Pokébook**. Um bloco em formato de notebook cuja tel
 acende ao ser clicado.
 
 O destino do projeto **não é decoração**: é um **sistema de missões** ("capture 3
-Pidgeys") com recompensas, integrado ao Cobblemon. A v1 atual entrega só o bloco
-interativo — é o alicerce, não o objetivo.
+Pidgeys") com recompensas, integrado ao Cobblemon. O bloco, a interface e as missões
+com alvos do vanilla já funcionam; falta o Cobblemon.
 
 ## Perfil do autor
 
@@ -37,9 +37,20 @@ lógica, orientação a objetos ou controle de fluxo.
   jogadores no mesmo pokébook veem listas diferentes. O bloco é só um portal —
   permanece "burro", só com propriedades de blockstate. Isso continua valendo quando
   as missões chegarem.
-- **Tela é um interruptor**: acende ao clicar, fica acesa até clicar de novo. Sem tick
-  agendado, sem timer.
-- **Luz nível 7** quando aceso, 0 quando apagado.
+- **A tela tem quatro níveis, não um booleano.** A propriedade é `SCREEN` (0 apagada,
+  3 acesa); `LIT` não existe mais. Os intermediários existem para a animação de
+  acender e apagar.
+- **Luz escalonada por nível**: `0 / 2 / 5 / 7`. Se a luz caísse de 7 a 0 de uma vez
+  enquanto a imagem desbota, o ambiente piscaria antes da tela terminar.
+- **A animação usa ticks agendados de bloco encadeados**, não BlockEntity: cada tick
+  anda um nível e agenda o próximo. É barato, é salvo com o chunk e sobrevive a
+  recarregar o mundo. Cada passo **reconsulta o alvo** em vez de guardá-lo, para que
+  reabrir no meio do fade-out inverta a animação em vez de terminar no lugar errado.
+- **Tempos**: acender 2 ticks por nível; ao fechar, 3 s parada e depois 1 s por nível.
+- **`SCREEN` guarda duas intenções**: "o jogador deixou aceso" e "alguém está com a
+  tela aberta". A regra é **alvo = 3 se há espectador ou o manual está ligado, senão 0**.
+  Enquanto ninguém olha e nada está em transição, o nível *é* o estado manual — é assim
+  que ele persiste sem BlockEntity.
 - **Interação só com mão vazia** — sai de graça usando `useWithoutItem`, que o jogo
   só invoca quando a mão principal está vazia. Não escreva um `if` para isso.
 - **Template Fabric puro**, sem architectury nem Kotlin. O Cobblemon entra depois
@@ -60,11 +71,15 @@ funciona no jogo.
 
 **Sem loot table o bloco some ao ser quebrado**, sem dropar nada.
 
-**`noOcclusion()` é obrigatório** — o modelo não preenche o cubo; sem isso as faces
+**`nonOpaque()` é obrigatório** — o modelo não preenche o cubo; sem isso as faces
 dos blocos vizinhos desaparecem.
 
-**`ResourceLocation` perdeu o construtor público na 1.21** — usar
-`ResourceLocation.fromNamespaceAndPath(...)`.
+**O projeto usa mappings Yarn, não os oficiais da Mojang.** A documentação atual do
+Fabric mostra os nomes da Mojang, que são diferentes: `onUse` e não `useWithoutItem`,
+`Identifier` e não `ResourceLocation`, `nonOpaque` e não `noOcclusion`,
+`addDrawableChild` e não `addRenderableWidget`. Copiar de lá dá nome inexistente.
+
+**`Identifier` perdeu o construtor público na 1.21** — usar `Identifier.of(ns, path)`.
 
 ## Sobre o Cobblemon (para quando as missões chegarem)
 
@@ -105,7 +120,44 @@ código que não o toca e assets podem ser feitos em qualquer uma.
 
 O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 100 MB.
 
+## Sistema de missões
+
+- **Sempre ativas**: não há aceitar nem recusar, o progresso conta sozinho.
+- **Dois eixos de extensão**: `ObjectiveType` (o que fazer) e `TargetMatcher` (em
+  quem vale). Separá-los permite combinar "derrotar" com "tipo voador" sem uma classe
+  por combinação. O alvo trabalha sobre `Entity` porque Pokémon também são entidades.
+- **Definidas em Java**, não em datapack — a forma já é a que um JSON teria, então
+  extrair depois é escrever o carregador, não redesenhar o modelo.
+- **Todas usam entidades vanilla, e isso é produto e não andaime.** É o que mantém o
+  sistema verificável sem o Cobblemon, inclusive no dia em que um update dele quebrar a
+  integração e for preciso saber de quem é o defeito.
+- **Progresso na API de anexo do Fabric**, não no armazenamento do Cobblemon — a API
+  dele quebra entre versões menores e não pode ter o poder de corromper histórico.
+  `copyOnDeath()` é obrigatório: sem ele o respawn cria uma entidade nova e apaga tudo.
+- **Resgate por botão, não automático.** Com recompensa automática o pokébook deixaria
+  de ter função — ninguém precisaria abri-lo.
+- **Inventário cheio recusa e mantém resgatável**, em vez de dropar aos pés. A
+  recompensa é única, e item caído sobre lava ou no void some para sempre. É
+  deliberadamente diferente do vanilla.
+
+## Interface
+
+- **`Screen` com pacote próprio**, não `ScreenHandler`. Este é feito para containers
+  (slots e `PropertyDelegate` de inteiros), e em 1.21.1 ainda exigiria um access
+  widener próprio.
+- **A troca entre telas passa por `navigateTo`.** `removed()` dispara em qualquer
+  troca — sem isso, ir do menu para as missões mandaria o pacote de fechamento e
+  apagaria a tela no meio do uso.
+- **O menu nasceu com um botão só de propósito**: a navegação define a forma dos
+  pacotes, e encaixar um menu depois significaria mexer num fluxo já funcionando.
+
+## Técnica
+
+Quando um nome de API do Yarn não fechar, **leia os membros reais do jar remapeado** com
+`javap`, em vez de tentar variações. O jar no cache do Gradle é a fonte de verdade — a
+documentação oficial do Fabric hoje mostra mappings da Mojang, que dão nomes diferentes.
+
 ## Estado atual
 
-Assets prontos e validados em `src/main/resources/assets/pokebook/`.
-**Nada de Java nem Gradle foi escrito ainda.** Veja `PLANO.md`.
+v1 e o sistema de missões estão prontos e verificados em jogo. Veja `PLANO.md` para o
+histórico e `IDEIAS.md` para o que ainda é intenção.

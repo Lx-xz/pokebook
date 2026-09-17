@@ -18,7 +18,7 @@ public final class ModBlocks {
 			.sounds(BlockSoundGroup.METAL)
 			// O modelo não preenche o cubo: sem isto, as faces dos blocos vizinhos somem.
 			.nonOpaque()
-			.luminance(state -> state.get(PokebookBlock.LIT) ? 7 : 0)
+			.luminance(state -> PokebookBlock.lightFor(state.get(PokebookBlock.SCREEN)))
 	);
 
 	private ModBlocks() {

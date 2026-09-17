@@ -12,13 +12,14 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
@@ -26,7 +27,18 @@ import net.minecraft.world.World;
 
 public class PokebookBlock extends Block {
 	public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
-	public static final BooleanProperty LIT = Properties.LIT;
+
+	/** Brilho da tela: 0 apagada, 3 acesa. Os intermediários existem para a transição. */
+	public static final int SCREEN_OFF = 0;
+	public static final int SCREEN_ON = 3;
+	public static final IntProperty SCREEN = IntProperty.of("screen", SCREEN_OFF, SCREEN_ON);
+
+	/** Luz emitida por nível. Escalonada junto com a imagem, senão o ambiente pisca. */
+	private static final int[] LIGHT_BY_LEVEL = { 0, 2, 5, 7 };
+
+	public static int lightFor(int level) {
+		return LIGHT_BY_LEVEL[level];
+	}
 
 	// Caixas do modelo, em pixels (0..16), para o bloco virado ao norte.
 	//
@@ -66,12 +78,12 @@ public class PokebookBlock extends Block {
 
 	public PokebookBlock(Settings settings) {
 		super(settings);
-		setDefaultState(getDefaultState().with(FACING, Direction.NORTH).with(LIT, false));
+		setDefaultState(getDefaultState().with(FACING, Direction.NORTH).with(SCREEN, SCREEN_OFF));
 	}
 
 	@Override
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(FACING, LIT);
+		builder.add(FACING, SCREEN);
 	}
 
 	@Override
@@ -99,6 +111,18 @@ public class PokebookBlock extends Block {
 		ServerPlayNetworking.send(serverPlayer, new OpenPokebookPayload(
 			pos, serverPlayer.getName().getString(), MissionService.snapshot(serverPlayer)));
 		return ActionResult.SUCCESS;
+	}
+
+	/**
+	 * Um passo da transição da tela.
+	 *
+	 * <p>Tick agendado de bloco, e não BlockEntity: é barato, é salvo junto com o chunk e
+	 * sobrevive a recarregar o mundo. Cada tick anda um nível e agenda o próximo, o que
+	 * transforma um mecanismo de gatilho único numa animação encadeada.
+	 */
+	@Override
+	protected void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+		PokebookViewers.stepScreen(world, pos);
 	}
 
 	@Override
