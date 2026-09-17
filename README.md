@@ -22,10 +22,10 @@ Fechar o ciclo básico do mod, sem nenhuma dependência externa.
 
 - [x] Modelo 3D no Blockbench, com texturas de tela apagada e acesa
 - [x] Blockstate com orientação (`facing`) e estado (`lit`)
-- [ ] Projeto Gradle e registro do bloco
-- [ ] Clique com a mão vazia alterna a tela
-- [ ] Emissão de luz quando aceso
-- [ ] Aba própria no menu criativo
+- [x] Projeto Gradle e registro do bloco
+- [x] Clique com a mão vazia alterna a tela
+- [x] Emissão de luz quando aceso
+- [x] Aba própria no menu criativo
 
 ### v2 — missões
 
