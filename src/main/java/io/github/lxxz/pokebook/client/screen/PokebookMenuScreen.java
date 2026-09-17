@@ -45,8 +45,8 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 
 	@Override
 	protected void renderPanel(DrawContext context, int mouseX, int mouseY, float delta) {
-		context.drawTextWithShadow(textRenderer,
+		context.drawText(textRenderer,
 			Text.translatable("screen.pokebook.logged_as", nick),
-			panelX() + 14, panelY() + 32, COLOR_ACCENT);
+			panelX() + 14, panelY() + 32, COLOR_ACCENT, false);
 	}
 }

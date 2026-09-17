@@ -1,10 +1,12 @@
 package io.github.lxxz.pokebook.client.screen;
 
+import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -22,15 +24,20 @@ public abstract class PokebookScreenBase extends Screen {
 	/** Mesma folga que baú e fornalha usam (8 blocos). */
 	private static final double MAX_DISTANCE_SQUARED = 64.0;
 
+	/** A arte ocupa 240x160 no canto superior esquerdo de um arquivo 256x256. */
+	private static final Identifier TEXTURE =
+		Identifier.of(Pokebook.MOD_ID, "textures/gui/pokebook_gui.png");
+	private static final int TEXTURE_SIZE = 256;
+
 	protected static final int PANEL_WIDTH = 240;
 	protected static final int PANEL_HEIGHT = 160;
 
-	protected static final int COLOR_BACKGROUND = 0xF00E1622;
-	protected static final int COLOR_BORDER = 0xFF29B6D8;
-	protected static final int COLOR_TEXT = 0xFFE6F6FB;
-	protected static final int COLOR_ACCENT = 0xFF7FE3F5;
-	protected static final int COLOR_DONE = 0xFF7BD88F;
-	protected static final int COLOR_MUTED = 0xFF6E8391;
+	// Paleta para fundo CLARO. A textura é ciano claro, então texto claro sumiria nela.
+	// Pelo mesmo motivo o texto vai sem sombra: sombra escura sob texto escuro empasta.
+	protected static final int COLOR_TEXT = 0xFF102028;
+	protected static final int COLOR_ACCENT = 0xFF0D5A70;
+	protected static final int COLOR_DONE = 0xFF1B6B2A;
+	protected static final int COLOR_MUTED = 0xFF5C7A86;
 
 	protected final BlockPos pos;
 	protected final String nick;
@@ -82,9 +89,12 @@ public abstract class PokebookScreenBase extends Screen {
 		super.render(context, mouseX, mouseY, delta);
 		int x = panelX();
 		int y = panelY();
-		context.fill(x, y, x + PANEL_WIDTH, y + PANEL_HEIGHT, COLOR_BACKGROUND);
-		context.drawBorder(x, y, PANEL_WIDTH, PANEL_HEIGHT, COLOR_BORDER);
-		context.drawCenteredTextWithShadow(textRenderer, title, width / 2, y + 10, COLOR_TEXT);
+		context.drawTexture(TEXTURE, x, y, 0, 0, PANEL_WIDTH, PANEL_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
+
+		// Não existe versão centralizada sem sombra, então o x é calculado aqui.
+		int titleX = x + (PANEL_WIDTH - textRenderer.getWidth(title)) / 2;
+		context.drawText(textRenderer, title, titleX, y + 10, COLOR_TEXT, false);
+
 		renderPanel(context, mouseX, mouseY, delta);
 	}
 

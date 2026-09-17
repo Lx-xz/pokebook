@@ -6,6 +6,7 @@
 		"1": "pokebook:block/screen",
 		"2": "pokebook:block/keyboard",
 		"3": "pokebook:block/touchpad",
+		"4": "pokebook:block/chassi_back",
 		"particle": "pokebook:block/chassi"
 	},
 	"elements": [
@@ -29,7 +30,7 @@
 			"faces": {
 				"north": {"uv": [0, 0, 16, 10], "texture": "#0"},
 				"east": {"uv": [1.25, 0.25, 1.75, 0.75], "texture": "#0"},
-				"south": {"uv": [0, 10, 16, 0], "rotation": 180, "texture": "#0"},
+				"south": {"uv": [0, 10, 16, 0], "rotation": 180, "texture": "#4"},
 				"west": {"uv": [3.25, 0.25, 3.75, 0.75], "texture": "#0"},
 				"up": {"uv": [4.25, 0.25, 4.75, 0.75], "texture": "#0"},
 				"down": {"uv": [5.25, 0.25, 5.75, 0.75], "texture": "#0"}

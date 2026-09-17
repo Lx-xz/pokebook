@@ -65,13 +65,13 @@ public class MissionsScreen extends PokebookScreenBase {
 			context.drawItemInSlot(textRenderer, entry.reward(), x + 10, rowY + 4);
 
 			int titleColor = entry.claimed() ? COLOR_MUTED : (entry.complete() ? COLOR_DONE : COLOR_TEXT);
-			context.drawTextWithShadow(textRenderer, Mission.titleOf(entry.id()), x + 32, rowY + 2, titleColor);
+			context.drawText(textRenderer, Mission.titleOf(entry.id()), x + 32, rowY + 2, titleColor, false);
 
 			Text status = entry.claimed()
 				? Text.translatable("screen.pokebook.claimed")
 				: Text.literal(entry.count() + "/" + entry.required());
-			context.drawTextWithShadow(textRenderer, status, x + 32, rowY + 13,
-				entry.claimed() ? COLOR_MUTED : COLOR_ACCENT);
+			context.drawText(textRenderer, status, x + 32, rowY + 13,
+				entry.claimed() ? COLOR_MUTED : COLOR_ACCENT, false);
 
 			rowY += ROW_HEIGHT;
 		}
