@@ -22,12 +22,41 @@ public class PokebookBlock extends Block {
 	public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
 	public static final BooleanProperty LIT = Properties.LIT;
 
-	// Caixas de colisão do modelo, em pixels (0..16), para o bloco virado ao norte:
-	// a base do notebook e a tela inclinada. As outras três direções saem daqui por rotação.
+	// Caixas do modelo, em pixels (0..16), para o bloco virado ao norte.
+	//
+	// VoxelShape só conhece caixas alinhadas aos eixos — não existe caixa rotacionada
+	// no Minecraft. Os 22.5° da tampa existem apenas no modelo visual, então aqui ela
+	// é aproximada por uma escada de quatro degraus que acompanha a inclinação.
+	//
+	// Valores derivados da geometria real do modelo: o painel da tampa, depois de
+	// rotacionado, ocupa y 0.617..10.239 e z 11.0..15.751 (a tela fica dentro desse
+	// envelope). Se o modelo mudar, recalcule — não ajuste no olho.
 	private static final double[][] BOXES = {
-		{ 0, 0, 3, 16, 1, 13 },
-		{ 0, 1, 12, 16, 10, 16 },
+		// base: chassi + teclado + touchpad
+		{ 0, 0,      1,       16, 1.25,  11      },
+		// tampa inclinada, de baixo para cima
+		{ 0, 0.625,  11,      16, 3,     12.9375 },
+		{ 0, 3,      11.625,  16, 5.4375, 13.9375 },
+		{ 0, 5.4375, 12.625,  16, 7.8125, 14.9375 },
+		{ 0, 7.8125, 13.625,  16, 10.25, 15.75   },
 	};
+
+	// A forma não muda em tempo de execução: só depende do FACING. Montar a união a
+	// cada chamada seria desperdício, porque getOutlineShape roda a cada raycast de
+	// mira. Aqui ela é pré-calculada uma vez por direção, indexada por quartos de volta.
+	private static final VoxelShape[] SHAPES = buildShapes();
+
+	private static VoxelShape[] buildShapes() {
+		VoxelShape[] shapes = new VoxelShape[4];
+		for (int turns = 0; turns < 4; turns++) {
+			VoxelShape shape = VoxelShapes.empty();
+			for (double[] box : BOXES) {
+				shape = VoxelShapes.union(shape, rotate(box, turns));
+			}
+			shapes[turns] = shape.simplify();
+		}
+		return shapes;
+	}
 
 	public PokebookBlock(Settings settings) {
 		super(settings);
@@ -54,11 +83,7 @@ public class PokebookBlock extends Block {
 
 	@Override
 	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		VoxelShape shape = VoxelShapes.empty();
-		for (double[] box : BOXES) {
-			shape = VoxelShapes.union(shape, rotate(box, quarterTurns(state.get(FACING))));
-		}
-		return shape;
+		return SHAPES[quarterTurns(state.get(FACING))];
 	}
 
 	private static int quarterTurns(Direction facing) {
