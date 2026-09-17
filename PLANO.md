@@ -48,39 +48,88 @@ agendado, sem sincronização cliente-servidor. Isso continua válido na v2.
 
 ## O que falta construir
 
-### 1. Projeto Gradle (raiz)
+### 1. Projeto Gradle (raiz) — ✅ feito
 
 `build.gradle`, `settings.gradle`, `gradle.properties`, wrapper (`gradlew`,
-`gradlew.bat`, `gradle/wrapper/`), `.gitignore`.
+`gradlew.bat`, `gradle/wrapper/`), `.gitignore` já escritos, baseados no template
+oficial `FabricMC/fabric-example-mod` na branch de 1.21.1.
 
-Base: template oficial `FabricMC/fabric-example-mod` na branch de 1.21.1.
+Versões levantadas em 17/09/2026 (`https://meta.fabricmc.net/v2/versions/...` e
+GitHub releases do `fabric-loom`):
 
-> ⚠️ **Pendência:** as versões exatas de `yarn_mappings`, `loader_version`,
-> `fabric_version` e do plugin `fabric-loom` **ainda não foram levantadas** — a
-> consulta à API do Fabric foi interrompida. Buscar em
-> `https://meta.fabricmc.net/v2/versions/yarn/1.21.1` e na página do Fabric API no
-> Modrinth antes de escrever o `gradle.properties`. **Não chutar esses números.**
+| propriedade | valor |
+|---|---|
+| `minecraft_version` | `1.21.1` |
+| `yarn_mappings` | `1.21.1+build.3` |
+| `loader_version` | `0.19.5` |
+| `loom_version` | `1.17.21` |
+| `fabric_api_version` | `0.116.17+1.21.1` |
+| Gradle wrapper | `9.5.1` |
 
-### 2. Código Java — `src/main/java/io/github/lxxz/pokebook/`
+> ⚠️ **Mudança no ecossistema desde que este plano foi escrito:** o template
+> oficial `fabric-example-mod` migrou de Yarn para `loom.officialMojangMappings()`
+> por padrão, e o plugin do Loom passou a ter dois ids — `net.fabricmc.fabric-loom`
+> (sem remap, para versões não ofuscadas) e `net.fabricmc.fabric-loom-remap` (com
+> remap, o nosso caso, já que o Minecraft 1.21.1 é ofuscado). **Decisão do autor:
+> continuar com Yarn** (`mappings "net.fabricmc:yarn:${yarn_mappings}:v2"` no
+> `build.gradle`), porque as mappings oficiais da Mojang não incluem nomes de
+> parâmetro — só classe/método/campo — o que deixa o código-fonte decompilado do
+> Minecraft mais difícil de ler para quem nunca escreveu Java. Isso também exigiu
+> subir o Gradle wrapper para a 9.5.1, que o `loom_version` 1.18.2 requer.
+>
+> O `build.gradle` do template também trazia `splitEnvironmentSourceSets()`, um
+> segundo entrypoint de cliente e um bloco `mixins` — removidos, porque o escopo
+> desta v1 (ver "O que falta construir" abaixo) não usa nenhum dos três.
 
-**`Pokebook.java`** — `ModInitializer`. Constante `MOD_ID = "pokebook"`, um `Logger`,
-e `onInitialize()` chamando os registros na ordem certa.
+> ⚠️ **Loom 1.18.x exige JVM 25 para rodar o Gradle** (não é a versão de bytecode do
+> mod — é o runtime do processo de build em si). Com JDK 21 instalado, o build falha
+> na fase de configuração com `Dependency requires at least JVM runtime version 25`.
+> Por isso o `loom_version` ficou em `1.17.21` — última linha estável do Loom
+> compatível com JDK 21 — em vez do 1.18.2 mais recente. Se um dia o autor migrar
+> para JDK 25+, o 1.18.x volta a ser opção.
+
+`gradlew build` **validado com sucesso** em 17/09/2026 (`BUILD SUCCESSFUL`, sem
+código Java ainda — só confirma que o Gradle/Loom resolve as dependências e gera o
+jar vazio). Dois avisos do próprio Gradle, sem ação necessária por ora:
+- O projeto está dentro do OneDrive, o que o Gradle/Loom aponta como fonte
+  conhecida de lentidão e possíveis problemas (sincronização mexendo em arquivos
+  que o build está escrevendo). Não bloqueou o build; vale lembrar se aparecerem
+  travamentos estranhos mais para frente.
+- O primeiro build esperou ~2min por um lock do cache do Loom seguro pela extensão
+  Java do VS Code (`redhat.java`), que também estava rodando Gradle no mesmo
+  projeto. Não é erro — só contenção entre dois processos Gradle simultâneos.
+
+### 2. Código Java — `src/main/java/io/github/lxxz/pokebook/` — ✅ feito
+
+> ⚠️ **Este plano foi escrito com os nomes das mappings oficiais da Mojang**
+> (`useWithoutItem`, `BlockStateProperties`, `noOcclusion`, `ResourceLocation`,
+> pacotes `net.minecraft.world.level.block.*`). O `build.gradle` usa **Yarn**, onde
+> os mesmos membros se chamam `onUse`, `Properties`, `nonOpaque`, `Identifier`, em
+> `net.minecraft.block.*`. O código foi escrito em Yarn; a descrição abaixo já está
+> corrigida.
+
+**`Pokebook.java`** — `ModInitializer`. Constante `MOD_ID = "pokebook"`, um `Logger`
+do SLF4J, e `onInitialize()` chamando `ModBlocks.register()` antes de
+`ModItemGroups.register()` (a aba usa o bloco como ícone e como entrada).
 
 **`block/PokebookBlock.java`** — estende `Block`, concentra o comportamento:
 
-- Propriedades `FACING` (`BlockStateProperties.HORIZONTAL_FACING`) e `LIT`
-  (`BlockStateProperties.LIT`), declaradas em `createBlockStateDefinition`
-- `getStateForPlacement` → `context.getHorizontalDirection().getOpposite()`, para a
-  tela nascer virada ao jogador
-- `useWithoutItem(...)` → `level.setBlock(pos, state.cycle(LIT), UPDATE_ALL)`.
-  Este método **só é invocado com a mão vazia** — a regra de interação sai de graça,
-  sem nenhum `if`. Agir só no servidor (`level.isClientSide`)
-- `getShape` → `VoxelShape` própria; o modelo não preenche o cubo, e a colisão padrão
-  faria o jogador flutuar sobre o pokébook
+- Propriedades `FACING` (`Properties.HORIZONTAL_FACING`) e `LIT` (`Properties.LIT`),
+  declaradas em `appendProperties`
+- `getPlacementState` → `ctx.getHorizontalPlayerFacing().getOpposite()`, para a tela
+  nascer virada ao jogador
+- `onUse(...)` (a sobrecarga de 5 parâmetros, **sem** `ItemStack`) →
+  `world.setBlockState(pos, state.cycle(LIT), Block.NOTIFY_ALL)`. Esta sobrecarga
+  **só é invocada com a mão vazia** — a regra de interação sai de graça, sem nenhum
+  `if`. Age só no servidor (`!world.isClient`) e devolve `ActionResult.SUCCESS`
+- `getOutlineShape` → `VoxelShape` própria (a colisão segue a outline por padrão); o
+  modelo não preenche o cubo. Duas caixas — base e tela — descritas para `facing=north`
+  e giradas por código para as outras três direções, no mesmo sentido horário do `y`
+  do blockstate
 
 **`registry/ModBlocks.java`** — registra bloco e `BlockItem` via
-`Registry.register(BuiltInRegistries.BLOCK, ...)`. Propriedades: `strength(1.5f)`,
-`sound(SoundType.METAL)`, `noOcclusion()`, `lightLevel(s -> s.getValue(LIT) ? 7 : 0)`.
+`Registry.register(Registries.BLOCK, ...)`. Propriedades: `strength(1.5f)`,
+`sounds(BlockSoundGroup.METAL)`, `nonOpaque()`, `luminance(s -> s.get(LIT) ? 7 : 0)`.
 
 **`registry/ModItemGroups.java`** — aba própria no criativo via
 `FabricItemGroup.builder()`, com o pokébook como ícone. A chave
@@ -88,11 +137,12 @@ e `onInitialize()` chamando os registros na ordem certa.
 
 ### 3. Recursos — `src/main/resources/`
 
-- **`fabric.mod.json`** — id, versão, entrypoint para `Pokebook`, e `depends` em
-  `fabricloader`, `minecraft` (`~1.21.1`), `java` (`>=21`), `fabric-api`
-- **`data/pokebook/loot_table/blocks/pokebook.json`** — sem isto **o bloco some ao
-  ser quebrado**, sem dropar nada
-- **`data/minecraft/tags/block/mineable/pickaxe.json`** — quebrável com picareta
+- **`fabric.mod.json`** — ✅ feito (id, versão, entrypoint para `Pokebook`, `depends`
+  em `fabricloader`, `minecraft` `~1.21.1`, `java` `>=21`, `fabric-api`)
+- **`data/pokebook/loot_table/blocks/pokebook.json`** — ✅ feito. Sem isto **o bloco
+  some ao ser quebrado**, sem dropar nada
+- **`data/minecraft/tags/block/mineable/pickaxe.json`** — ✅ feito. Quebrável com
+  picareta
 
 ### Já prontos — não mexer
 
@@ -134,16 +184,112 @@ sistema de missões · renderização emissiva da tela.
 
 ---
 
+## Verificação em jogo — resultado (17/09/2026)
+
+`gradlew runClient` rodou e a v1 **funciona de ponta a ponta**. Resultado item a item
+da lista de Verificação acima:
+
+| # | Item | Resultado |
+|---|---|---|
+| 1 | `gradlew build` | ✅ |
+| 2 | `gradlew runClient` | ✅ |
+| 3 | Aba "Pokébook" no criativo | ✅ aba existe, item aparece — mas o **ícone sai achatado** (ver P1) |
+| 4 | Nasce virado ao jogador | ✅ o risco de orientação **não** se concretizou; o `getOpposite()` está certo |
+| 5 | Clique com mão vazia acende | ✅ |
+| 6 | Clique com item não alterna | ✅ |
+| 7 | Clique de novo apaga | ✅ |
+| 8 | Quebra com picareta e dropa | ✅ |
+| 9 | Log sem avisos | a confirmar em `run/logs/latest.log` |
+
+## Pendências da v1.1
+
+Levantadas pelo autor olhando o bloco em jogo. Nenhuma impede a v1 de funcionar.
+
+**P1 — O item não tem transformações de exibição.** ✅ **corrigido e validado em jogo.** Sintoma triplo, uma causa só:
+ícone achatado no inventário e na hotbar, item invisível em primeira pessoa, e
+tamanho/posição errados na mão em terceira pessoa. O modelo exportado do Blockbench
+(`models/block/pokebook.json`) **não declara `parent`**, então não herda o bloco
+`display` do `minecraft:block/block`, que é quem define escala e rotação do item em
+cada contexto (`gui`, `firstperson_righthand`, `thirdperson_righthand`, `ground`,
+`fixed`). Sem ele, o jogo usa a transformação identidade — o modelo fica em tamanho
+natural e fora de enquadramento.
+
+> Corrigido declarando o `display` **no `models/item/pokebook.json`**, não no modelo
+> de bloco: o de bloco é o que o autor reexporta do Blockbench, e um reexport
+> apagaria o ajuste; o de item é escrito à mão e sobrevive. Os valores são os mesmos
+> do `minecraft:block/block` do vanilla, copiados literalmente.
+
+**P2 — A hitbox não acompanha a inclinação da tela.** A `VoxelShape` só aceita caixas
+alinhadas aos eixos, e a tela do modelo é inclinada 22,5°. Hoje ela é uma caixa reta
+única, folgada. Dá para aproximar a diagonal empilhando três ou quatro caixas finas
+em degrau. Nunca vai encostar perfeitamente — é uma limitação do formato, não do
+código.
+
+**P3 — A tela acesa não parece acesa o bastante.** A luz do bloco funciona (nível 7,
+ilumina o entorno), mas a textura da tela continua sendo sombreada pela iluminação da
+cena, então no escuro ela escurece junto. O que dá a aparência de "ligada de verdade"
+é **renderização emissiva** — explicitamente fora do escopo da v1. Duas saídas:
+clarear a textura `screen_on.png` (barato, meia solução) ou renderização emissiva
+(a solução real, mais trabalho).
+
+**P4 — Registrar as capturas de tela.** ✅ feito. Ficam em `docs/screenshots/`, na
+convenção **`v<versão>-pokebook-<assunto>.png`** — ex.: `v1-pokebook-inventario.png`
+e `v1.1-pokebook-inventario.png`. Manter o `<assunto>` idêntico entre versões faz as
+duas capturas da mesma cena ficarem lado a lado na listagem, virando um
+antes-e-depois comparável. Capturas coladas no chat chegam ao Claude renderizadas,
+não como arquivo: quem salva o PNG é o autor (`F2` no jogo escreve em
+`run/screenshots/`).
+
 ## Onde paramos
 
-Assets prontos e validados. **Nenhuma linha de Java ou Gradle escrita ainda.**
+**A v1 está entregue e validada em jogo** (ver a tabela de verificação acima), e a
+**P1 está fechada** — corrigida e confirmada em jogo nos três sintomas.
 
-O plano foi aprovado e a implementação tinha acabado de começar: o primeiro passo era
-levantar as versões exatas do Fabric para 1.21.1 — e é exatamente aí que retomamos.
+Foram três rodadas, todas no `models/item/pokebook.json`:
 
-**Próxima ação:** buscar as versões (yarn, loader, fabric-api, loom), escrever o
-`gradle.properties` e o `build.gradle`, e seguir para o código Java.
+1. Declarar o bloco `display` com os valores do `minecraft:block/block`. Resolveu
+   **dois dos três sintomas** — ícone isométrico no inventário/hotbar
+   (`v1.1-pokebook-inventario.png`) e item correto na mão em terceira pessoa
+   (`v1.1-pokebook-mao-3a-pessoa.png`). Dois caírem juntos confirmou que o `display`
+   estava sendo lido.
+2. Primeira pessoa continuava invisível. Causa: as transformações giram e escalam em
+   torno do centro do cubo, `(8, 8, 8)`, e este modelo não preenche o cubo — a base
+   tem 1 pixel de altura e quase toda a massa fica abaixo da metade, então caía fora
+   do enquadramento. `translation [0, 4.5, 1]` e escala `0.5` o trouxeram de volta,
+   mas grande demais e cortado, visto de cima e por trás.
+3. Escala `0.35` e `y` girado 180° (`45` → `225` na mão direita, espelhado na
+   esquerda) para a tela encarar a câmera. **Aprovado**
+   (`v1.1-pokebook-mao-1a-pessoa.png`): reconhecível de relance, que era o critério.
+   Ele encosta na borda direita, mas isso é normal para item segurado — blocos
+   vanilla também saem parcialmente do quadro ali.
+4. Ajuste a pedido do autor: espelhar a vista para a tela ficar **à direita**.
+   `225` → `135` na mão direita. **Aprovado em jogo.**
+5. A mão esquerda, porém, ficou **de costas**. Causa: seguiu-se a convenção do
+   vanilla, em que `firstperson_lefthand` é o `righthand` **mais 180°**. Isso só
+   funciona no vanilla porque blocos são **cubos simétricos** — girar um cubo 180°
+   não muda nada. Este modelo tem frente e costas, então o +180 mostrou as costas.
+   Corrigido para `225`: junto com o `135`, são 180° ∓ 45°, as duas vistas de 3/4
+   **ambas** com a tela voltada para a câmera.
 
-O JDK ainda não está instalado nesta máquina — só há um JRE 8, que não compila. Os
-arquivos de texto podem ser escritos sem ele; `gradlew build` e `runClient` só
-funcionam depois do JDK 21.
+> Os quatro contextos restantes (`gui`, `ground`, `fixed`, `thirdperson_righthand`)
+> são cópia literal do vanilla; só os dois de primeira pessoa têm valores empíricos.
+> A translação é aplicada **depois** da rotação, no espaço já girado — girar 180°
+> podia ter invertido o efeito do `translation z`, mas não inverteu.
+>
+> **Lição geral:** convenções do vanilla que pressupõem simetria (como
+> `lefthand = righthand + 180`) não valem para modelos com frente e costas. O
+> `__comment` dentro do `models/item/pokebook.json` registra isso no próprio arquivo.
+
+**Próxima ação:** conferir em jogo a mão esquerda (passo 5 acima — única pendência
+da P1, cosmética). Em seguida, **P2** — aproximar a hitbox da tela
+inclinada empilhando três ou quatro caixas finas em degrau, em `PokebookBlock.BOXES`;
+o código de rotação já existente cuida das outras três direções sozinho. Depois
+**P3** (tela emissiva), que já é escopo de v1.1.
+
+Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
+Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)
+fica no `PATH` do sistema **antes** do Temurin. Se o `JAVA_HOME` não estiver visível
+na sessão, o `gradlew` cai nesse Java 8 e falha com *"Gradle requires JVM 17 or
+later"*. Terminal novo resolve. Não fixar `org.gradle.java.home` no
+`gradle.properties`: é caminho absoluto e o arquivo é versionado, indo para a outra
+máquina do autor.
