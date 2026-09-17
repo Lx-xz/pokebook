@@ -1,4 +1,7 @@
 {
 	"block.pokebook.pokebook": "Pokébook",
-	"itemGroup.pokebook.main": "Pokébook"
+	"itemGroup.pokebook.main": "Pokébook",
+	"screen.pokebook.title": "Pokébook",
+	"screen.pokebook.logged_as": "Conectado como: %s",
+	"screen.pokebook.no_missions": "Nenhuma missão disponível ainda."
 }

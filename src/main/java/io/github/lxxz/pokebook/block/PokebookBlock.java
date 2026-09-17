@@ -1,10 +1,15 @@
 package io.github.lxxz.pokebook.block;
 
+import io.github.lxxz.pokebook.network.OpenPokebookPayload;
+import io.github.lxxz.pokebook.server.PokebookViewers;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.DirectionProperty;
@@ -75,10 +80,33 @@ public class PokebookBlock extends Block {
 
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		if (!world.isClient) {
-			world.setBlockState(pos, state.cycle(LIT), Block.NOTIFY_ALL);
+		// Nada de cliente aqui: a tela é aberta pelo pacote, no entrypoint de cliente.
+		// Mencionar classes de net.minecraft.client neste arquivo derrubaria o servidor
+		// dedicado com NoClassDefFoundError — e um "if (world.isClient)" não protegeria,
+		// porque a referência é resolvida antes do desvio ser avaliado.
+		if (!(world instanceof ServerWorld serverWorld) || !(player instanceof ServerPlayerEntity serverPlayer)) {
+			return ActionResult.SUCCESS;
 		}
+
+		if (player.isSneaking()) {
+			// Shift+clique mantém o pokébook como decoração: alterna a tela sem abrir nada.
+			world.setBlockState(pos, state.cycle(LIT), Block.NOTIFY_ALL);
+			return ActionResult.SUCCESS;
+		}
+
+		PokebookViewers.open(serverWorld, pos, serverPlayer);
+		ServerPlayNetworking.send(serverPlayer,
+			new OpenPokebookPayload(pos, serverPlayer.getName().getString()));
 		return ActionResult.SUCCESS;
+	}
+
+	@Override
+	protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+		// Só quando o bloco deixa de ser um pokébook — alternar LIT também passa por aqui.
+		if (!state.isOf(newState.getBlock()) && world instanceof ServerWorld serverWorld) {
+			PokebookViewers.forget(serverWorld, pos);
+		}
+		super.onStateReplaced(state, world, pos, newState, moved);
 	}
 
 	@Override

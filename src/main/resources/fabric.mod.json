@@ -14,6 +14,9 @@
 	"entrypoints": {
 		"main": [
 			"io.github.lxxz.pokebook.Pokebook"
+		],
+		"client": [
+			"io.github.lxxz.pokebook.client.PokebookClient"
 		]
 	},
 	"depends": {
