@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "pokebook",
+	"version": "${version}",
+	"name": "Pokébook",
+	"description": "Um bloco em formato de notebook, ponto de entrada para um futuro sistema de missões integrado ao Cobblemon.",
+	"authors": [
+		"Lx-xz"
+	],
+	"contact": {
+		"sources": "https://github.com/Lx-xz/pokebook"
+	},
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.github.lxxz.pokebook.Pokebook"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
