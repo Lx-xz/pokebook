@@ -293,3 +293,45 @@ na sessão, o `gradlew` cai nesse Java 8 e falha com *"Gradle requires JVM 17 or
 later"*. Terminal novo resolve. Não fixar `org.gradle.java.home` no
 `gradle.properties`: é caminho absoluto e o arquivo é versionado, indo para a outra
 máquina do autor.
+
+---
+
+# Cobblemon — o que aplicar em casa
+
+Estas três mudanças foram escritas, testadas e **revertidas**: a máquina do trabalho
+não consegue baixar o jar de 141 MB (ver `CLAUDE.md`, seção do ambiente). Em casa elas
+funcionam direto.
+
+**1. `gradle.properties`** — ao final:
+
+```properties
+# Cobblemon. O esquema de versão é <versaoCobblemon>+<versaoMinecraft>.
+# Fixado de propósito: a API do Cobblemon quebra entre versões menores.
+cobblemon_version=1.8.0+1.21.1
+```
+
+**2. `build.gradle`** — dentro de `repositories`:
+
+```groovy
+// Espelho do ImpactDev, e não o artefacts.cobblemon.com oficial: aquele responde
+// 403 (corpo vazio, sem cabeçalho Server) a clientes que não são navegador.
+maven {
+	name = 'ImpactDev'
+	url = uri('https://maven.impactdev.net/repository/development/')
+}
+```
+
+**3. `build.gradle`** — dentro de `dependencies`:
+
+```groovy
+modImplementation "com.cobblemon:fabric:${project.cobblemon_version}"
+```
+
+O POM e o repositório já foram validados: o espelho responde 200 e serve o artefato
+`1.8.0+1.21.1`. O único obstáculo era o tamanho do jar.
+
+**Ainda não incluído:** o plugin do Kotlin. Para apenas *carregar* o Cobblemon no
+ambiente de teste ele não é necessário — o Cobblemon empacota o Fabric Language Kotlin
+no próprio jar. Ele passa a ser necessário quando formos **compilar** código Java
+contra a API do Cobblemon, para o stdlib do Kotlin resolver no classpath de
+desenvolvimento. A MDK oficial usa `kotlin("jvm")` na versão 2.2.20.

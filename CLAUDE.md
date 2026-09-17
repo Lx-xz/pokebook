@@ -83,12 +83,27 @@ dos blocos vizinhos desaparecem.
 
 ## Ambiente do autor
 
-Ele trabalha em duas máquinas. Na do trabalho há um **firewall Fortinet fazendo SSL
-inspection**, que quebra downloads de `npm`, `bun` e **Gradle**. Sintoma no Gradle:
-`PKIX path building failed`. A correção é importar o CA da Fortinet no `cacerts` do
-JDK — o certificado já foi extraído para `C:\Users\2699\corp-ca.pem`.
+Ele trabalha em duas máquinas. A do trabalho fica atrás de um **firewall Fortinet**,
+que atrapalha de três formas distintas. As duas primeiras estão resolvidas:
 
-Em casa não há esse problema.
+1. **Inspeção de TLS** — sintoma `PKIX path building failed`. ✅ Resolvido: o CA da
+   Fortinet foi importado no `cacerts` do JDK. O certificado está em
+   `C:\Users\2699\corp-ca.pem`, e o `keytool` importa só o primeiro certificado por
+   arquivo — esse PEM tem dois, então precisam ser separados e importados um a um.
+2. **Filtro de URL** — `artefacts.cobblemon.com` responde **403** (corpo vazio, sem
+   cabeçalho `Server`) a clientes que não são navegador. ✅ Contornado: use o espelho
+   `https://maven.impactdev.net/repository/development/`, que serve os mesmos artefatos.
+3. **Antivírus de gateway** — ⛔ **não resolvido, e provavelmente insolúvel sem o TI.**
+   O FortiGate bufferiza o arquivo inteiro para escanear antes de liberar o primeiro
+   byte. Arquivos até ~50 MB passam (o `minecraft-server.jar` de 49 MB baixou normal);
+   o jar do Cobblemon, com **141 MB**, trava — a conexão nunca começa a responder.
+   `HEAD` funciona, o POM funciona, o jar não.
+
+**Consequência prática: não dá para buildar com Cobblemon na máquina do trabalho.**
+Em casa nada disso acontece. Trabalho que dependa do Cobblemon fica para casa; desenho,
+código que não o toca e assets podem ser feitos em qualquer uma.
+
+O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 100 MB.
 
 ## Estado atual
 
