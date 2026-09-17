@@ -1,7 +1,19 @@
 {
 	"block.pokebook.pokebook": "Pokébook",
 	"itemGroup.pokebook.main": "Pokébook",
+
 	"screen.pokebook.title": "Pokébook",
 	"screen.pokebook.logged_as": "Signed in as: %s",
-	"screen.pokebook.no_missions": "No missions available yet."
+	"screen.pokebook.missions": "Missions",
+	"screen.pokebook.social": "Social",
+	"screen.pokebook.soon": "Coming soon",
+	"screen.pokebook.back": "Back",
+	"screen.pokebook.claim": "Claim",
+	"screen.pokebook.claimed": "Claimed",
+
+	"message.pokebook.inventory_full": "Free up an inventory slot to claim this reward.",
+
+	"mission.pokebook.three_cows": "Slay 3 cows",
+	"mission.pokebook.five_zombies": "Slay 5 zombies",
+	"mission.pokebook.ten_chickens": "Slay 10 chickens"
 }

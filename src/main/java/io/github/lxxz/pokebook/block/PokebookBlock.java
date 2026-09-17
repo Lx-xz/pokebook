@@ -1,5 +1,6 @@
 package io.github.lxxz.pokebook.block;
 
+import io.github.lxxz.pokebook.mission.MissionService;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
 import io.github.lxxz.pokebook.server.PokebookViewers;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -95,8 +96,8 @@ public class PokebookBlock extends Block {
 		}
 
 		PokebookViewers.open(serverWorld, pos, serverPlayer);
-		ServerPlayNetworking.send(serverPlayer,
-			new OpenPokebookPayload(pos, serverPlayer.getName().getString()));
+		ServerPlayNetworking.send(serverPlayer, new OpenPokebookPayload(
+			pos, serverPlayer.getName().getString(), MissionService.snapshot(serverPlayer)));
 		return ActionResult.SUCCESS;
 	}
 

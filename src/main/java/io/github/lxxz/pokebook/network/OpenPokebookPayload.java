@@ -8,17 +8,20 @@ import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
+
 /**
- * Servidor → cliente: manda abrir a tela do pokébook.
+ * Servidor → cliente: abre o pokébook, com tudo que as telas precisam mostrar.
  *
- * <p>Por enquanto a carga útil é só o apelido do jogador — o suficiente para provar que
- * o caminho inteiro funciona. O nick vem do servidor de propósito: o cliente já sabe o
- * próprio nome, então pegá-lo localmente não testaria nada.
+ * <p>Manda o conteúdo inteiro de uma vez, em vez de um pacote por tela. Com este volume
+ * de dados o desperdício é irrelevante, e em troca a navegação entre telas fica
+ * instantânea e sem estado intermediário — ninguém vê uma lista vazia esperando resposta.
+ * Se um dia houver aba pesada o bastante para doer, ela ganha o próprio pacote.
  *
- * <p>A posição do bloco viaja junto porque o cliente precisa dela para dois fins: medir
- * a distância enquanto a tela está aberta e dizer ao servidor qual pokébook foi fechado.
+ * <p>A posição viaja porque o cliente precisa dela para medir distância e para dizer qual
+ * pokébook foi fechado.
  */
-public record OpenPokebookPayload(BlockPos pos, String nick) implements CustomPayload {
+public record OpenPokebookPayload(BlockPos pos, String nick, List<MissionEntry> missions) implements CustomPayload {
 	public static final CustomPayload.Id<OpenPokebookPayload> ID =
 		new CustomPayload.Id<>(Identifier.of(Pokebook.MOD_ID, "open"));
 
@@ -26,6 +29,7 @@ public record OpenPokebookPayload(BlockPos pos, String nick) implements CustomPa
 		PacketCodec.tuple(
 			BlockPos.PACKET_CODEC, OpenPokebookPayload::pos,
 			PacketCodecs.STRING, OpenPokebookPayload::nick,
+			MissionEntry.CODEC.collect(PacketCodecs.toList()), OpenPokebookPayload::missions,
 			OpenPokebookPayload::new
 		);
 
