@@ -35,6 +35,19 @@ Fechar o ciclo básico do mod, sem nenhuma dependência externa.
 - [ ] Integração com o evento `POKEMON_CAPTURED` do Cobblemon
 - [ ] Sistema de recompensas
 
+### v3 — social e comunicação
+
+- [ ] Aba social: ver o progresso de missões dos outros jogadores
+- [ ] Poképhone: um irmão portátil do pokébook
+- [ ] Mensagens entre jogadores
+- [ ] Ligações por voz, integrando o [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat)
+
+A ideia por trás das ligações: com o Simple Voice Chat instalado para voz de
+proximidade, o Pokébook desabilitaria o sistema de grupos dele — e a única forma de
+conversar à distância passaria a ser ligar pelo celular.
+
+Ver [IDEIAS.md](IDEIAS.md) para o que já foi pesquisado sobre isso.
+
 ### Ideias para depois
 
 - Renderização emissiva (tela brilhando de verdade no escuro)
