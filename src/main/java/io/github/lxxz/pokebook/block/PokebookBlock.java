@@ -89,8 +89,8 @@ public class PokebookBlock extends Block {
 		}
 
 		if (player.isSneaking()) {
-			// Shift+clique mantém o pokébook como decoração: alterna a tela sem abrir nada.
-			world.setBlockState(pos, state.cycle(LIT), Block.NOTIFY_ALL);
+			// Shift+clique é o "sempre aceso": vale por si, e fechar a interface não o desfaz.
+			PokebookViewers.toggleManual(serverWorld, pos, state);
 			return ActionResult.SUCCESS;
 		}
 
