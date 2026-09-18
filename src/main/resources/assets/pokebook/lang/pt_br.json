@@ -15,7 +15,7 @@
 	"screen.pokebook.close": "Fechar",
 	"objective.pokebook.capture": "Capturar %s ×%s",
 	"objective.pokebook.capture.one": "Capturar %s",
-	"screen.pokebook.tab.in_progress": "Em andamento",
+	"screen.pokebook.tab.in_progress": "Ativas",
 	"screen.pokebook.tab.claimable": "A resgatar",
 	"screen.pokebook.tab.done": "Concluídas",
 	"screen.pokebook.tab.empty": "Nada aqui ainda.",
