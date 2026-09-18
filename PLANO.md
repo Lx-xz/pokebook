@@ -418,15 +418,10 @@ pode chegar depois de o jogador ter navegado para outro lugar.
 e o bloco seguir aceso parecia defeito, não estilo), e o `CLAUDE.md` ganhou a seção de
 **branches**, com a regra de que mudança sem Cobblemon nasce na `main`.
 
-**Nada disso foi visto em jogo.**
+**Verificado em jogo, nas duas branches.** A aba social abre e lista, a tela apaga na
+hora, e as abas de missão não cortam mais o texto.
 
-**Próxima ação:** `gradlew runClient` e conferir:
-
-1. O botão "Social" abre e lista os jogadores; sozinho, aparece só você.
-2. A tela apaga imediatamente ao fechar, em 0,3 s.
-3. As abas da lista de missões não cortam mais o texto.
-
-Depois, o que resta é o **redesenho visual** (sprites com nine-slice, cara de macOS), que
+**Próxima ação:** o que resta é o **redesenho visual** (sprites com nine-slice, cara de macOS), que
 o autor fará mais tarde. Em aberto no `IDEIAS.md`: missões repetíveis, degrau 1.5 do
 social (detalhe de um jogador), advancement de desbloqueio da receita, som ao clicar.
 
