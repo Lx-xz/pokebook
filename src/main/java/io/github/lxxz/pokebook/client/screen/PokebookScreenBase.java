@@ -222,11 +222,26 @@ public abstract class PokebookScreenBase extends Screen {
 		});
 	}
 
+	/**
+	 * A moldura e o título, <b>antes</b> dos widgets.
+	 *
+	 * <p>Isto vive em {@code renderBackground} e não em {@code render} por uma razão de
+	 * ordem: o {@code render} do vanilla desenha o fundo <em>e depois</em> os widgets. A
+	 * moldura estava sendo desenhada depois de {@code super.render}, ou seja, <b>por cima
+	 * de todos os botões</b>.
+	 *
+	 * <p>Isso passou despercebido por muito tempo porque botão do vanilla desenha texto e
+	 * sprite em camadas que o jogo esvazia mais tarde, então ele reaparecia por cima. Um
+	 * widget nosso que pinte o próprio fundo com {@code fill} não tem essa sorte: sumia
+	 * inteiro. Foi o que aconteceu com os ícones da tela inicial.
+	 */
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
+	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+		super.renderBackground(context, mouseX, mouseY, delta);
+
 		int x = panelX();
 		int y = panelY();
+
 		// A arte é deitada; em pé ela é esticada para a moldura nova. Fica aceitável porque
 		// é um retângulo de cor sólida com borda, mas é provisório: o redesenho com sprites
 		// e nine-slice resolve isto de verdade, sem deformar canto nenhum.
@@ -237,18 +252,31 @@ public abstract class PokebookScreenBase extends Screen {
 			LANDSCAPE_WIDTH, LANDSCAPE_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
 
 		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
-		// fica na altura dos botões de canto, entre os dois.
-		// Centralizado na área clara, e na altura dos botões de canto.
-		int titleX = contentX() + (contentWidth() - textRenderer.getWidth(title)) / 2;
-		int titleY = contentY() + (CORNER_BUTTON - textRenderer.fontHeight) / 2 + 1;
-		context.drawText(textRenderer, title, titleX, titleY, COLOR_TEXT, false);
+		// fica centralizado na área clara, na altura dos botões de canto.
+		context.drawText(textRenderer, title, titleX(), titleY(), COLOR_TEXT, false);
+	}
 
+	private int titleX() {
+		return contentX() + (contentWidth() - textRenderer.getWidth(title)) / 2;
+	}
+
+	private int titleY() {
+		return contentY() + (CORNER_BUTTON - textRenderer.fontHeight) / 2 + 1;
+	}
+
+	@Override
+	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+		// Desenha o fundo (moldura e título) e depois os widgets, nesta ordem.
+		super.render(context, mouseX, mouseY, delta);
+
+		// O conteúdo próprio da tela vem por último, sobre os widgets. Nas telas atuais os
+		// dois não se sobrepõem: as abas ficam acima da lista, e a lista é desenhada à mão.
 		renderPanel(context, mouseX, mouseY, delta);
 
 		if (LAYOUT_DEBUG) {
-			outline(context, x, y, panelWidth(), panelHeight(), DEBUG_PANEL);
+			outline(context, panelX(), panelY(), panelWidth(), panelHeight(), DEBUG_PANEL);
 			outline(context, contentX(), contentY(), contentWidth(), contentHeight(), DEBUG_AREA);
-			outlineText(context, title, titleX, titleY, DEBUG_TEXT);
+			outlineText(context, title, titleX(), titleY(), DEBUG_TEXT);
 			// Os botões se desenham sozinhos; aqui só marcamos onde eles de fato estão.
 			for (net.minecraft.client.gui.Element child : children()) {
 				if (child instanceof net.minecraft.client.gui.widget.ClickableWidget widget) {

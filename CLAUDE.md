@@ -145,6 +145,13 @@ faz o cliente esconder o botão sozinho. Antes de contornar o comportamento de o
 procure a chave de config no jar dele — `javap -p` na classe de config mostra os campos,
 e as strings do `.class` mostram os nomes das chaves.
 
+**A moldura vai em `renderBackground`, não em `render`.** O `render` do vanilla desenha
+o fundo **e depois** os widgets. Desenhar a moldura dentro do `render`, após
+`super.render`, a põe **por cima de todos os botões**. O defeito fica escondido por muito
+tempo porque botão do vanilla desenha texto e sprite em camadas que o jogo esvazia mais
+tarde, e reaparece por cima; um widget nosso que pinte o próprio fundo com `fill` some
+inteiro. Foi assim que os ícones da tela inicial nasceram invisíveis.
+
 **Widget não convive com lista que rola.** Widget tem posição fixa e a lista muda de
 posição a cada quadro. Numa lista rolável, desenhe as linhas à mão e trate o clique com
 o deslocamento aplicado; guarde widgets para o que não rola.
