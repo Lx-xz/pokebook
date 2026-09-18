@@ -236,8 +236,26 @@ direita, botões de **ícone** em vez de texto no menu, linhas de missão como *
 arredondados** claros sobre o fundo ciano, e abas "NOVAS / COMPLETAS" separando as
 missões por estado. O fundo tem um padrão de silhuetas de Pokémon em marca-d'água.
 
-Os botões de canto já existem. O resto é desenho, e o caminho técnico é o **sistema de
-sprites de GUI** da 1.21, não `drawTexture` com coordenadas na mão:
+Os botões de canto já existem, e o menu já virou **grade de ícones** — três por linha,
+como a tela inicial de um celular, nos dois aparelhos. Os ícones de hoje são caracteres da
+fonte (◎ missões, ✉ social, ☎ ligações) e existem só para segurar o lugar até as texturas.
+
+**Fixo ou nine-slice? A regra é: estica, nine-slice; não estica, fixo.**
+
+| peça | como |
+|---|---|
+| ícone (o desenho) | **PNG fixo**, 32×32 |
+| quadrado atrás do ícone | **PNG fixo** se todos forem do mesmo tamanho |
+| moldura da tela | **nine-slice** — tem duas proporções, deitada e em pé |
+| cartão de missão | **nine-slice** — a largura muda com a moldura |
+| botão de largura variável | **nine-slice** |
+
+Nine-slice onde não precisa é trabalho a mais no desenho (recortar bordas, escrever o
+`.mcmeta`) sem ganho nenhum. E ícone esticado fica borrado, que é o defeito que o
+nine-slice existe para evitar.
+
+O resto é desenho, e o caminho técnico é o **sistema de sprites de GUI** da 1.21, não
+`drawTexture` com coordenadas na mão:
 
 - Cada peça vira um PNG em `assets/pokebook/textures/gui/sprites/<nome>.png`, referida
   por id (`pokebook:<nome>`), e desenhada com `context.drawGuiTexture(id, x, y, w, h)`.
