@@ -4,7 +4,9 @@ import de.maxhenkel.voicechat.api.VoicechatApi;
 import de.maxhenkel.voicechat.api.VoicechatConnection;
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
 import de.maxhenkel.voicechat.api.VoicechatServerApi;
+import de.maxhenkel.voicechat.api.events.CreateGroupEvent;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
+import de.maxhenkel.voicechat.api.events.JoinGroupEvent;
 import de.maxhenkel.voicechat.api.events.MicrophonePacketEvent;
 import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.call.CallService;
@@ -58,6 +60,27 @@ public class VoicechatIntegration implements VoicechatPlugin {
 	@Override
 	public void registerEvents(EventRegistration registration) {
 		registration.registerEvent(MicrophonePacketEvent.class, this::onMicrophonePacket);
+		registration.registerEvent(CreateGroupEvent.class, this::onCreateGroup);
+		registration.registerEvent(JoinGroupEvent.class, this::onJoinGroup);
+	}
+
+	/**
+	 * Ninguém cria grupo nesta instalação.
+	 *
+	 * <p>É a peça que faltava no {@code IDEIAS.md}: sem isto, dava para continuar
+	 * conversando à distância pelo grupo do próprio Simple Voice Chat, e o aparelho virava
+	 * mais um jeito de fazer o que já dava, em vez de ser o único. Cancelar aqui não é
+	 * suposição — conferido no bytecode do jar do mod ({@code ServerGroupManager.addGroup}):
+	 * ele consulta {@code PluginManager.onCreateGroup} e retorna sem criar nada se algum
+	 * plugin cancelou.
+	 */
+	private void onCreateGroup(CreateGroupEvent event) {
+		event.cancel();
+	}
+
+	/** Mesma ideia para quem tentar entrar num grupo já existente, criado antes desta versão. */
+	private void onJoinGroup(JoinGroupEvent event) {
+		event.cancel();
 	}
 
 	/**
@@ -88,6 +111,13 @@ public class VoicechatIntegration implements VoicechatPlugin {
 		// entre o nosso estado e este quadro, o certo é a ligação ficar muda — não é voltar
 		// a voz de proximidade no meio de uma conversa que os dois acham que é privada.
 		event.cancel();
+
+		if (CallService.isMuted(sender.getPlayer().getUuid())) {
+			// Mudo não é "sem ligação": a proximidade continua suprimida (o cancel() já
+			// aconteceu), só o áudio não atravessa. É a diferença entre desligar e tapar o
+			// microfone.
+			return;
+		}
 
 		VoicechatServerApi api = event.getVoicechat();
 		VoicechatConnection peer = api.getConnectionOf(peerId);
