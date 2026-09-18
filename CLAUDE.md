@@ -138,6 +138,13 @@ update do jogo sem aviso de compilação. Se um método tiver sobrecargas, escre
 descritor inteiro: só assim o alvo é o certo. Os nomes se escrevem em Yarn e o Loom os
 remapeia — verificado no jar, a anotação sai com `class_759`.
 
+**Mod de terceiro costuma já ter a opção — procure antes de escrever código.** Para
+desabilitar os grupos do Simple Voice Chat cogitou-se cancelar eventos e até um mixin na
+tela dele; a resposta era `enable_groups=false` no config do servidor do próprio mod, que
+faz o cliente esconder o botão sozinho. Antes de contornar o comportamento de outro mod,
+procure a chave de config no jar dele — `javap -p` na classe de config mostra os campos,
+e as strings do `.class` mostram os nomes das chaves.
+
 **Widget não convive com lista que rola.** Widget tem posição fixa e a lista muda de
 posição a cada quadro. Numa lista rolável, desenhe as linhas à mão e trate o clique com
 o deslocamento aplicado; guarde widgets para o que não rola.

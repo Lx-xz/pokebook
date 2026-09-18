@@ -166,15 +166,42 @@ O que era "sinalização é toda nossa" virou código: tocar, atender, recusar, 
 desistir depois de meio minuto e identificar quem liga. O aviso de chamada vive **acima da
 hotbar**, onde alcança quem não está com tela nenhuma aberta.
 
-### Grupos do SVC — resolvido
+### Grupos do SVC — resolvido, em duas camadas
 
-**Fechado.** `VoicechatIntegration` cancela `CreateGroupEvent` e `JoinGroupEvent`.
-Conferido no bytecode do jar do mod, não por suposição: `ServerGroupManager.addGroup` e
-`.joinGroup` chamam `PluginManager.onCreateGroup`/`onJoinGroup` e retornam **antes** de
-criar o grupo ou mandar o pacote de confirmação se algum plugin cancelou — é o mecanismo
-suportado, não um efeito colateral. Ninguém cria grupo nem entra num grupo já existente
-nesta instalação; a tela de grupos do SVC continua existindo no cliente, só não faz nada
-ao confirmar.
+**A forma certa é uma opção nativa do próprio Simple Voice Chat**, e ela só apareceu
+depois que o autor reclamou do botão que não fazia nada. No config do servidor
+(`config/voicechat/voicechat-server.properties`):
+
+```properties
+# If group chats are allowed
+enable_groups=false
+```
+
+Três classes do mod leem essa opção, e juntas resolvem o problema inteiro sem uma linha
+nossa: `ServerGroupManager` recusa no servidor, `VoiceChatScreen` **esconde o botão** no
+cliente, e `SecretPacket` sincroniza a opção do servidor para o cliente ao conectar. É o
+caminho suportado, então não quebra quando o SVC atualizar — ao contrário de um mixin na
+tela dele, que era a outra alternativa considerada.
+
+> ⚠️ **Correção a uma afirmação antiga deste arquivo.** Dizia-se que "a API expõe acesso
+> à configuração do servidor", como caminho plausível para desabilitar grupos por código.
+> **É falso.** O `ConfigAccessor` da API tem só `hasKey`, `getValue`, `getString`,
+> `getBoolean`, `getInt` e `getDouble` — nenhum setter. Dá para *ler* a configuração, não
+> para mudá-la. Conferido com `javap` no jar da API.
+
+**A segunda camada é a rede de segurança.** `VoicechatIntegration` continua cancelando
+`CreateGroupEvent` e `JoinGroupEvent`, agora **explicando ao jogador** por que nada
+aconteceu. Isso cobre o servidor onde ninguém configurou a opção — e cancelar sem
+explicar era exatamente o defeito original: o botão parecia quebrado.
+
+O cancelamento foi conferido no bytecode do jar, não por suposição:
+`ServerGroupManager.addGroup` e `.joinGroup` chamam
+`PluginManager.onCreateGroup`/`onJoinGroup` e retornam **antes** de criar o grupo ou
+mandar o pacote de confirmação se algum plugin cancelou.
+
+> ⚠️ A mensagem é enviada com `player.server.execute(...)`. O evento chega pela thread do
+> Simple Voice Chat, e mandar pacote para um jogador de fora da thread do servidor é o
+> tipo de coisa que passa no teste e quebra num servidor cheio.
 
 ### O que ainda não se sabe
 

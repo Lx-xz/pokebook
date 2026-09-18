@@ -556,10 +556,10 @@ Se alguma não fechar, é um arquivo só para consertar.
    outro lado.
 6. Desconectar no meio da ligação não deixa o outro falando com um fantasma.
 
-**Testado em jogo, com dois clients** (ver `TESTES.md` para o como) — parcialmente: dos
-itens 1 a 6, confirmou-se que a ligação toca, atende e o áudio atravessa pelo SVC. Os
-itens de desligar/recusar/desistir por timeout e desconectar no meio da ligação **ainda
-não foram exercitados** e continuam por conferir.
+**Testado em jogo, com dois clients** (ver `TESTES.md` para o como) — **checklist
+inteiro confirmado**: toca, atende, o áudio atravessa pelo SVC, desligar e recusar dão a
+mensagem certa dos dois lados, não atender por meio minuto desiste sozinho, e desconectar
+no meio da ligação desliga em vez de deixar alguém falando com um fantasma.
 
 Um bug apareceu no teste: o **bipe de tocar não soava para quem estava sendo chamado**,
 só para quem estivesse perto dele no mundo. Causa: `PokebookSounds.playTo` usava
@@ -601,7 +601,29 @@ que já existia para o filtro de abas da lista de missões, que também é só d
   o próprio SVC abortar antes de criar o grupo ou confirmar a entrada. Ver a seção
   "Grupos do SVC — resolvido" no `IDEIAS.md` para o detalhe.
 
-Nada disso foi visto em jogo ainda — só compilado (`compileJava`, limpo).
+**Tudo verificado em jogo:** mutar, favoritos, não avisar quem não tem celular, e os
+grupos desabilitados.
+
+### Grupos do SVC: a opção nativa
+
+O autor notou que clicar em "criar grupo" não fazia nada **e não dizia por quê** — o
+botão parecia quebrado. Isso levou a uma descoberta que muda a solução:
+
+**O Simple Voice Chat já tem a opção.** `enable_groups=false` no
+`config/voicechat/voicechat-server.properties`. Três classes do mod a leem —
+`ServerGroupManager` recusa no servidor, `VoiceChatScreen` **esconde o botão** no
+cliente, `SecretPacket` sincroniza do servidor para o cliente. Zero código nosso, e é o
+caminho suportado, então não quebra em update.
+
+> ⚠️ Isso **corrige** uma afirmação do `IDEIAS.md`: dizia-se que a API do SVC expunha
+> acesso à configuração do servidor. Não expõe. O `ConfigAccessor` só tem getters —
+> conferido com `javap`. Dá para ler a config, não para mudá-la.
+
+O cancelamento de evento que já existia **fica**, mudando de papel: deixa de ser a
+solução e passa a ser a **rede de segurança** para o servidor onde ninguém configurou. E
+agora ele **explica ao jogador**, que era o defeito que o autor apontou. A mensagem sai
+por `player.server.execute(...)`: o evento chega pela thread do SVC, e mandar pacote de
+outra thread é o tipo de coisa que passa no teste e quebra num servidor cheio.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)

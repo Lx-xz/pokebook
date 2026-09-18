@@ -10,6 +10,8 @@ import de.maxhenkel.voicechat.api.events.JoinGroupEvent;
 import de.maxhenkel.voicechat.api.events.MicrophonePacketEvent;
 import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.call.CallService;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 
 import java.util.UUID;
 
@@ -76,11 +78,39 @@ public class VoicechatIntegration implements VoicechatPlugin {
 	 */
 	private void onCreateGroup(CreateGroupEvent event) {
 		event.cancel();
+		explainToPlayer(event.getConnection());
 	}
 
 	/** Mesma ideia para quem tentar entrar num grupo já existente, criado antes desta versão. */
 	private void onJoinGroup(JoinGroupEvent event) {
 		event.cancel();
+		explainToPlayer(event.getConnection());
+	}
+
+	/**
+	 * Diz ao jogador por que nada aconteceu.
+	 *
+	 * <p>Cancelar sem explicar deixa o botão parecendo quebrado: o jogador clica, nada
+	 * acontece, e ele não tem como saber que foi de propósito nem que existe outro caminho.
+	 *
+	 * <p>Com {@code enable_groups=false} no config do servidor isto quase nunca dispara —
+	 * o próprio Simple Voice Chat esconde o botão. Este caminho é a rede de segurança para
+	 * o servidor onde ninguém configurou.
+	 *
+	 * <p>⚠️ <b>O envio é agendado na thread do servidor.</b> Este método é chamado pela
+	 * thread do Simple Voice Chat, e mandar pacote para um jogador a partir de outra thread
+	 * é justamente o tipo de coisa que funciona nos testes e quebra num servidor cheio.
+	 */
+	private void explainToPlayer(VoicechatConnection connection) {
+		if (connection == null || connection.getPlayer() == null) {
+			return;
+		}
+		// getPlayer() da API devolve Object: é o jogador da plataforma, que no Fabric é
+		// ServerPlayerEntity. O instanceof também cobre o caso de não ser.
+		if (connection.getPlayer().getPlayer() instanceof ServerPlayerEntity player) {
+			player.server.execute(() ->
+				player.sendMessage(Text.translatable("message.pokebook.groups_disabled"), false));
+		}
 	}
 
 	/**

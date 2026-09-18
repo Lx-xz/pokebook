@@ -50,5 +50,6 @@
 	"message.pokebook.call.hung_up": "%s hung up.",
 	"message.pokebook.call.declined": "%s declined the call.",
 	"message.pokebook.call.gave_up": "The call was cancelled.",
-	"message.pokebook.call.no_answer": "%s did not answer."
+	"message.pokebook.call.no_answer": "%s did not answer.",
+	"message.pokebook.groups_disabled": "Voice chat groups are disabled here. Use the Poképhone to call someone."
 }
