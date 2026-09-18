@@ -45,11 +45,16 @@ public final class PokebookViewers {
 	/** Espera antes de <em>começar</em> a apagar, depois que o último espectador sai. */
 	public static final int SHUTDOWN_DELAY_TICKS = 60;
 
-	/** Entre um nível e o seguinte ao apagar: um segundo por nível, como uma tela de verdade. */
-	private static final int FADE_OUT_STEP_TICKS = 20;
-
-	/** Entre um nível e o seguinte ao acender — rápido, para o clique parecer responsivo. */
-	private static final int FADE_IN_STEP_TICKS = 2;
+	/**
+	 * Entre um nível e o seguinte. Igual nos dois sentidos: três níveis a 2 ticks dão
+	 * 0,3 s de transição, tanto para acender quanto para apagar.
+	 *
+	 * <p>O apagar já foi lento de propósito — um segundo por nível, imitando o fade de um
+	 * monitor de verdade. Na prática ficou arrastado: a espera de {@link #SHUTDOWN_DELAY_TICKS}
+	 * já dá o tempo de "isto não desligou por acidente", e depois dela o que se quer é que
+	 * acabe logo.
+	 */
+	private static final int FADE_STEP_TICKS = 2;
 
 	/** Posição sozinha não identifica um bloco: as mesmas coordenadas existem em cada dimensão. */
 	private record Key(ServerWorld world, BlockPos pos) {
@@ -208,7 +213,7 @@ public final class PokebookViewers {
 		}
 
 		if (next != target) {
-			schedule(key, target > next ? FADE_IN_STEP_TICKS : FADE_OUT_STEP_TICKS);
+			schedule(key, FADE_STEP_TICKS);
 		} else if (entry != null && entry.viewers.isEmpty()) {
 			OPEN.remove(key);
 		}

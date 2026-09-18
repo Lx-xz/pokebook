@@ -79,8 +79,11 @@ public class MissionsScreen extends PokebookScreenBase {
 	@Override
 	protected void initPanel() {
 		Tab[] tabs = Tab.values();
-		int tabWidth = (PANEL_WIDTH - 40) / tabs.length;
-		int tabX = panelX() + 20;
+		// A moldura inteira menos uma margem fina: "Em andamento" não cabia na largura
+		// anterior e saía cortado. Rótulo de aba é texto traduzido, então o espaço tem de
+		// caber no idioma mais verboso, não no mais curto.
+		int tabWidth = (PANEL_WIDTH - 16) / tabs.length;
+		int tabX = panelX() + 8;
 
 		for (Tab candidate : tabs) {
 			ButtonWidget button = ButtonWidget.builder(Text.translatable(candidate.key), b -> selectTab(candidate))

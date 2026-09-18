@@ -4,8 +4,13 @@ Um mod de Minecraft que adiciona um notebook funcional — com a intenção de v
 **sistema de missões** para o [Cobblemon](https://cobblemon.com): receber objetivos
 como "capture 3 Pidgeys", acompanhar o progresso e resgatar recompensas.
 
-> 🚧 **Em construção.** O bloco, a interface e o sistema de missões já funcionam, com
-> missões sobre entidades do vanilla. A integração com o Cobblemon ainda não entrou.
+> 🚧 **Em construção.** O bloco, a interface e o sistema de missões funcionam, com
+> missões sobre entidades do vanilla **e** sobre Pokémon — capturar e vencer batalhas.
+>
+> A dependência do Cobblemon vive na branch `cobblemon`, não na `main`. A `main` compila
+> e roda sem ele: missões de Pokémon carregam normalmente, apenas nunca progridem. Isso
+> é deliberado — permite trabalhar numa rede que não consegue baixar o jar de 141 MB do
+> Cobblemon.
 
 ## Stack
 
@@ -36,8 +41,10 @@ Fechar o ciclo básico do mod, sem nenhuma dependência externa.
 - [x] Missões com objetivo, alvo, quantidade e recompensa
 - [x] Resgate por botão, com recusa quando o inventário está cheio
 - [x] Animação de acender e apagar a tela
+- [x] Abas por estado e rolagem na lista
+- [x] Sons emprestados do Cobblemon
 - [x] Definição de missões via datapack
-- [ ] Integração com o Cobblemon: capturar e vencer batalhas
+- [x] Integração com o Cobblemon: capturar e vencer batalhas
 
 ### v3 — social e comunicação
 
@@ -97,12 +104,45 @@ Isso já vale: matar um creeper, sem recompensa. Os outros campos têm padrão:
 
 | campo | padrão | o que é |
 |---|---|---|
-| `target` | — | o tipo de entidade que conta |
+| `target` | — | em quem a missão vale |
 | `objective` | `kill` | o que fazer com ele |
 | `required` | `1` | quantos |
 | `reward` | nenhuma | o item da recompensa |
 | `reward_count` | `1` | quantos itens |
-| `title` | chave de tradução | o nome na tela |
+| `title` | gerado | o nome na tela |
+
+### Objetivos
+
+| valor | o que conta |
+|---|---|
+| `kill` | matar uma entidade |
+| `capture` | capturar um Pokémon |
+| `battle_win` | vencer uma batalha; o alvo é o **Pokémon derrotado** |
+
+`capture` e `battle_win` precisam do Cobblemon para *acontecer*, mas não para
+*existir*: uma missão assim carrega numa instalação sem ele e apenas nunca progride.
+
+### Alvos
+
+| forma | exemplo | casa com |
+|---|---|---|
+| id de entidade | `"minecraft:cow"` | aquele tipo exato de entidade |
+| espécie | `{ "species": "pidgey" }` | aquela espécie de Pokémon |
+| tipo elemental | `{ "element": "fire" }` | tipo primário **ou** secundário |
+| geração | `{ "generation": 1 }` | Pokémon daquela geração |
+
+A forma de objeto é identificada pela **chave que traz** — não há campo `type` de
+despacho, para que uma missão de espécie se escreva `{"species": "pidgey"}` e não
+`{"type": "pokebook:species", "species": "pidgey"}`.
+
+Declarar duas chaves ao mesmo tempo é **erro**, não precedência silenciosa:
+`{"species": "pidgey", "element": "fire"}` quase certamente quer dizer "Pidgey do tipo
+fogo", que este modelo não sabe expressar. Falhar alto é melhor do que atender metade
+do pedido em silêncio.
+
+Em `species`, o namespace pode ser omitido: `pidgey` vira `cobblemon:pidgey`.
+"Geração" é **etiqueta**, não campo — o Cobblemon guarda rótulos como `gen1` na
+espécie, e este campo é açúcar sobre isso.
 
 Uma missão completa:
 
@@ -116,12 +156,15 @@ Uma missão completa:
 }
 ```
 
-**Sobre o `title`:** sem ele, o nome vem da chave de tradução
-`mission.<namespace>.<nome>` — é o caminho certo para o mod, que tem arquivos de
-idioma para cada língua. Com ele, o texto é usado como está. A diferença importa num
-servidor com jogadores de idiomas diferentes: a chave de tradução é resolvida no
-cliente de cada um, o texto literal não. Para uma missão caseira, `title` evita ter
-de mexer em qualquer outro arquivo — que é o ponto de ter datapack.
+**Sobre o `title`:** sem ele, o nome é **montado** das peças que a missão já tem —
+verbo do objetivo, alvo e quantidade: "Capturar Pidgey ×3". Nenhuma chave de tradução
+por missão, porque criar uma missão não pode exigir editar um arquivo de idioma por
+língua.
+
+A quantidade vem depois do alvo, com "×", e não "Capturar 3 Pidgeys". Os arquivos de
+idioma do Minecraft **não têm plural** e o nome de uma espécie é sempre singular, então
+"Capturar 3 Pidgey" sairia errado em qualquer idioma. Com `title`, o texto é usado como
+está — útil para a missão que merecer um nome próprio, ao custo de não ser traduzido.
 
 `/reload` recarrega as missões com o mundo aberto, e quem estiver com o pokébook na
 tela recebe a lista nova na hora. Um arquivo inválido é registrado no log e pulado:
