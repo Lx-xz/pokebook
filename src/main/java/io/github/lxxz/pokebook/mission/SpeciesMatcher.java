@@ -1,7 +1,6 @@
 package io.github.lxxz.pokebook.mission;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -13,12 +12,12 @@ import net.minecraft.util.Identifier;
  * esta classe compila e carrega numa máquina sem o Cobblemon — inclusive a do trabalho.
  */
 public record SpeciesMatcher(Identifier species) implements TargetMatcher {
-	public static final Codec<SpeciesMatcher> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-		// Aceita "pidgey" além de "cobblemon:pidgey": escrever o namespace em toda missão
-		// de Pokémon seria ruído, já que praticamente todas virão do Cobblemon.
-		Codec.STRING.xmap(SpeciesMatcher::parse, Identifier::toString)
-			.fieldOf("species").forGetter(SpeciesMatcher::species)
-	).apply(instance, SpeciesMatcher::new));
+	/**
+	 * Aceita "pidgey" além de "cobblemon:pidgey": escrever o namespace em toda missão de
+	 * Pokémon seria ruído, já que praticamente todas virão do Cobblemon.
+	 */
+	public static final Codec<Identifier> SPECIES_CODEC =
+		Codec.STRING.xmap(SpeciesMatcher::parse, Identifier::toString);
 
 	private static final String DEFAULT_NAMESPACE = "cobblemon";
 
