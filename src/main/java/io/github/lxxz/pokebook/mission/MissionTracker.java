@@ -19,13 +19,17 @@ import net.minecraft.util.Identifier;
  * instalado, pelo mesmo motivo que classe de cliente derruba o servidor dedicado.
  */
 public final class MissionTracker {
+	// AttachmentRegistry.builder() está @Deprecated; o substituto é o create(id, consumidor),
+	// que recebe o Identifier na frente em vez de terminar com buildAndRegister(id).
 	public static final AttachmentType<MissionProgress> PROGRESS =
-		AttachmentRegistry.<MissionProgress>builder()
-			.initializer(MissionProgress::new)
-			.persistent(MissionProgress.CODEC)
-			// Sem isto o jogador perde tudo ao morrer: o respawn cria uma entidade nova.
-			.copyOnDeath()
-			.buildAndRegister(Identifier.of(Pokebook.MOD_ID, "mission_progress"));
+		AttachmentRegistry.create(
+			Identifier.of(Pokebook.MOD_ID, "mission_progress"),
+			builder -> builder
+				.initializer(MissionProgress::new)
+				.persistent(MissionProgress.CODEC)
+				// Sem isto o jogador perde tudo ao morrer: o respawn cria uma entidade nova.
+				.copyOnDeath()
+		);
 
 	private MissionTracker() {
 	}
