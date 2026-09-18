@@ -250,6 +250,32 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
 - O **redesenho visual** (cara de macOS, sprites com nine-slice) está desenhado e **não
   implementado**. Ver `IDEIAS.md`.
 
+## Ligações
+
+- **Duas metades, e a divisão é a regra de branch.** O *telefone* (quem liga para quem,
+  tocar, atender, recusar, desligar, desistir) é `call/` + `network/` + `CallScreen`, e
+  **não menciona o Simple Voice Chat** — nasce na `main`. O *fio* (o áudio) é só
+  `integration/VoicechatIntegration`, e fica na branch `voicechat`. Os dois se falam por
+  uma pergunta: `CallService.peerOf(uuid)` devolve `UUID` ou `null`.
+- **Quatro estados, não um booleano** — `IDLE`, `DIALING`, `RINGING`, `ACTIVE`, e o estado
+  é **do jogador**, não da ligação: chamar e ser chamado oferecem botões diferentes.
+  `peerOf` só responde com a ligação **atendida**, senão quem chamou seria ouvido antes de
+  atenderem.
+- **O aviso vive acima da hotbar** (a sobreposição do vanilla), não numa camada nossa: o
+  aparelho toca no bolso, e quem é chamado precisa saber sem tela aberta. Ela some sozinha
+  em alguns segundos, então é reenviada a cada segundo enquanto durar.
+- **A lista de quem chamar sai do cliente**, a mesma da tecla Tab. Sem pacote de pedido e
+  sem tela vazia esperando. Liga-se pelo **apelido**; quem autoriza é o servidor.
+- **Um pacote só para desligar.** Recusar, desistir e desligar são a mesma frase em
+  momentos diferentes, e o servidor já sabe em qual deles o jogador está. Quem precisa da
+  distinção é o outro lado, e ela aparece só na mensagem.
+- ⚠️ **O mapa de ligações é concorrente por necessidade.** `peerOf` é chamado pela thread
+  de áudio do SVC, não pela do servidor. `HashMap` lido de duas threads pode entrar em
+  laço infinito, não só devolver valor velho. Nada no gancho de áudio pode tocar em mundo,
+  entidade ou inventário.
+- **Sem o SVC o botão não existe** — o cliente esconde, o servidor recusa. Sinalização
+  funcionando e ninguém se ouvindo é pior do que não ter o recurso.
+
 ## Técnica
 
 Quando um nome de API do Yarn não fechar, **leia os membros reais do jar remapeado** com

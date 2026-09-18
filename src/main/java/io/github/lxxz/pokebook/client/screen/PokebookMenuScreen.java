@@ -1,5 +1,6 @@
 package io.github.lxxz.pokebook.client.screen;
 
+import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.network.MissionEntry;
 import io.github.lxxz.pokebook.network.RequestSocialPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -41,6 +42,8 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 			button -> navigateTo(new MissionsScreen(session, missions))
 		).dimensions(contentX(), y, contentWidth(), BUTTON_HEIGHT).build());
 
+		y += BUTTON_HEIGHT + BUTTON_GAP;
+
 		addDrawableChild(ButtonWidget.builder(
 			Text.translatable("screen.pokebook.social"),
 			button -> {
@@ -50,7 +53,19 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 				ClientPlayNetworking.send(new RequestSocialPayload());
 				navigateTo(new SocialScreen(session, missions));
 			}
-		).dimensions(contentX(), y + BUTTON_HEIGHT + BUTTON_GAP, contentWidth(), BUTTON_HEIGHT).build());
+		).dimensions(contentX(), y, contentWidth(), BUTTON_HEIGHT).build());
+
+		// O botão de ligar só existe onde há como falar. Sem o Simple Voice Chat toda a
+		// sinalização funcionaria e ninguém ouviria nada — um telefone mudo é pior do que
+		// um telefone que não está ali. O servidor recusa de qualquer forma; esconder aqui
+		// é para não oferecer o que não se pode cumprir.
+		if (CallService.available()) {
+			y += BUTTON_HEIGHT + BUTTON_GAP;
+			addDrawableChild(ButtonWidget.builder(
+				Text.translatable("screen.pokebook.calls"),
+				button -> navigateTo(new CallScreen(session, missions))
+			).dimensions(contentX(), y, contentWidth(), BUTTON_HEIGHT).build());
+		}
 	}
 
 	@Override

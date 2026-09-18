@@ -1,11 +1,14 @@
 package io.github.lxxz.pokebook.client;
 
 import io.github.lxxz.pokebook.Pokebook;
+import io.github.lxxz.pokebook.client.call.ClientCalls;
 import io.github.lxxz.pokebook.client.render.EmissiveScreenModel;
+import io.github.lxxz.pokebook.client.screen.CallScreen;
 import io.github.lxxz.pokebook.client.screen.MissionsScreen;
 import io.github.lxxz.pokebook.client.screen.PokebookMenuScreen;
 import io.github.lxxz.pokebook.client.screen.PokebookSession;
 import io.github.lxxz.pokebook.client.screen.SocialScreen;
+import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
 import io.github.lxxz.pokebook.network.SocialUpdatePayload;
@@ -40,9 +43,21 @@ public class PokebookClient implements ClientModInitializer {
 		// Em 1.21.1 estes handlers já rodam na render thread, então dá para chamar métodos
 		// de cliente direto. O client.execute(...) que os tutoriais de 1.19 exigem virou
 		// desnecessário.
-		ClientPlayNetworking.registerGlobalReceiver(OpenPokebookPayload.ID, (payload, context) ->
-			context.client().setScreen(new PokebookMenuScreen(
-				new PokebookSession(payload.pos(), payload.nick()), payload.missions())));
+		ClientPlayNetworking.registerGlobalReceiver(OpenPokebookPayload.ID, (payload, context) -> {
+			PokebookSession session = new PokebookSession(payload.pos(), payload.nick());
+			// Com o aparelho tocando, abrir no menu seria pedir um clique a mais para
+			// atender enquanto o outro espera. Quem está numa ligação abriu o aparelho por
+			// causa dela.
+			context.client().setScreen(ClientCalls.idle()
+				? new PokebookMenuScreen(session, payload.missions())
+				: new CallScreen(session, payload.missions()));
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(CallStatePayload.ID, (payload, context) ->
+			// Guardado fora da tela de propósito: o estado muda quando o OUTRO faz alguma
+			// coisa, e isso acontece com ou sem o aparelho aberto. A tela, se estiver
+			// aberta, percebe a mudança no próprio tick e se remonta.
+			ClientCalls.set(payload.state(), payload.peer()));
 
 		ClientPlayNetworking.registerGlobalReceiver(MissionsUpdatePayload.ID, (payload, context) -> {
 			// Só atualiza se a lista estiver de fato aberta: o resgate não deve arrastar
