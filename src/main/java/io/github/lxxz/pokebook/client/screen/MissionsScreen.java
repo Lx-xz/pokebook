@@ -34,8 +34,8 @@ import java.util.function.Predicate;
 public class MissionsScreen extends PokebookScreenBase {
 	private static final int ROW_HEIGHT = 26;
 	private static final int TAB_HEIGHT = 14;
-	private static final int LIST_TOP_INSET = 42;
-	private static final int LIST_BOTTOM_INSET = 10;
+	/** Altura da faixa de abas mais a folga até a lista. */
+	private static final int TABS_BAND = TAB_HEIGHT + 6;
 
 	private static final int CLAIM_WIDTH = 52;
 	private static final int CLAIM_HEIGHT = 18;
@@ -78,15 +78,14 @@ public class MissionsScreen extends PokebookScreenBase {
 	@Override
 	protected void initPanel() {
 		Tab[] tabs = Tab.values();
-		// A moldura inteira menos uma margem fina: "Em andamento" não cabia na largura
-		// anterior e saía cortado. Rótulo de aba é texto traduzido, então o espaço tem de
-		// caber no idioma mais verboso, não no mais curto.
-		int tabWidth = (panelWidth() - 16) / tabs.length;
-		int tabX = panelX() + 8;
+		// As abas ocupam a largura da área clara. Rótulo de aba é texto traduzido, então o
+		// espaço tem de caber no idioma mais verboso, não no mais curto.
+		int tabWidth = contentWidth() / tabs.length;
+		int tabX = contentX();
 
 		for (Tab candidate : tabs) {
 			ButtonWidget button = ButtonWidget.builder(Text.translatable(candidate.key), b -> selectTab(candidate))
-				.dimensions(tabX, panelY() + 24, tabWidth, TAB_HEIGHT)
+				.dimensions(tabX, contentTop(), tabWidth, TAB_HEIGHT)
 				.build();
 			// A aba atual não é clicável: já estamos nela, e desabilitada ela também fica
 			// visualmente distinta das outras sem precisar de sprite próprio.
@@ -107,11 +106,11 @@ public class MissionsScreen extends PokebookScreenBase {
 	}
 
 	private int listTop() {
-		return panelY() + LIST_TOP_INSET;
+		return contentTop() + TABS_BAND;
 	}
 
 	private int listHeight() {
-		return panelHeight() - LIST_TOP_INSET - LIST_BOTTOM_INSET;
+		return contentY() + contentHeight() - listTop();
 	}
 
 	private int maxScroll() {
@@ -121,18 +120,18 @@ public class MissionsScreen extends PokebookScreenBase {
 	@Override
 	protected void renderPanel(DrawContext context, int mouseX, int mouseY, float delta) {
 		List<MissionEntry> entries = visible();
-		int x = panelX();
+		int x = contentX();
 
 		if (entries.isEmpty()) {
 			Text empty = Text.translatable("screen.pokebook.tab.empty");
 			context.drawText(textRenderer, empty,
-				x + (panelWidth() - textRenderer.getWidth(empty)) / 2, listTop() + 16, COLOR_MUTED, false);
+				x + (contentWidth() - textRenderer.getWidth(empty)) / 2, listTop() + 16, COLOR_MUTED, false);
 			return;
 		}
 
 		// Recorta ao retângulo da lista: sem isto, a linha que está saindo por cima
 		// continuaria desenhada sobre as abas e sobre o título.
-		context.enableScissor(x, listTop(), x + panelWidth(), listTop() + listHeight());
+		context.enableScissor(x, listTop(), x + contentWidth(), listTop() + listHeight());
 
 		int rowY = listTop() - scroll;
 		for (MissionEntry entry : entries) {
@@ -142,26 +141,33 @@ public class MissionsScreen extends PokebookScreenBase {
 
 		context.disableScissor();
 
+		outline(context, x, listTop(), contentWidth(), listHeight(), DEBUG_AREA);
+
 		if (maxScroll() > 0) {
 			renderScrollbar(context, x, entries.size());
 		}
 	}
 
 	private void renderRow(DrawContext context, MissionEntry entry, int x, int rowY, int mouseX, int mouseY) {
-		context.drawItem(entry.reward(), x + 10, rowY + 4);
-		context.drawItemInSlot(textRenderer, entry.reward(), x + 10, rowY + 4);
+		outline(context, x, rowY, contentWidth(), ROW_HEIGHT, DEBUG_ROW);
+		outline(context, x, rowY + 4, 16, 16, DEBUG_AREA);
+
+		context.drawItem(entry.reward(), x, rowY + 4);
+		context.drawItemInSlot(textRenderer, entry.reward(), x, rowY + 4);
 
 		int titleColor = entry.claimed() ? COLOR_MUTED : (entry.complete() ? COLOR_DONE : COLOR_TEXT);
-		context.drawText(textRenderer, entry.title(), x + 32, rowY + 2, titleColor, false);
+		context.drawText(textRenderer, entry.title(), x + 22, rowY + 2, titleColor, false);
+		outlineText(context, entry.title(), x + 22, rowY + 2, DEBUG_TEXT);
 
 		Text status = entry.claimed()
 			? Text.translatable("screen.pokebook.claimed")
 			: Text.literal(entry.count() + "/" + entry.required());
-		context.drawText(textRenderer, status, x + 32, rowY + 13,
+		context.drawText(textRenderer, status, x + 22, rowY + 13,
 			entry.claimed() ? COLOR_MUTED : COLOR_ACCENT, false);
+		outlineText(context, status, x + 22, rowY + 13, DEBUG_TEXT);
 
 		if (entry.claimable() && !session.portable()) {
-			int buttonX = x + panelWidth() - CLAIM_WIDTH - 10;
+			int buttonX = x + contentWidth() - CLAIM_WIDTH;
 			int buttonY = rowY + 3;
 			boolean hovered = mouseX >= buttonX && mouseX < buttonX + CLAIM_WIDTH
 				&& mouseY >= buttonY && mouseY < buttonY + CLAIM_HEIGHT
@@ -172,12 +178,13 @@ public class MissionsScreen extends PokebookScreenBase {
 			Text label = Text.translatable("screen.pokebook.claim");
 			context.drawText(textRenderer, label,
 				buttonX + (CLAIM_WIDTH - textRenderer.getWidth(label)) / 2, buttonY + 5, 0xFFFFFFFF, false);
+			outline(context, buttonX, buttonY, CLAIM_WIDTH, CLAIM_HEIGHT, DEBUG_HIT);
 		}
 	}
 
 	/** Barra fina à direita, só para dizer que há mais coisa e onde estamos. */
 	private void renderScrollbar(DrawContext context, int x, int rowCount) {
-		int trackX = x + panelWidth() - 6;
+		int trackX = x + contentWidth() - 3;
 		int trackTop = listTop();
 		int trackHeight = listHeight();
 
@@ -186,6 +193,7 @@ public class MissionsScreen extends PokebookScreenBase {
 
 		context.fill(trackX, trackTop, trackX + 3, trackTop + trackHeight, 0x30000000);
 		context.fill(trackX, thumbY, trackX + 3, thumbY + thumbHeight, 0xFF0D5A70);
+		outline(context, trackX, trackTop, 3, trackHeight, DEBUG_AREA);
 	}
 
 	@Override
@@ -200,8 +208,8 @@ public class MissionsScreen extends PokebookScreenBase {
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (button == 0 && mouseY >= listTop() && mouseY < listTop() + listHeight()) {
-			int x = panelX();
-			int buttonX = x + panelWidth() - CLAIM_WIDTH - 10;
+			int x = contentX();
+			int buttonX = x + contentWidth() - CLAIM_WIDTH;
 			int rowY = listTop() - scroll;
 
 			for (MissionEntry entry : visible()) {
