@@ -556,9 +556,10 @@ Se alguma não fechar, é um arquivo só para consertar.
    outro lado.
 6. Desconectar no meio da ligação não deixa o outro falando com um fantasma.
 
-**Verificado em jogo, com dois clients** (ver `TESTES.md` para o como). Os itens 1 a 6
-passaram — a ligação toca, atende, o áudio atravessa pelo SVC e desligar/recusar/desistir
-mandam a mensagem certa para cada lado.
+**Testado em jogo, com dois clients** (ver `TESTES.md` para o como) — parcialmente: dos
+itens 1 a 6, confirmou-se que a ligação toca, atende e o áudio atravessa pelo SVC. Os
+itens de desligar/recusar/desistir por timeout e desconectar no meio da ligação **ainda
+não foram exercitados** e continuam por conferir.
 
 Um bug apareceu no teste: o **bipe de tocar não soava para quem estava sendo chamado**,
 só para quem estivesse perto dele no mundo. Causa: `PokebookSounds.playTo` usava
