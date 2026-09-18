@@ -11,6 +11,7 @@ import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import io.github.lxxz.pokebook.network.DialCallPayload;
 import io.github.lxxz.pokebook.network.HangUpCallPayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
+import io.github.lxxz.pokebook.network.MuteCallPayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
 import io.github.lxxz.pokebook.network.RequestSocialPayload;
 import io.github.lxxz.pokebook.network.SocialUpdatePayload;
@@ -55,6 +56,7 @@ public class Pokebook implements ModInitializer {
 		PayloadTypeRegistry.playC2S().register(DialCallPayload.ID, DialCallPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(AnswerCallPayload.ID, AnswerCallPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(HangUpCallPayload.ID, HangUpCallPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(MuteCallPayload.ID, MuteCallPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ClosePokebookPayload.ID, (payload, context) -> {
 			// Este pacote vem do cliente, que não é confiável. A validação não precisa ser
@@ -70,8 +72,8 @@ public class Pokebook implements ModInitializer {
 			ServerPlayNetworking.send(context.player(),
 				new SocialUpdatePayload(MissionService.socialSnapshot(context.player().server))));
 
-		// Os três da ligação. Nenhum deles confia no que veio: quem pode ligar, atender ou
-		// desligar o quê é decidido inteiro dentro do CallService.
+		// Os quatro da ligação. Nenhum deles confia no que veio: quem pode ligar, atender,
+		// desligar ou mutar o quê é decidido inteiro dentro do CallService.
 		ServerPlayNetworking.registerGlobalReceiver(DialCallPayload.ID, (payload, context) ->
 			CallService.dial(context.player(), payload.target()));
 
@@ -80,6 +82,9 @@ public class Pokebook implements ModInitializer {
 
 		ServerPlayNetworking.registerGlobalReceiver(HangUpCallPayload.ID, (payload, context) ->
 			CallService.hangUp(context.player()));
+
+		ServerPlayNetworking.registerGlobalReceiver(MuteCallPayload.ID, (payload, context) ->
+			CallService.toggleMute(context.player()));
 
 		// O telefone precisa de tempo passando: é o que repete o aviso acima da hotbar e o
 		// que desiste de quem não atende. Sai barato — sem ligação nenhuma, não faz nada.

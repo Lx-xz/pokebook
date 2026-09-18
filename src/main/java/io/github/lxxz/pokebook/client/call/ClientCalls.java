@@ -21,6 +21,7 @@ import io.github.lxxz.pokebook.call.CallState;
 public final class ClientCalls {
 	private static CallState state = CallState.IDLE;
 	private static String peer = "";
+	private static boolean muted;
 
 	private ClientCalls() {
 	}
@@ -34,12 +35,18 @@ public final class ClientCalls {
 		return peer;
 	}
 
+	/** Se o próprio jogador tapou o microfone nesta ligação — quem decide é o servidor. */
+	public static boolean muted() {
+		return muted;
+	}
+
 	public static boolean idle() {
 		return state == CallState.IDLE;
 	}
 
-	public static void set(CallState newState, String newPeer) {
+	public static void set(CallState newState, String newPeer, boolean newMuted) {
 		state = newState;
 		peer = newPeer;
+		muted = newMuted;
 	}
 }

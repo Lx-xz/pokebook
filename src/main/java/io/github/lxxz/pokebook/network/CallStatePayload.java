@@ -17,8 +17,12 @@ import net.minecraft.util.Identifier;
  *
  * <p>O nome do outro vai junto porque é o que a tela mostra, e ele pode desconectar entre
  * uma coisa e outra. Vem vazio quando não há ligação — {@link CallState#IDLE} não tem par.
+ *
+ * <p>{@code muted} é se <b>este</b> jogador tapou o próprio microfone — o servidor que
+ * decide, não um estado só de cliente, porque é ele quem sabe se o pacote de áudio está
+ * sendo mesmo repassado.
  */
-public record CallStatePayload(CallState state, String peer) implements CustomPayload {
+public record CallStatePayload(CallState state, String peer, boolean muted) implements CustomPayload {
 	public static final CustomPayload.Id<CallStatePayload> ID =
 		new CustomPayload.Id<>(Identifier.of(Pokebook.MOD_ID, "call_state"));
 
@@ -26,6 +30,7 @@ public record CallStatePayload(CallState state, String peer) implements CustomPa
 		PacketCodec.tuple(
 			CallState.PACKET_CODEC, CallStatePayload::state,
 			PacketCodecs.STRING, CallStatePayload::peer,
+			PacketCodecs.BOOL, CallStatePayload::muted,
 			CallStatePayload::new
 		);
 

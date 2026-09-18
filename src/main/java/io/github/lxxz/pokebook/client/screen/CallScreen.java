@@ -1,11 +1,13 @@
 package io.github.lxxz.pokebook.client.screen;
 
 import io.github.lxxz.pokebook.call.CallState;
+import io.github.lxxz.pokebook.client.call.CallFavorites;
 import io.github.lxxz.pokebook.client.call.ClientCalls;
 import io.github.lxxz.pokebook.network.AnswerCallPayload;
 import io.github.lxxz.pokebook.network.DialCallPayload;
 import io.github.lxxz.pokebook.network.HangUpCallPayload;
 import io.github.lxxz.pokebook.network.MissionEntry;
+import io.github.lxxz.pokebook.network.MuteCallPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.PlayerSkinDrawer;
@@ -20,7 +22,9 @@ import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * O telefone: para quem ligar, e o que fazer com a ligação em curso.
@@ -44,6 +48,22 @@ public class CallScreen extends PokebookScreenBase {
 	private static final int BIG_FACE_SIZE = 32;
 	private static final int BUTTON_HEIGHT = 20;
 	private static final int BUTTON_GAP = 4;
+	private static final int STAR_WIDTH = 12;
+
+	/** Estrela cheia e vazia. A fonte padrão do Minecraft cobre os dois via glifo Unicode. */
+	private static final String STAR_FAVORITE = "★";
+	private static final String STAR_NOT_FAVORITE = "☆";
+
+	/**
+	 * Uma linha da lista: quem, se está conectado agora e se foi marcado como favorito.
+	 *
+	 * <p>Existe porque a lista deixou de ser só "quem está online" — favoritos continuam
+	 * aparecendo desconectados, e {@link PlayerListEntry} não descreve alguém fora do
+	 * mundo. {@link #skinOf} já sabia resolver a skin nos dois casos, então só a linha
+	 * precisava de um tipo novo.
+	 */
+	private record Contact(String name, boolean online, boolean favorite) {
+	}
 
 	/** Guardadas só para reconstruir o menu ao voltar, como nas outras telas. */
 	private final List<MissionEntry> missions;
@@ -56,6 +76,9 @@ public class CallScreen extends PokebookScreenBase {
 	 * Comparar a cada tick é o que dispara a remontagem — ver {@link #tick()}.
 	 */
 	private CallState built = CallState.IDLE;
+
+	/** Igual a {@link #built}, mas para o rótulo do botão de mutar — ver {@link #tick()}. */
+	private boolean builtMuted;
 
 	private int scroll;
 
@@ -72,6 +95,7 @@ public class CallScreen extends PokebookScreenBase {
 	@Override
 	protected void initPanel() {
 		built = ClientCalls.state();
+		builtMuted = ClientCalls.muted();
 
 		int y = contentY() + contentHeight() - BUTTON_HEIGHT;
 
@@ -91,10 +115,28 @@ public class CallScreen extends PokebookScreenBase {
 				).dimensions(contentX() + half + BUTTON_GAP, y, contentWidth() - half - BUTTON_GAP,
 					BUTTON_HEIGHT).build());
 			}
-			case DIALING, ACTIVE -> addDrawableChild(ButtonWidget.builder(
+			case DIALING -> addDrawableChild(ButtonWidget.builder(
 				Text.translatable("screen.pokebook.call.hang_up"),
 				button -> ClientPlayNetworking.send(new HangUpCallPayload())
 			).dimensions(contentX(), y, contentWidth(), BUTTON_HEIGHT).build());
+
+			// Mutar só faz sentido com áudio de fato passando — enquanto chama, não há o
+			// que tapar ainda.
+			case ACTIVE -> {
+				int half = (contentWidth() - BUTTON_GAP) / 2;
+				addDrawableChild(ButtonWidget.builder(
+					Text.translatable(ClientCalls.muted()
+						? "screen.pokebook.call.unmute"
+						: "screen.pokebook.call.mute"),
+					button -> ClientPlayNetworking.send(new MuteCallPayload())
+				).dimensions(contentX(), y, half, BUTTON_HEIGHT).build());
+
+				addDrawableChild(ButtonWidget.builder(
+					Text.translatable("screen.pokebook.call.hang_up"),
+					button -> ClientPlayNetworking.send(new HangUpCallPayload())
+				).dimensions(contentX() + half + BUTTON_GAP, y, contentWidth() - half - BUTTON_GAP,
+					BUTTON_HEIGHT).build());
+			}
 
 			// Sem ligação não há botão: a lista inteira é a interface, e ela é desenhada
 			// à mão porque rola.
@@ -106,7 +148,7 @@ public class CallScreen extends PokebookScreenBase {
 	@Override
 	public void tick() {
 		super.tick();
-		if (ClientCalls.state() != built) {
+		if (ClientCalls.state() != built || ClientCalls.muted() != builtMuted) {
 			// Trocou de estado por conta do outro lado. clearAndInit() refaz os widgets
 			// pelo init() da base, que repõe os botões de canto antes de chamar initPanel().
 			scroll = 0;
@@ -128,7 +170,7 @@ public class CallScreen extends PokebookScreenBase {
 	/** Sem ligação: a lista de quem dá para chamar. */
 	private void renderRoster(DrawContext context, int mouseX, int mouseY) {
 		int x = contentX();
-		List<PlayerListEntry> roster = roster();
+		List<Contact> roster = roster();
 
 		if (roster.isEmpty()) {
 			centered(context, Text.translatable("screen.pokebook.call.nobody"), listTop() + 16, COLOR_MUTED);
@@ -138,8 +180,8 @@ public class CallScreen extends PokebookScreenBase {
 		context.enableScissor(x, listTop(), x + contentWidth(), listTop() + listHeight());
 
 		int rowY = listTop() - scroll;
-		for (PlayerListEntry entry : roster) {
-			renderRow(context, entry, x, rowY, mouseX, mouseY);
+		for (Contact contact : roster) {
+			renderRow(context, contact, x, rowY, mouseX, mouseY);
 			rowY += ROW_HEIGHT;
 		}
 
@@ -148,7 +190,7 @@ public class CallScreen extends PokebookScreenBase {
 		outline(context, x, listTop(), contentWidth(), listHeight(), DEBUG_AREA);
 	}
 
-	private void renderRow(DrawContext context, PlayerListEntry entry, int x, int rowY, int mouseX, int mouseY) {
+	private void renderRow(DrawContext context, Contact contact, int x, int rowY, int mouseX, int mouseY) {
 		outline(context, x, rowY, contentWidth(), ROW_HEIGHT, DEBUG_ROW);
 
 		// Realce sob o mouse: numa lista sem botão, é o que diz que a linha é clicável.
@@ -159,16 +201,29 @@ public class CallScreen extends PokebookScreenBase {
 			context.fill(x, rowY, x + contentWidth(), rowY + ROW_HEIGHT, 0x30000000);
 		}
 
-		int faceY = rowY + (ROW_HEIGHT - FACE_SIZE) / 2;
-		PlayerSkinDrawer.draw(context, entry.getSkinTextures().texture(), x, faceY, FACE_SIZE);
-
-		Text name = Text.literal(entry.getProfile().getName());
-		int nameX = x + FACE_SIZE + 6;
 		int nameY = rowY + (ROW_HEIGHT - textRenderer.fontHeight) / 2;
-		context.drawText(textRenderer, name, nameX, nameY, hovered ? COLOR_ACCENT : COLOR_TEXT, false);
+
+		Text star = Text.literal(contact.favorite() ? STAR_FAVORITE : STAR_NOT_FAVORITE);
+		context.drawText(textRenderer, star, x, nameY, contact.favorite() ? COLOR_ACCENT : COLOR_MUTED, false);
+
+		int faceX = x + STAR_WIDTH;
+		int faceY = rowY + (ROW_HEIGHT - FACE_SIZE) / 2;
+		PlayerSkinDrawer.draw(context, skinOf(contact.name()), faceX, faceY, FACE_SIZE);
+		if (!contact.online()) {
+			// Sem desenhar em tons de cinza de verdade — um véu escuro sobre o rosto já
+			// diz "não está aqui agora" sem precisar tocar nos pixels da skin.
+			context.fill(faceX, faceY, faceX + FACE_SIZE, faceY + FACE_SIZE, 0xA0202020);
+		}
+
+		Text name = Text.literal(contact.name());
+		int nameX = faceX + FACE_SIZE + 6;
+		context.drawText(textRenderer, name, nameX, nameY,
+			!contact.online() ? COLOR_MUTED : hovered ? COLOR_ACCENT : COLOR_TEXT, false);
 		outlineText(context, name, nameX, nameY, DEBUG_TEXT);
 
-		Text action = Text.translatable("screen.pokebook.call.dial");
+		Text action = Text.translatable(contact.online()
+			? "screen.pokebook.call.dial"
+			: "screen.pokebook.call.offline_label");
 		int actionX = x + contentWidth() - textRenderer.getWidth(action);
 		context.drawText(textRenderer, action, actionX, nameY, COLOR_MUTED, false);
 	}
@@ -189,11 +244,13 @@ public class CallScreen extends PokebookScreenBase {
 		Text status = switch (built) {
 			case DIALING -> Text.translatable("screen.pokebook.call.status.dialing");
 			case RINGING -> Text.translatable("screen.pokebook.call.status.ringing");
-			case ACTIVE -> Text.translatable("screen.pokebook.call.status.active");
+			case ACTIVE -> ClientCalls.muted()
+				? Text.translatable("screen.pokebook.call.status.muted")
+				: Text.translatable("screen.pokebook.call.status.active");
 			case IDLE -> Text.empty();
 		};
 		centered(context, status, nameY + textRenderer.fontHeight + 4,
-			built == CallState.ACTIVE ? COLOR_DONE : COLOR_MUTED);
+			built == CallState.ACTIVE && !ClientCalls.muted() ? COLOR_DONE : COLOR_MUTED);
 	}
 
 	// ------------------------------------------------------------------ interação
@@ -213,12 +270,22 @@ public class CallScreen extends PokebookScreenBase {
 		// O deslocamento da rolagem tem de entrar na conta: o que se vê na linha de cima
 		// não é o primeiro da lista depois de rolar.
 		int index = (int) ((mouseY - listTop() + scroll) / ROW_HEIGHT);
-		List<PlayerListEntry> roster = roster();
+		List<Contact> roster = roster();
 		if (index < 0 || index >= roster.size()) {
 			return super.mouseClicked(mouseX, mouseY, button);
 		}
 
-		ClientPlayNetworking.send(new DialCallPayload(roster.get(index).getProfile().getName()));
+		Contact contact = roster.get(index);
+		if (mouseX < x + STAR_WIDTH) {
+			CallFavorites.toggle(contact.name());
+			return true;
+		}
+
+		// Favorito offline continua na lista para lembrar que existe, mas não há para
+		// quem ligar — o servidor recusaria do mesmo jeito, então nem manda o pacote.
+		if (contact.online()) {
+			ClientPlayNetworking.send(new DialCallPayload(contact.name()));
+		}
 		return true;
 	}
 
@@ -249,20 +316,35 @@ public class CallScreen extends PokebookScreenBase {
 	}
 
 	/**
-	 * Quem dá para chamar: todo mundo conectado, menos você.
+	 * Quem dá para chamar, mais quem foi marcado como favorito mesmo sem estar aqui agora.
 	 *
-	 * <p>Ordenado por nome para a lista não dançar entre um quadro e outro — a ordem da
-	 * lista de jogadores do cliente não é estável.
+	 * <p>Favoritos primeiro — é a razão de existir do botão — e dentro de cada grupo por
+	 * nome, para a lista não dançar entre um quadro e outro. Um favorito que também está
+	 * conectado aparece uma vez só, com o rosto de verdade.
 	 */
-	private List<PlayerListEntry> roster() {
+	private List<Contact> roster() {
 		ClientPlayNetworkHandler handler = client == null ? null : client.getNetworkHandler();
-		if (handler == null) {
-			return List.of();
+		List<Contact> contacts = new ArrayList<>();
+		Set<String> onlineNames = new HashSet<>();
+
+		if (handler != null) {
+			for (PlayerListEntry entry : handler.getPlayerList()) {
+				String name = entry.getProfile().getName();
+				if (!name.equals(session.nick())) {
+					onlineNames.add(name);
+					contacts.add(new Contact(name, true, CallFavorites.isFavorite(name)));
+				}
+			}
 		}
-		List<PlayerListEntry> entries = new ArrayList<>(handler.getPlayerList());
-		entries.removeIf(entry -> entry.getProfile().getName().equals(session.nick()));
-		entries.sort(Comparator.comparing((PlayerListEntry entry) -> entry.getProfile().getName()));
-		return entries;
+		for (String favorite : CallFavorites.all()) {
+			if (!favorite.equals(session.nick()) && !onlineNames.contains(favorite)) {
+				contacts.add(new Contact(favorite, false, true));
+			}
+		}
+
+		contacts.sort(Comparator.comparing(Contact::favorite).reversed()
+			.thenComparing(Contact::name, String.CASE_INSENSITIVE_ORDER));
+		return contacts;
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package io.github.lxxz.pokebook.call;
 
 import io.github.lxxz.pokebook.network.CallStatePayload;
+import io.github.lxxz.pokebook.registry.ModItems;
 import io.github.lxxz.pokebook.sound.PokebookSounds;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
@@ -67,6 +68,8 @@ public final class CallService {
 		final UUID callee;
 		boolean answered;
 		int ticks;
+		boolean callerMuted;
+		boolean calleeMuted;
 
 		Call(UUID caller, UUID callee) {
 			this.caller = caller;
@@ -75,6 +78,18 @@ public final class CallService {
 
 		UUID other(UUID player) {
 			return player.equals(caller) ? callee : caller;
+		}
+
+		boolean isMuted(UUID player) {
+			return player.equals(caller) ? callerMuted : calleeMuted;
+		}
+
+		void setMuted(UUID player, boolean muted) {
+			if (player.equals(caller)) {
+				callerMuted = muted;
+			} else {
+				calleeMuted = muted;
+			}
 		}
 	}
 
@@ -109,6 +124,32 @@ public final class CallService {
 	public static UUID peerOf(UUID player) {
 		Call call = BY_PLAYER.get(player);
 		return call != null && call.answered ? call.other(player) : null;
+	}
+
+	/**
+	 * Este jogador tapou o próprio microfone na ligação atual?
+	 *
+	 * <p>Chamado pela thread de áudio do Simple Voice Chat, igual a {@link #peerOf}, e pela
+	 * mesma razão é uma leitura só no mapa concorrente — nada de tocar no mundo aqui.
+	 */
+	public static boolean isMuted(UUID player) {
+		Call call = BY_PLAYER.get(player);
+		return call != null && call.isMuted(player);
+	}
+
+	/**
+	 * Muta ou desmuta quem pediu, na ligação em que estiver.
+	 *
+	 * <p>Sem ligação não faz nada — não há o que mutar, e o cliente não deveria nem
+	 * oferecer o botão fora de uma chamada ativa.
+	 */
+	public static void toggleMute(ServerPlayerEntity player) {
+		Call call = BY_PLAYER.get(player.getUuid());
+		if (call == null) {
+			return;
+		}
+		call.setMuted(player.getUuid(), !call.isMuted(player.getUuid()));
+		sendState(player);
 	}
 
 	/** Em que pé está a ligação deste jogador. */
@@ -292,11 +333,13 @@ public final class CallService {
 	public static void sendState(ServerPlayerEntity player) {
 		Call call = BY_PLAYER.get(player.getUuid());
 		String peer = "";
+		boolean muted = false;
 		if (call != null) {
 			ServerPlayerEntity other = player.server.getPlayerManager().getPlayer(call.other(player.getUuid()));
 			peer = other == null ? "" : displayName(other);
+			muted = call.isMuted(player.getUuid());
 		}
-		ServerPlayNetworking.send(player, new CallStatePayload(stateOf(player.getUuid()), peer));
+		ServerPlayNetworking.send(player, new CallStatePayload(stateOf(player.getUuid()), peer, muted));
 	}
 
 	/**
@@ -321,11 +364,32 @@ public final class CallService {
 
 		if (caller != null && callee != null) {
 			caller.sendMessage(Text.translatable("message.pokebook.call.dialing", displayName(callee)), true);
-			callee.sendMessage(Text.translatable("message.pokebook.call.ringing", displayName(caller)), true);
-			// Só para quem é chamado: o toque é o que chama a atenção de quem não está
-			// esperando nada. Quem ligou já sabe que ligou.
-			PokebookSounds.playTo(callee, PokebookSounds.RING, 0.7f, 1.6f);
+			if (hasPhone(callee)) {
+				callee.sendMessage(Text.translatable("message.pokebook.call.ringing", displayName(caller)), true);
+				// Só para quem é chamado: o toque é o que chama a atenção de quem não está
+				// esperando nada. Quem ligou já sabe que ligou.
+				PokebookSounds.playTo(callee, PokebookSounds.RING, 0.7f, 1.6f);
+			}
+			// Sem aparelho, quem é chamado não tem como saber nem como atender — avisar
+			// só confundiria alguém que nunca ouviu falar do mod. A ligação continua
+			// tocando e desiste sozinha depois de meio minuto, igual a ninguém atender.
 		}
+	}
+
+	/**
+	 * Tem como este jogador perceber que está sendo chamado?
+	 *
+	 * <p>O aviso acima da hotbar e o toque só fazem sentido para quem tem <b>um poképhone
+	 * em algum lugar do inventário</b> — sem ele não há como abrir a tela e atender. A
+	 * pokébook (o bloco) não entra aqui: o aviso soa longe de qualquer estação, e andar até
+	 * uma para atender não é o que o desenho da ligação pede.
+	 *
+	 * <p>Continuar aparecendo na lista de quem chamar, mesmo sem aparelho, é decisão de
+	 * propósito por ora — tirar quem não tem celular da lista é outra mudança, registrada
+	 * à parte.
+	 */
+	private static boolean hasPhone(ServerPlayerEntity player) {
+		return player.getInventory().contains(stack -> stack.isOf(ModItems.POKEPHONE));
 	}
 
 	/** Tocou meio minuto e ninguém atendeu. */

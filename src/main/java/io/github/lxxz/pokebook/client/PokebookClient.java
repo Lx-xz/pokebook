@@ -57,7 +57,7 @@ public class PokebookClient implements ClientModInitializer {
 			// Guardado fora da tela de propósito: o estado muda quando o OUTRO faz alguma
 			// coisa, e isso acontece com ou sem o aparelho aberto. A tela, se estiver
 			// aberta, percebe a mudança no próprio tick e se remonta.
-			ClientCalls.set(payload.state(), payload.peer()));
+			ClientCalls.set(payload.state(), payload.peer(), payload.muted()));
 
 		ClientPlayNetworking.registerGlobalReceiver(MissionsUpdatePayload.ID, (payload, context) -> {
 			// Só atualiza se a lista estiver de fato aberta: o resgate não deve arrastar
