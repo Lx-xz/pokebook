@@ -1,11 +1,15 @@
 package io.github.lxxz.pokebook.client;
 
+import io.github.lxxz.pokebook.Pokebook;
+import io.github.lxxz.pokebook.client.render.EmissiveScreenModel;
 import io.github.lxxz.pokebook.client.screen.MissionsScreen;
 import io.github.lxxz.pokebook.client.screen.PokebookMenuScreen;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.util.Identifier;
 
 /**
  * Entrypoint de cliente.
@@ -17,6 +21,19 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 public class PokebookClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
+		// Embrulha os modelos de bloco do pokébook para que as faces de tela acesa sejam
+		// desenhadas em brilho máximo. O filtro é pelo prefixo do caminho, então vale para
+		// os quatro níveis de tela de uma vez; o modelo de item não entra.
+		ModelLoadingPlugin.register(plugin -> plugin.modifyModelAfterBake().register((model, context) -> {
+			Identifier id = context.resourceId();
+			if (model == null || id == null) {
+				return model;
+			}
+			return id.getNamespace().equals(Pokebook.MOD_ID) && id.getPath().startsWith("block/pokebook")
+				? new EmissiveScreenModel(model)
+				: model;
+		}));
+
 		// Em 1.21.1 estes handlers já rodam na render thread, então dá para chamar métodos
 		// de cliente direto. O client.execute(...) que os tutoriais de 1.19 exigem virou
 		// desnecessário.
