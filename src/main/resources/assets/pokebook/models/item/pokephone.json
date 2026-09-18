@@ -1,59 +1,200 @@
 {
 	"format_version": "26.3",
 	"credit": "Made with Blockbench",
-
-	"__comment": "Exportado do Blockbench sem namespace nas texturas e sem display. As duas coisas foram acrescentadas à mão: sem namespace o jogo procura em minecraft: e a textura sai rosa-e-preta; sem display o item aparece em tamanho natural e fora de enquadramento. Um reexport do Blockbench apaga ambas — reponha.",
-
+	"__comment": "Exportado do Blockbench sem namespace nas texturas e sem display. As duas coisas foram acrescentadas à mão: sem namespace o jogo procura em minecraft: e a textura sai rosa-e-preta; sem display o item aparece em tamanho natural e fora de enquadramento. Um reexport do Blockbench apaga ambas — reponha. As transformacoes de mao foram ajustadas olhando em jogo: em pe, com a tela voltada para a camera em primeira pessoa; em terceira pessoa girado para a tela ficar voltada para dentro e inclinada para cima.",
 	"textures": {
 		"0": "pokebook:item/pokephone_screen",
 		"1": "pokebook:item/pokephone_chassi",
 		"particle": "pokebook:item/pokephone_screen"
 	},
-
 	"display": {
 		"gui": {
-			"rotation": [0, 180, 0],
-			"translation": [0, 0, 0],
-			"scale": [1, 1, 1]
+			"rotation": [
+				0,
+				180,
+				0
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			]
 		},
 		"ground": {
-			"rotation": [90, 0, 0],
-			"translation": [0, 2, 0],
-			"scale": [0.4, 0.4, 0.4]
+			"rotation": [
+				90,
+				0,
+				0
+			],
+			"translation": [
+				0,
+				2,
+				0
+			],
+			"scale": [
+				0.4,
+				0.4,
+				0.4
+			]
 		},
 		"fixed": {
-			"rotation": [0, 180, 0],
-			"translation": [0, 0, 0],
-			"scale": [1, 1, 1]
+			"rotation": [
+				0,
+				180,
+				0
+			],
+			"translation": [
+				0,
+				0,
+				0
+			],
+			"scale": [
+				1,
+				1,
+				1
+			]
 		},
 		"thirdperson_righthand": {
-			"rotation": [0, -90, 25],
-			"translation": [0, 3, 1],
-			"scale": [0.5, 0.5, 0.5]
+			"rotation": [
+				-35,
+				70,
+				-15
+			],
+			"translation": [
+				0.5,
+				3.5,
+				0.5
+			],
+			"scale": [
+				0.4,
+				0.4,
+				0.4
+			]
 		},
 		"firstperson_righthand": {
-			"rotation": [0, -90, 25],
-			"translation": [0, 4, 2],
-			"scale": [0.55, 0.55, 0.55]
+			"rotation": [
+				0,
+				170,
+				10
+			],
+			"translation": [
+				4.0,
+				1.0,
+				-1.0
+			],
+			"scale": [
+				0.3,
+				0.3,
+				0.3
+			]
 		},
 		"firstperson_lefthand": {
-			"rotation": [0, 90, -25],
-			"translation": [0, 4, 2],
-			"scale": [0.55, 0.55, 0.55]
+			"rotation": [
+				0,
+				190,
+				-10
+			],
+			"translation": [
+				-4.0,
+				1.0,
+				-1.0
+			],
+			"scale": [
+				0.3,
+				0.3,
+				0.3
+			]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [
+				-35,
+				-70,
+				15
+			],
+			"translation": [
+				-0.5,
+				3.5,
+				0.5
+			],
+			"scale": [
+				0.4,
+				0.4,
+				0.4
+			]
 		}
 	},
-
 	"elements": [
 		{
-			"from": [3, 0, 7],
-			"to": [13, 16, 9],
+			"from": [
+				3,
+				0,
+				7
+			],
+			"to": [
+				13,
+				16,
+				9
+			],
 			"faces": {
-				"north": {"uv": [0, 0, 10, 16], "texture": "#0"},
-				"east": {"uv": [0, 0, 2, 16], "texture": "#1"},
-				"south": {"uv": [0, 0, 10, 16], "texture": "#1"},
-				"west": {"uv": [0, 0, 2, 16], "texture": "#1"},
-				"up": {"uv": [0, 0, 10, 2], "texture": "#1"},
-				"down": {"uv": [0, 0, 10, 2], "texture": "#1"}
+				"north": {
+					"uv": [
+						0,
+						0,
+						10,
+						16
+					],
+					"texture": "#0"
+				},
+				"east": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#1"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						10,
+						16
+					],
+					"texture": "#1"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						2,
+						16
+					],
+					"texture": "#1"
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						10,
+						2
+					],
+					"texture": "#1"
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						10,
+						2
+					],
+					"texture": "#1"
+				}
 			}
 		}
 	]

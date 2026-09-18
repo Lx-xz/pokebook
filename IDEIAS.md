@@ -42,6 +42,22 @@ Ideias para aprofundar a divisão, nenhuma decidida:
 - **Alcance.** O celular funciona em qualquer lugar; o pokébook poderia dar algo que o
   celular não dá — mais missões ativas, ou recompensa melhor por resgatar na estação.
 
+### Animação de olhar para o celular
+
+O autor quer que o personagem olhe para o poképhone enquanto o usa. É possível, mas é
+frente nova:
+
+- O Minecraft tem um conjunto **fechado** de animações de uso de item — comer, beber,
+  bloquear, arco, lança, besta, luneta, corneta, pincel. Não se declara uma nova por
+  JSON. A luneta é a mais próxima, mas exige **segurar** o botão, e o celular abre a tela
+  num clique e solta.
+- Fazer o boneco olhar para baixo exigiria um estado "usando o celular" **sincronizado**
+  para os outros jogadores, e um **mixin** no modelo do jogador para dobrar cabeça e
+  braço.
+
+O projeto já tem um mixin (o que esconde a mão), então a ferramenta existe. O que falta é
+o estado sincronizado, que é o trabalho de verdade.
+
 ### Receita alternativa com itens do Cobblemon
 
 Dois caminhos para o mesmo item é normal no Minecraft: são duas receitas com ids

@@ -60,6 +60,9 @@ lógica, orientação a objetos ou controle de fluxo.
 - **Template Fabric puro**, sem architectury. O Cobblemon entrou como repositório Maven
   + dependência, sem re-scaffolding — mas exigiu o plugin do Kotlin no Gradle, que não é
   para escrever Kotlin (ver a seção do Cobblemon).
+- **Mixin só onde a API pública não chega.** O bloco de mixins foi removido do scaffold
+  da v1 por não ser usado, e voltou quando o poképhone precisou esconder a mão. Há um
+  só, e a intenção é que continue assim.
 
 ## Branches — leia antes de commitar
 
@@ -126,6 +129,14 @@ vêm antes do tamanho; na longa, o tamanho vem antes de `u,v`. Todos os parâmet
 numéricos, então trocar a ordem **compila e desenha nada** — um retângulo de tamanho
 zero, sem erro no log. Já aconteceu: a moldura inteira da interface sumiu. Confira a
 assinatura com `javap` antes de trocar de sobrecarga.
+
+**O projeto usa mixin, mas só onde não há alternativa.** Existe um só, em
+`mixin/HeldItemRendererMixin`, para esconder a mão enquanto o poképhone está aberto —
+quem desenha a mão é o jogo, e nenhuma API oferece gancho para cancelar. A regra
+continua sendo **API pública primeiro**; mixin é o último recurso, porque quebra em
+update do jogo sem aviso de compilação. Se um método tiver sobrecargas, escreva o
+descritor inteiro: só assim o alvo é o certo. Os nomes se escrevem em Yarn e o Loom os
+remapeia — verificado no jar, a anotação sai com `class_759`.
 
 **Widget não convive com lista que rola.** Widget tem posição fixa e a lista muda de
 posição a cada quadro. Numa lista rolável, desenhe as linhas à mão e trate o clique com
