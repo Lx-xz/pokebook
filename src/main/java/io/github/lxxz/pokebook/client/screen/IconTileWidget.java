@@ -26,6 +26,9 @@ public class IconTileWidget extends ButtonWidget {
 	/** Folga entre o quadrado do ícone e o rótulo. */
 	private static final int LABEL_GAP = 2;
 
+	/** Quanto da altura do quadrado o desenho ocupa. O resto é respiro em volta. */
+	private static final float GLYPH_FILL = 0.55f;
+
 	private final String glyph;
 	private final int tileSize;
 
@@ -55,10 +58,24 @@ public class IconTileWidget extends ButtonWidget {
 
 		int tint = active ? PokebookScreenBase.COLOR_ACCENT : PokebookScreenBase.COLOR_MUTED;
 
-		// O glifo centrado no quadrado. Vira o sprite do ícone quando houver.
-		int glyphX = x + (tileSize - textRenderer.getWidth(glyph)) / 2;
-		int glyphY = y + (tileSize - textRenderer.fontHeight) / 2;
-		context.drawText(textRenderer, glyph, glyphX, glyphY, tint, false);
+		// O glifo centrado no quadrado, ampliado para ocupar o ícone.
+		//
+		// A fonte do jogo tem um tamanho só, então aumentar um caractere é escalar a
+		// matriz de desenho — não existe "fonte maior" para pedir. O texto sai com os
+		// pixels ampliados, o que num glifo provisório é aceitável e num rótulo não seria.
+		//
+		// A escala sai do tamanho do ícone em vez de ser um número fixo, senão o glifo
+		// ficaria certo no poképhone e pequeno no pokébook, onde o quadrado é maior.
+		float scale = Math.max(1f, (tileSize * GLYPH_FILL) / textRenderer.fontHeight);
+
+		context.getMatrices().push();
+		// Escalar multiplica a posição também, então move-se primeiro para o centro do
+		// quadrado, escala-se ali, e só então se desenha centrado na origem.
+		context.getMatrices().translate(x + tileSize / 2f, y + tileSize / 2f, 0f);
+		context.getMatrices().scale(scale, scale, 1f);
+		context.drawText(textRenderer, glyph,
+			-textRenderer.getWidth(glyph) / 2, -textRenderer.fontHeight / 2, tint, false);
+		context.getMatrices().pop();
 
 		// O rótulo embaixo, cortado se não couber: é melhor "Missõ..." do que texto
 		// invadindo o ícone vizinho.
