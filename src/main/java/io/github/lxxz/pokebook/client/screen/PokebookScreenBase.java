@@ -46,6 +46,26 @@ public abstract class PokebookScreenBase extends Screen {
 	private static final int PORTRAIT_WIDTH = 176;
 	private static final int PORTRAIT_HEIGHT = 220;
 
+	/**
+	 * Liga o contorno de depuração: cada componente ganha uma borda de 1 px, para se ver a
+	 * disposição real em vez de se deduzir dos números.
+	 *
+	 * <p>Deixe {@code false} antes de considerar qualquer visual pronto — a borda desenha
+	 * por cima de tudo, inclusive do que ela está medindo.
+	 */
+	public static final boolean LAYOUT_DEBUG = true;
+
+	/** Vermelho: a moldura inteira. */
+	protected static final int DEBUG_PANEL = 0xFFFF2040;
+	/** Verde: áreas que contêm outras coisas — a lista, a faixa de abas. */
+	protected static final int DEBUG_AREA = 0xFF00C060;
+	/** Azul: cada linha de uma lista. */
+	protected static final int DEBUG_ROW = 0xFF3080FF;
+	/** Amarelo: o que responde a clique. */
+	protected static final int DEBUG_HIT = 0xFFFFC000;
+	/** Roxo: caixas de texto, para se ver a folga real em volta das letras. */
+	protected static final int DEBUG_TEXT = 0xFFC060FF;
+
 	// Paleta para fundo CLARO. A textura é ciano claro, então texto claro sumiria nela.
 	// Pelo mesmo motivo o texto vai sem sombra: sombra escura sob texto escuro empasta.
 	protected static final int COLOR_TEXT = 0xFF102028;
@@ -71,11 +91,18 @@ public abstract class PokebookScreenBase extends Screen {
 		return session.portrait() ? PORTRAIT_HEIGHT : LANDSCAPE_HEIGHT;
 	}
 
+	/**
+	 * Margem entre a borda da moldura e o conteúdo.
+	 *
+	 * <p>A arte tem borda escura e canto arredondado; o azul claro só começa aqui dentro.
+	 * Conteúdo encostado na borda fica em cima do contorno e "escorrega" pelo canto
+	 * redondo. <b>Toda medida de tela sai de {@link #contentX()} e companhia</b>, nunca de
+	 * {@code panelX()} — é o que garante que nada nasça fora da área clara.
+	 */
+	protected static final int CONTENT_INSET = 10;
+
 	/** Lado dos botões quadrados de canto (voltar e fechar). */
 	protected static final int CORNER_BUTTON = 14;
-
-	/** Distância dos botões de canto até a borda da moldura. */
-	private static final int CORNER_INSET = 6;
 
 	protected int panelX() {
 		return (width - panelWidth()) / 2;
@@ -83,6 +110,28 @@ public abstract class PokebookScreenBase extends Screen {
 
 	protected int panelY() {
 		return (height - panelHeight()) / 2;
+	}
+
+	/** Canto superior esquerdo da área clara. */
+	protected int contentX() {
+		return panelX() + CONTENT_INSET;
+	}
+
+	protected int contentY() {
+		return panelY() + CONTENT_INSET;
+	}
+
+	protected int contentWidth() {
+		return panelWidth() - CONTENT_INSET * 2;
+	}
+
+	protected int contentHeight() {
+		return panelHeight() - CONTENT_INSET * 2;
+	}
+
+	/** Primeira linha livre abaixo da barra de título. */
+	protected int contentTop() {
+		return contentY() + CORNER_BUTTON + 4;
 	}
 
 	/**
@@ -95,7 +144,7 @@ public abstract class PokebookScreenBase extends Screen {
 	@Override
 	protected final void init() {
 		addDrawableChild(ButtonWidget.builder(Text.literal("✕"), button -> close())
-			.dimensions(panelX() + panelWidth() - CORNER_INSET - CORNER_BUTTON, panelY() + CORNER_INSET,
+			.dimensions(contentX() + contentWidth() - CORNER_BUTTON, contentY(),
 				CORNER_BUTTON, CORNER_BUTTON)
 			.tooltip(Tooltip.of(Text.translatable("screen.pokebook.close")))
 			.build());
@@ -103,7 +152,7 @@ public abstract class PokebookScreenBase extends Screen {
 		PokebookScreenBase parent = parentScreen();
 		if (parent != null) {
 			addDrawableChild(ButtonWidget.builder(Text.literal("←"), button -> navigateTo(parent))
-				.dimensions(panelX() + CORNER_INSET, panelY() + CORNER_INSET, CORNER_BUTTON, CORNER_BUTTON)
+				.dimensions(contentX(), contentY(), CORNER_BUTTON, CORNER_BUTTON)
 				.tooltip(Tooltip.of(Text.translatable("screen.pokebook.back")))
 				.build());
 		}
@@ -175,10 +224,43 @@ public abstract class PokebookScreenBase extends Screen {
 
 		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
 		// fica na altura dos botões de canto, entre os dois.
-		int titleX = x + (panelWidth() - textRenderer.getWidth(title)) / 2;
-		context.drawText(textRenderer, title, titleX, y + CORNER_INSET + 3, COLOR_TEXT, false);
+		// Centralizado na área clara, e na altura dos botões de canto.
+		int titleX = contentX() + (contentWidth() - textRenderer.getWidth(title)) / 2;
+		int titleY = contentY() + (CORNER_BUTTON - textRenderer.fontHeight) / 2 + 1;
+		context.drawText(textRenderer, title, titleX, titleY, COLOR_TEXT, false);
 
 		renderPanel(context, mouseX, mouseY, delta);
+
+		if (LAYOUT_DEBUG) {
+			outline(context, x, y, panelWidth(), panelHeight(), DEBUG_PANEL);
+			outline(context, contentX(), contentY(), contentWidth(), contentHeight(), DEBUG_AREA);
+			outlineText(context, title, titleX, titleY, DEBUG_TEXT);
+			// Os botões se desenham sozinhos; aqui só marcamos onde eles de fato estão.
+			for (net.minecraft.client.gui.Element child : children()) {
+				if (child instanceof net.minecraft.client.gui.widget.ClickableWidget widget) {
+					outline(context, widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(), DEBUG_HIT);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Contorno de 1 px, se a depuração estiver ligada. Não faz nada quando desligada, para
+	 * a chamada poder ficar no código de desenho sem um {@code if} em volta de cada uma.
+	 */
+	protected void outline(DrawContext context, int x, int y, int width, int height, int color) {
+		if (!LAYOUT_DEBUG) {
+			return;
+		}
+		context.fill(x, y, x + width, y + 1, color);
+		context.fill(x, y + height - 1, x + width, y + height, color);
+		context.fill(x, y, x + 1, y + height, color);
+		context.fill(x + width - 1, y, x + width, y + height, color);
+	}
+
+	/** O mesmo, em volta de um texto já desenhado. */
+	protected void outlineText(DrawContext context, Text text, int x, int y, int color) {
+		outline(context, x - 1, y - 1, textRenderer.getWidth(text) + 2, textRenderer.fontHeight + 2, color);
 	}
 
 	/** Conteúdo próprio de cada tela, desenhado dentro da moldura. */

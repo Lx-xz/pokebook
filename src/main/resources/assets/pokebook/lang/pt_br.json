@@ -2,7 +2,6 @@
 	"block.pokebook.pokebook": "Pokébook",
 	"itemGroup.pokebook.main": "Pokébook",
 	"screen.pokebook.title": "Pokébook",
-	"screen.pokebook.logged_as": "Conectado como: %s",
 	"screen.pokebook.missions": "Missões",
 	"screen.pokebook.social": "Social",
 	"screen.pokebook.back": "Voltar",
@@ -23,7 +22,8 @@
 	"target.pokebook.generation": "Geração %s",
 	"screen.pokebook.loading": "Carregando...",
 	"screen.pokebook.social.empty": "Ninguém mais online.",
-	"screen.pokebook.social.summary": "%s/%s concluídas · %s resgatadas",
 	"item.pokebook.pokephone": "Poképhone",
-	"message.pokebook.claim_at_block": "Recompensas são resgatadas no Pokébook, não no Poképhone."
+	"message.pokebook.claim_at_block": "Recompensas são resgatadas no Pokébook, não no Poképhone.",
+	"screen.pokebook.phone_title": "Poképhone",
+	"screen.pokebook.social.completed": "%s concluídas"
 }

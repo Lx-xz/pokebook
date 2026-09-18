@@ -2,7 +2,6 @@
 	"block.pokebook.pokebook": "Pokébook",
 	"itemGroup.pokebook.main": "Pokébook",
 	"screen.pokebook.title": "Pokébook",
-	"screen.pokebook.logged_as": "Signed in as: %s",
 	"screen.pokebook.missions": "Missions",
 	"screen.pokebook.social": "Social",
 	"screen.pokebook.back": "Back",
@@ -23,7 +22,8 @@
 	"target.pokebook.generation": "Generation %s",
 	"screen.pokebook.loading": "Loading...",
 	"screen.pokebook.social.empty": "Nobody else online.",
-	"screen.pokebook.social.summary": "%s/%s complete · %s claimed",
 	"item.pokebook.pokephone": "Poképhone",
-	"message.pokebook.claim_at_block": "Rewards are claimed on the Pokébook, not the Poképhone."
+	"message.pokebook.claim_at_block": "Rewards are claimed on the Pokébook, not the Poképhone.",
+	"screen.pokebook.phone_title": "Poképhone",
+	"screen.pokebook.social.completed": "%s done"
 }

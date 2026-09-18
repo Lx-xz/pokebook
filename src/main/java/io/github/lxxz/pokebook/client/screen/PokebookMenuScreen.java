@@ -10,47 +10,51 @@ import net.minecraft.text.Text;
 import java.util.List;
 
 /**
- * Tela inicial do pokébook.
+ * Tela inicial do aparelho.
  *
- * <p>Existe com um botão só de propósito. A navegação é o que define a forma dos pacotes,
- * e encaixar um menu depois significaria mexer num fluxo de dados já funcionando. Com a
- * moldura pronta, a aba social entra sem tocar em nada.
+ * <p>Existe com poucos botões de propósito. A navegação é o que define a forma dos
+ * pacotes, e encaixar um menu depois significaria mexer num fluxo de dados já
+ * funcionando. Com a moldura pronta, uma aba nova entra sem tocar em nada.
+ *
+ * <p>O título vem da sessão: o mesmo menu é a tela inicial do pokébook e do poképhone, e
+ * chamar os dois de "Pokébook" seria mentira na cara do jogador.
  */
 public class PokebookMenuScreen extends PokebookScreenBase {
+	private static final int BUTTON_HEIGHT = 20;
+	private static final int BUTTON_GAP = 6;
+
 	private final List<MissionEntry> missions;
 
 	public PokebookMenuScreen(PokebookSession session, List<MissionEntry> missions) {
-		super(Text.translatable("screen.pokebook.title"), session);
+		super(Text.translatable(session.portable()
+			? "screen.pokebook.phone_title"
+			: "screen.pokebook.title"), session);
 		this.missions = missions;
 	}
 
 	@Override
 	protected void initPanel() {
-		int x = panelX() + 20;
-		int y = panelY() + 56;
-		int buttonWidth = panelWidth() - 40;
+		int y = contentTop() + 8;
 
 		addDrawableChild(ButtonWidget.builder(
 			Text.translatable("screen.pokebook.missions"),
 			button -> navigateTo(new MissionsScreen(session, missions))
-		).dimensions(x, y, buttonWidth, 20).build());
+		).dimensions(contentX(), y, contentWidth(), BUTTON_HEIGHT).build());
 
 		addDrawableChild(ButtonWidget.builder(
 			Text.translatable("screen.pokebook.social"),
 			button -> {
 				// O pedido sai junto com a navegação, e a tela nasce vazia até a resposta
-				// chegar. Pedir aqui e não ao abrir o pokébook evita mandar a lista de todo
+				// chegar. Pedir aqui e não ao abrir o aparelho evita mandar a lista de todo
 				// mundo em aberturas que nunca chegam a esta aba.
 				ClientPlayNetworking.send(new RequestSocialPayload());
 				navigateTo(new SocialScreen(session, missions));
 			}
-		).dimensions(x, y + 26, buttonWidth, 20).build());
+		).dimensions(contentX(), y + BUTTON_HEIGHT + BUTTON_GAP, contentWidth(), BUTTON_HEIGHT).build());
 	}
 
 	@Override
 	protected void renderPanel(DrawContext context, int mouseX, int mouseY, float delta) {
-		context.drawText(textRenderer,
-			Text.translatable("screen.pokebook.logged_as", session.nick()),
-			panelX() + 14, panelY() + 32, COLOR_ACCENT, false);
+		// Sem conteúdo próprio: os botões são widgets e se desenham sozinhos.
 	}
 }
