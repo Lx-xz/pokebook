@@ -90,6 +90,14 @@ Fabric mostra os nomes da Mojang, que são diferentes: `onUse` e não `useWithou
   não existe, só forks)
 - Cobblemon empacota o Fabric Language Kotlin no próprio jar — o usuário final não
   instala nada extra, e um mod em Java puro consome a API normalmente
+- ⚠️ **Mas o ambiente de desenvolvimento precisa do plugin do Kotlin** —
+  `org.jetbrains.kotlin.jvm`, mesmo sem uma linha de Kotlin no projeto. Ele é o que liga
+  o remapeamento dos **metadados** do Kotlin no Loom. Sem ele o jogo **crasha na
+  inicialização** com `ClassNotFoundException: net.minecraft.class_2960` — o nome
+  intermediary de `Identifier`. O Loom remapeia o bytecode do jar, mas a reflexão do
+  Kotlin resolve classes por strings nos metadados, que o remapeamento de bytecode não
+  alcança. Ao aplicar o plugin, **limpe `.gradle/loom-cache/remapped_mods`**, senão o
+  jar remapeado velho continua sendo usado
 - `CobblemonEvents` usa `@JvmField` e sobrecargas `Consumer<T>`;
   **`POKEMON_CAPTURED` é o gancho central** do sistema de missões
 - ⚠️ **A API quebra entre versões menores.** A MDK oficial fixa faixa estreita

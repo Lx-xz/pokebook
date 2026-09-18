@@ -86,14 +86,43 @@ Falar direto com a API do Simple Voice Chat é mais simples.
 
 ---
 
+## Redesenho da interface
+
+O autor desenhou um conceito (`docs/pokebook_gui.pixil`, e as capturas em
+`docs/screenshots/`) com cara de macOS: barra de título própria com ← à esquerda e ✕ à
+direita, botões de **ícone** em vez de texto no menu, linhas de missão como **cartões
+arredondados** claros sobre o fundo ciano, e abas "NOVAS / COMPLETAS" separando as
+missões por estado. O fundo tem um padrão de silhuetas de Pokémon em marca-d'água.
+
+Os botões de canto já existem. O resto é desenho, e o caminho técnico é o **sistema de
+sprites de GUI** da 1.21, não `drawTexture` com coordenadas na mão:
+
+- Cada peça vira um PNG em `assets/pokebook/textures/gui/sprites/<nome>.png`, referida
+  por id (`pokebook:<nome>`), e desenhada com `context.drawGuiTexture(id, x, y, w, h)`.
+- Um `.png.mcmeta` ao lado marca a peça como **nine-slice**: declara a largura das
+  bordas, e o jogo estica só o miolo. É o que permite um cartão arredondado servir a
+  qualquer largura e altura sem deformar o canto — exatamente o que os cartões de missão
+  e os botões precisam.
+- Botão com aparência própria é um `ButtonWidget` cujo `renderWidget` desenha o sprite;
+  três sprites (normal, sob o mouse, desabilitado) cobrem os estados.
+
+A vantagem sobre `drawTexture` é não haver número de coordenada espalhado pelo código:
+mudar o desenho passa a ser trocar o PNG.
+
+**Decisão em aberto:** as abas "novas/completas" mudam o *modelo* da tela, não só o
+desenho — hoje a lista é uma só. Vale decidir se a separação é filtro de cliente ou se
+o servidor manda as duas listas.
+
+---
+
 ## Outras pendências menores
 
 - **Contorno cheio de linhas** — a escada de quatro caixas desenha quatro wireframes
   sobrepostos. Dá para separar: contorno simples com uma caixa, colisão detalhada com a
   escada. São métodos diferentes, não é preciso escolher.
-- **Tela emissiva** — hoje a tela escurece junto com o ambiente. Brilho real exige
-  renderização emissiva, configurada de forma diferente em Fabric e NeoForge.
-- **Receita de craft e som ao clicar** — cortados do escopo da v1 de propósito.
+- **Som ao clicar** — cortado do escopo da v1 de propósito.
+- **Advancement de desbloqueio da receita** — a receita funciona, mas não aparece
+  sozinha no livro de receitas.
 - **Rolagem na lista de missões** — quando passarem de caber na moldura.
 - **Missões repetíveis** — exige decidir *quando* reinicia, e essa decisão fica melhor
   depois de ter jogado com o sistema.

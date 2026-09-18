@@ -1,8 +1,13 @@
-# Pokébook — Plano da v1
+# Pokébook — Plano e histórico
 
 > **Para retomar numa conversa nova:** leia `CLAUDE.md` primeiro (contexto, decisões
 > e armadilhas), depois este arquivo. O ponto exato onde paramos está no final, em
 > **Onde paramos**.
+
+> ⚠️ **As seções daqui até "Pendências da v1.1" são registro histórico do
+> planejamento da v1**, mantidas pelo raciocínio que carregam. Várias decisões que
+> elas descrevem **já foram substituídas** — a mais visível é o `LIT` booleano, hoje
+> `SCREEN` com quatro níveis. Em caso de divergência, **o `CLAUDE.md` vale**.
 
 ## Contexto
 
@@ -216,17 +221,57 @@ natural e fora de enquadramento.
 
 > Corrigido declarando o `display` **no `models/item/pokebook.json`**, não no modelo
 > de bloco: o de bloco é o que o autor reexporta do Blockbench, e um reexport
-> apagaria o ajuste; o de item é escrito à mão e sobrevive. Os valores são os mesmos
-> do `minecraft:block/block` do vanilla, copiados literalmente.
+> apagaria o ajuste; o de item é escrito à mão e sobrevive.
 
-**P2 — A hitbox não acompanha a inclinação da tela.** A `VoxelShape` só aceita caixas
+Foram cinco rodadas, todas no `models/item/pokebook.json`:
+
+1. Declarar o bloco `display` com os valores do `minecraft:block/block`. Resolveu
+   **dois dos três sintomas** — ícone isométrico no inventário/hotbar
+   (`v1.1-pokebook-inventario.png`) e item correto na mão em terceira pessoa
+   (`v1.1-pokebook-mao-3a-pessoa.png`). Dois caírem juntos confirmou que o `display`
+   estava sendo lido.
+2. Primeira pessoa continuava invisível. Causa: as transformações giram e escalam em
+   torno do centro do cubo, `(8, 8, 8)`, e este modelo não preenche o cubo — a base
+   tem 1 pixel de altura e quase toda a massa fica abaixo da metade, então caía fora
+   do enquadramento. `translation [0, 4.5, 1]` e escala `0.5` o trouxeram de volta,
+   mas grande demais e cortado, visto de cima e por trás.
+3. Escala `0.35` e `y` girado 180° (`45` → `225` na mão direita, espelhado na
+   esquerda) para a tela encarar a câmera. **Aprovado**
+   (`v1.1-pokebook-mao-1a-pessoa.png`): reconhecível de relance, que era o critério.
+   Ele encosta na borda direita, mas isso é normal para item segurado — blocos
+   vanilla também saem parcialmente do quadro ali.
+4. Ajuste a pedido do autor: espelhar a vista para a tela ficar **à direita**.
+   `225` → `135` na mão direita. **Aprovado em jogo.**
+5. A mão esquerda, porém, ficou **de costas**. Causa: seguiu-se a convenção do
+   vanilla, em que `firstperson_lefthand` é o `righthand` **mais 180°**. Isso só
+   funciona no vanilla porque blocos são **cubos simétricos** — girar um cubo 180°
+   não muda nada. Este modelo tem frente e costas, então o +180 mostrou as costas.
+   Corrigido para `225`: junto com o `135`, são 180° ∓ 45°, as duas vistas de 3/4
+   **ambas** com a tela voltada para a câmera.
+
+> Os quatro contextos restantes (`gui`, `ground`, `fixed`, `thirdperson_righthand`)
+> são cópia literal do vanilla; só os dois de primeira pessoa têm valores empíricos.
+> A translação é aplicada **depois** da rotação, no espaço já girado — girar 180°
+> podia ter invertido o efeito do `translation z`, mas não inverteu.
+>
+> **Lição geral:** convenções do vanilla que pressupõem simetria (como
+> `lefthand = righthand + 180`) não valem para modelos com frente e costas. O
+> `__comment` dentro do `models/item/pokebook.json` registra isso no próprio arquivo.
+
+**P2 — A hitbox não acompanha a inclinação da tela.** ✅ **resolvido** (commit
+`8d6b807`): o modelo foi deslocado 2 px e a tampa aproximada por uma escada de
+caixas. Ficou pendente só um detalhe estético, registrado em `IDEIAS.md`: a escada
+desenha quatro wireframes sobrepostos no contorno. Dá para separar contorno simples
+de colisão detalhada — são métodos diferentes, não é preciso escolher. Diagnóstico
+original: a `VoxelShape` só aceita caixas
 alinhadas aos eixos, e a tela do modelo é inclinada 22,5°. Hoje ela é uma caixa reta
 única, folgada. Dá para aproximar a diagonal empilhando três ou quatro caixas finas
 em degrau. Nunca vai encostar perfeitamente — é uma limitação do formato, não do
 código.
 
-**P3 — A tela acesa não parece acesa o bastante.** A luz do bloco funciona (nível 7,
-ilumina o entorno), mas a textura da tela continua sendo sombreada pela iluminação da
+**P3 — A tela acesa não parece acesa o bastante.** ⏳ **ainda aberto**, agora em
+`IDEIAS.md`. A luz do bloco funciona (hoje escalonada `0/2/5/7` pelos quatro níveis
+de `SCREEN`, ver `CLAUDE.md`), mas a textura da tela continua sendo sombreada pela iluminação da
 cena, então no escuro ela escurece junto. O que dá a aparência de "ligada de verdade"
 é **renderização emissiva** — explicitamente fora do escopo da v1. Duas saídas:
 clarear a textura `screen_on.png` (barato, meia solução) ou renderização emissiva
@@ -242,18 +287,88 @@ não como arquivo: quem salva o PNG é o autor (`F2` no jogo escreve em
 
 ## Onde paramos
 
-**A v1 está entregue e validada em jogo** (ver a tabela de verificação acima), e a
-**P1 está fechada** — corrigida e confirmada em jogo nos três sintomas.
+### Sessão de 18/09/2026
 
-Foram três rodadas, todas no `models/item/pokebook.json`:
+Antes: correção do `AttachmentRegistry.builder()` `@Deprecated`, missões por datapack,
+receita e renderização emissiva — detalhes nas seções acima e no `README.md`. Tudo isso
+foi **verificado em jogo** e funciona.
 
-1. Declarar o bloco `display` com os valores do `minecraft:block/block`. Resolveu
-   **dois dos três sintomas** — ícone isométrico no inventário/hotbar
-   (`v1.1-pokebook-inventario.png`) e item correto na mão em terceira pessoa
-   (`v1.1-pokebook-mao-3a-pessoa.png`). Dois caírem juntos confirmou que o `display`
-   estava sendo lido.
-2. Primeira pessoa continuava invisível. Causa: as transformações giram e escalam em
-   torno do centro do cubo, `(8, 8, 8)`, e este modelo não preenche o cubo — a base
+Depois, a partir do que o autor viu na tela:
+
+**Nomes de missão gerados.** Uma missão nova sem chave de tradução aparecia com o id
+cru na interface (`mission.pokebook.one_enderman`). A chave por missão foi **removida**:
+o nome agora é montado das peças que toda missão já tem — verbo do objetivo, alvo e
+quantidade. As chaves passaram a ser por **objetivo** (`objective.pokebook.kill`), que
+são poucas e fixas.
+
+> ⚠️ O formato é "Abater Zumbi ×5", não "Abater 5 zumbis". Os arquivos de idioma do
+> Minecraft **não têm plural**, e o nome que o jogo dá a uma entidade é sempre singular:
+> "Abater 5 Zumbi" sairia errado em qualquer idioma. O "×N" depois do alvo evita o
+> problema em vez de tentar resolvê-lo. `title` no JSON continua sobrescrevendo tudo,
+> para a missão que merecer nome próprio.
+
+**Botões de canto.** Fechar (✕) no canto superior direito e voltar (←) no esquerdo, em
+**todas** as telas. Ficam na classe base, não em cada tela: "onde fica o X" é decisão de
+uma vez só, e uma tela nova nasce com os dois no lugar. O `init()` da base virou
+`final` e chama `initPanel()`, que é o que cada tela implementa.
+
+> A tela de destino do "voltar" é criada **no clique**, não guardada: precisa nascer com
+> os dados do momento, não com os de quando a tela atual abriu.
+
+**Cobblemon — na branch `cobblemon`, não na `main`.** As mudanças de build foram
+aplicadas, o jar de 141 MB baixou e o jogo sobe com ele. Mas elas **não** entram na
+`main`, e a razão é prática: com o Cobblemon na `main`, a máquina do trabalho não
+conseguiria nem buildar o projeto — o FortiGate trava no jar (ver `CLAUDE.md`). A
+separação é o que mantém a `main` utilizável nas duas máquinas, e é o que permite fazer
+o redesenho da interface no trabalho enquanto a integração com o Cobblemon espera por
+casa.
+
+Por ora é só dependência de teste: **nenhuma classe do Cobblemon é mencionada no
+código**, e por isso ele também não entrou no `depends` do `fabric.mod.json`.
+
+> ⚠️ **A armadilha que isso custou**, registrada também no `CLAUDE.md`: o primeiro
+> `runClient` com o Cobblemon **crashou na inicialização** com
+> `ClassNotFoundException: net.minecraft.class_2960` — o nome *intermediary* de
+> `Identifier`, que não existe em dev, onde as classes têm nomes Yarn. O Loom remapeia o
+> bytecode do jar, mas o Cobblemon é Kotlin e resolve classes por **reflexão**, a partir
+> de descritores guardados como **string** nos metadados — e strings não são bytecode.
+>
+> A correção é aplicar o plugin `org.jetbrains.kotlin.jvm` (2.2.20, a versão da MDK
+> oficial), que liga o remapeamento de metadados Kotlin no Loom. **Não é para escrever
+> Kotlin**, e a suposição de que ele só seria necessário ao compilar contra a API estava
+> errada: ele já é necessário para apenas *carregar* o mod. Ao aplicá-lo, foi preciso
+> limpar `.gradle/loom-cache/remapped_mods`, senão o jar remapeado antigo continuaria em
+> uso.
+>
+> Verificado com `javap -v` na classe exata que crashou
+> (`SpeciesAdditions$AdditionParameterAdapter`): zero ocorrências de `class_2960` e 13
+> de `net/minecraft/util/Identifier`.
+
+Tudo verificado em jogo.
+
+**Próxima ação**, na ordem imposta pelas duas máquinas — o que toca o Cobblemon só
+acontece em casa, o resto acontece em qualquer lugar:
+
+1. **Redesenho da interface** (pode ser no trabalho, na `main`) — o autor mandou um conceito com cara de macOS: barra de
+   título com ← e ✕, botões de ícone, linhas de missão como cartões arredondados, abas
+   "novas/completas". Ver `IDEIAS.md`. Decisão pendente: as abas mudam o modelo da tela,
+   não só o desenho — filtro no cliente ou duas listas do servidor?
+2. **Integração com o Cobblemon** (só em casa, na branch `cobblemon`) —
+   `POKEMON_CAPTURED`. Traz o `ObjectiveType.CAPTURE`, que é o segundo valor do enum, e
+   um alvo por espécie, que é o **segundo caso concreto** de `TargetMatcher` — é aí que
+   o codec de alvo vira despachado por `"type"`, como previsto. A classe que toca o
+   Cobblemon fica isolada, pelo mesmo padrão de fronteira usado para cliente/servidor.
+3. **Aba social, degrau 1** — ler o progresso dos outros; o dado já é persistido.
+
+Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
+Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)
+fica no `PATH` do sistema **antes** do Temurin. Se o `JAVA_HOME` não estiver visível
+na sessão, o `gradlew` cai nesse Java 8 e falha com *"Gradle requires JVM 17 or
+later"*. Terminal novo resolve. Não fixar `org.gradle.java.home` no
+`gradle.properties`: é caminho absoluto e o arquivo é versionado, indo para a outra
+máquina do autor.
+
+ubo, `(8, 8, 8)`, e este modelo não preenche o cubo — a base
    tem 1 pixel de altura e quase toda a massa fica abaixo da metade, então caía fora
    do enquadramento. `translation [0, 4.5, 1]` e escala `0.5` o trouxeram de volta,
    mas grande demais e cortado, visto de cima e por trás.
