@@ -126,8 +126,6 @@ o servidor manda as duas listas.
   sobrepostos. Dá para separar: contorno simples com uma caixa, colisão detalhada com a
   escada. São métodos diferentes, não é preciso escolher.
 - **Som ao clicar** — cortado do escopo da v1 de propósito.
-- **Advancement de desbloqueio da receita** — a receita funciona, mas não aparece
-  sozinha no livro de receitas.
 - **Rolagem na lista de missões** — quando passarem de caber na moldura.
 - **Missões repetíveis** — exige decidir *quando* reinicia, e essa decisão fica melhor
   depois de ter jogado com o sistema.

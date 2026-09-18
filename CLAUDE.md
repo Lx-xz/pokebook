@@ -8,8 +8,9 @@ Mod de Minecraft chamado **Pokébook**. Um bloco em formato de notebook cuja tel
 acende ao ser clicado.
 
 O destino do projeto **não é decoração**: é um **sistema de missões** ("capture 3
-Pidgeys") com recompensas, integrado ao Cobblemon. O bloco, a interface e as missões
-com alvos do vanilla já funcionam; falta o Cobblemon.
+Pidgeys") com recompensas, integrado ao Cobblemon. O bloco, a interface, as missões e a
+integração com o Cobblemon **já funcionam**. O que resta é acabamento e ideias novas —
+ver `IDEIAS.md`.
 
 ## Perfil do autor
 
@@ -46,15 +47,19 @@ lógica, orientação a objetos ou controle de fluxo.
   anda um nível e agenda o próximo. É barato, é salvo com o chunk e sobrevive a
   recarregar o mundo. Cada passo **reconsulta o alvo** em vez de guardá-lo, para que
   reabrir no meio do fade-out inverta a animação em vez de terminar no lugar errado.
-- **Tempos**: acender 2 ticks por nível; ao fechar, 3 s parada e depois 1 s por nível.
+- **Tempos**: 2 ticks por nível, **nos dois sentidos** — 0,3 s para acender e 0,3 s para
+  apagar. Já houve uma espera de 3 s antes de começar a apagar e um segundo por nível,
+  imitando o fade de um monitor; na prática fechar a tela e o bloco seguir aceso parecia
+  defeito, não estilo.
 - **`SCREEN` guarda duas intenções**: "o jogador deixou aceso" e "alguém está com a
   tela aberta". A regra é **alvo = 3 se há espectador ou o manual está ligado, senão 0**.
   Enquanto ninguém olha e nada está em transição, o nível *é* o estado manual — é assim
   que ele persiste sem BlockEntity.
 - **Interação só com mão vazia** — sai de graça usando `useWithoutItem`, que o jogo
   só invoca quando a mão principal está vazia. Não escreva um `if` para isso.
-- **Template Fabric puro**, sem architectury nem Kotlin. O Cobblemon entra depois
-  como repositório Maven + dependência, não exige re-scaffolding.
+- **Template Fabric puro**, sem architectury. O Cobblemon entrou como repositório Maven
+  + dependência, sem re-scaffolding — mas exigiu o plugin do Kotlin no Gradle, que não é
+  para escrever Kotlin (ver a seção do Cobblemon).
 
 ## Branches — leia antes de commitar
 
@@ -172,7 +177,12 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
 - **Sempre ativas**: não há aceitar nem recusar, o progresso conta sozinho.
 - **Dois eixos de extensão**: `ObjectiveType` (o que fazer) e `TargetMatcher` (em
   quem vale). Separá-los permite combinar "derrotar" com "tipo voador" sem uma classe
-  por combinação. O alvo trabalha sobre `Entity` porque Pokémon também são entidades.
+  por combinação.
+- **O alvo interroga um `MissionTarget`, não uma `Entity`.** Foi uma assimetria da API
+  do Cobblemon que forçou isso: matar entrega uma entidade, mas capturar e vencer
+  entregam um `Pokemon` — objeto de dados —, e a entidade já saiu do mundo. O
+  `MissionTarget` carrega o que se sabe em cada caso, **só com tipos do Minecraft e do
+  Java**, e é essa fronteira que mantém o sistema inteiro livre do Cobblemon.
 - **Todas usam entidades vanilla, e isso é produto e não andaime.** É o que mantém o
   sistema verificável sem o Cobblemon, inclusive no dia em que um update dele quebrar a
   integração e for preciso saber de quem é o defeito.
@@ -206,6 +216,22 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
   apagaria a tela no meio do uso.
 - **O menu nasceu com um botão só de propósito**: a navegação define a forma dos
   pacotes, e encaixar um menu depois significaria mexer num fluxo já funcionando.
+- **Botões de canto vivem na classe base** — ✕ à direita, ← à esquerda. "Onde fica o X"
+  é decisão de uma vez só, e uma tela nova nasce com os dois no lugar. O `init()` da base
+  é `final` e chama `initPanel()`, que é o que cada tela implementa.
+- **A lista de missões tem abas por estado**, não por assunto: em andamento, a resgatar,
+  concluídas. Abas por assunto seriam taxonomia — organizam, mas não dizem o que fazer a
+  seguir. O filtro é do **cliente**; o servidor já manda tudo.
+- **Sons emprestados do Cobblemon por id** (`pc.on`, `pc.off`, `gui.click`), buscados no
+  registro em tempo de execução. Nenhum arquivo dele é copiado para o nosso jar — copiar
+  seria redistribuir asset alheio, referenciar não é — e nenhuma classe dele é
+  mencionada, então isso vive na `main`. Sem o Cobblemon a busca devolve `null` e o mod
+  fica em silêncio.
+- **A aba social mostra resumo, e só de quem está conectado.** Progresso de quem está
+  offline mora no arquivo de save do jogador; abrir um arquivo por jogador a cada
+  consulta não se paga. O pedido sai ao clicar na aba, não ao abrir o pokébook.
+- O **redesenho visual** (cara de macOS, sprites com nine-slice) está desenhado e **não
+  implementado**. Ver `IDEIAS.md`.
 
 ## Técnica
 

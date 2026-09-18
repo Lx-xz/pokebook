@@ -31,7 +31,7 @@ Fechar o ciclo básico do mod, sem nenhuma dependência externa.
 - [x] Clique com a mão vazia alterna a tela
 - [x] Emissão de luz quando aceso
 - [x] Aba própria no menu criativo
-- [x] Receita de craft
+- [x] Receita de craft, desbloqueada ao obter um dos ingredientes
 - [x] Renderização emissiva (a tela brilha de verdade no escuro)
 
 ### v2 — missões
