@@ -4,7 +4,6 @@ import io.github.lxxz.pokebook.network.MissionEntry;
 import io.github.lxxz.pokebook.network.SocialEntry;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
@@ -36,8 +35,8 @@ public class SocialScreen extends PokebookScreenBase {
 	private boolean loaded;
 	private int scroll;
 
-	public SocialScreen(BlockPos pos, String nick, List<MissionEntry> missions) {
-		super(Text.translatable("screen.pokebook.social"), pos, nick);
+	public SocialScreen(PokebookSession session, List<MissionEntry> missions) {
+		super(Text.translatable("screen.pokebook.social"), session);
 		this.missions = missions;
 	}
 
@@ -50,7 +49,7 @@ public class SocialScreen extends PokebookScreenBase {
 
 	@Override
 	protected PokebookScreenBase parentScreen() {
-		return new PokebookMenuScreen(pos, nick, missions);
+		return new PokebookMenuScreen(session, missions);
 	}
 
 	private int listTop() {
@@ -58,7 +57,7 @@ public class SocialScreen extends PokebookScreenBase {
 	}
 
 	private int listHeight() {
-		return PANEL_HEIGHT - LIST_TOP_INSET - LIST_BOTTOM_INSET;
+		return panelHeight() - LIST_TOP_INSET - LIST_BOTTOM_INSET;
 	}
 
 	private int maxScroll() {
@@ -78,11 +77,11 @@ public class SocialScreen extends PokebookScreenBase {
 			return;
 		}
 
-		context.enableScissor(x, listTop(), x + PANEL_WIDTH, listTop() + listHeight());
+		context.enableScissor(x, listTop(), x + panelWidth(), listTop() + listHeight());
 
 		int rowY = listTop() - scroll;
 		for (SocialEntry entry : players) {
-			boolean self = entry.name().equals(nick);
+			boolean self = entry.name().equals(session.nick());
 			int nameColor = self ? COLOR_ACCENT : COLOR_TEXT;
 
 			context.drawText(textRenderer, Text.literal(entry.name()), x + 12, rowY + 2, nameColor, false);
@@ -93,7 +92,7 @@ public class SocialScreen extends PokebookScreenBase {
 
 			// Barrinha de progresso: a comparação entre jogadores se lê de relance, sem
 			// precisar ler os números de cada linha.
-			int barWidth = PANEL_WIDTH - 24;
+			int barWidth = panelWidth() - 24;
 			int filled = entry.total() == 0 ? 0 : barWidth * entry.completed() / entry.total();
 			context.fill(x + 12, rowY + 21, x + 12 + barWidth, rowY + 23, 0x30000000);
 			if (filled > 0) {
@@ -107,7 +106,7 @@ public class SocialScreen extends PokebookScreenBase {
 	}
 
 	private void centered(DrawContext context, Text text, int x, int y, int color) {
-		context.drawText(textRenderer, text, x + (PANEL_WIDTH - textRenderer.getWidth(text)) / 2, y, color, false);
+		context.drawText(textRenderer, text, x + (panelWidth() - textRenderer.getWidth(text)) / 2, y, color, false);
 	}
 
 	@Override

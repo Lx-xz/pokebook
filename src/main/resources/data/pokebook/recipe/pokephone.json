@@ -1,0 +1,27 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"key": {
+		"A": {
+			"item": "minecraft:amethyst_shard"
+		},
+		"G": {
+			"item": "minecraft:gold_ingot"
+		},
+		"P": {
+			"item": "pokebook:pokebook"
+		},
+		"R": {
+			"item": "minecraft:redstone"
+		}
+	},
+	"pattern": [
+		" A ",
+		"GPG",
+		" R "
+	],
+	"result": {
+		"count": 1,
+		"id": "pokebook:pokephone"
+	}
+}

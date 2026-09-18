@@ -118,6 +118,25 @@ public final class PokebookViewers {
 		}
 	}
 
+	/**
+	 * Este jogador está com algum pokébook aberto agora?
+	 *
+	 * <p>É o que autoriza o resgate de recompensa. A regra "resgata-se no pokébook, não no
+	 * poképhone" precisa ser conferida no <b>servidor</b>: esconder o botão no cliente é
+	 * aparência, não regra — o pacote de resgate continua sendo um pacote que qualquer
+	 * cliente pode mandar. E o conjunto de espectadores, que já existia para a animação da
+	 * tela, é exatamente a informação necessária.
+	 */
+	public static boolean isViewingBlock(ServerPlayerEntity player) {
+		UUID uuid = player.getUuid();
+		for (Entry entry : OPEN.values()) {
+			if (entry.viewers.contains(uuid)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Chamado quando o jogador desconecta: ele não vai mandar o pacote de fechamento. */
 	public static void removePlayer(ServerPlayerEntity player) {
 		UUID uuid = player.getUuid();

@@ -9,6 +9,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Servidor → cliente: abre o pokébook, com tudo que as telas precisam mostrar.
@@ -21,13 +22,13 @@ import java.util.List;
  * <p>A posição viaja porque o cliente precisa dela para medir distância e para dizer qual
  * pokébook foi fechado.
  */
-public record OpenPokebookPayload(BlockPos pos, String nick, List<MissionEntry> missions) implements CustomPayload {
+public record OpenPokebookPayload(Optional<BlockPos> pos, String nick, List<MissionEntry> missions) implements CustomPayload {
 	public static final CustomPayload.Id<OpenPokebookPayload> ID =
 		new CustomPayload.Id<>(Identifier.of(Pokebook.MOD_ID, "open"));
 
 	public static final PacketCodec<RegistryByteBuf, OpenPokebookPayload> CODEC =
 		PacketCodec.tuple(
-			BlockPos.PACKET_CODEC, OpenPokebookPayload::pos,
+			PacketCodecs.optional(BlockPos.PACKET_CODEC), OpenPokebookPayload::pos,
 			PacketCodecs.STRING, OpenPokebookPayload::nick,
 			MissionEntry.CODEC.collect(PacketCodecs.toList()), OpenPokebookPayload::missions,
 			OpenPokebookPayload::new

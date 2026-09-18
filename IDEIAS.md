@@ -9,11 +9,82 @@ Ver `PLANO.md` para o que está em construção e `CLAUDE.md` para as decisões 
 
 ## Poképhone
 
-Um segundo item, portátil, irmão do pokébook. O pokébook é a estação — fica na base,
-onde você administra missões. O celular é o que você leva no bolso.
+**Existe, em versão de teste** — item registrado, abre a mesma interface em pé, usando o
+modelo do pokébook até ter o seu. Receita: um pokébook, ouro, redstone e um fragmento de
+ametista.
 
-A divisão natural seria: **pokébook = missões e administração; poképhone = social e
-comunicação.** Mas nada disso está decidido.
+⚠️ **A receita consome o pokébook.** É a forma mais clara de fazer o celular custar mais,
+e cria uma progressão — notebook primeiro, celular depois. Mas como o resgate só acontece
+no pokébook, quem fizer o celular vai precisar craftar outro. Isso é coerente ou
+irritante? Decisão em aberto.
+
+### O que impede um de substituir o outro
+
+O risco declarado: se o celular faz tudo e cabe no bolso, o pokébook vira decoração — o
+que o projeto não quer ser. Uma regra já está no código:
+
+- **Resgate só no pokébook.** Conferido no servidor, não no cliente: esconder o botão é
+  aparência, e o pacote de resgate continua sendo um pacote que qualquer cliente pode
+  mandar. A autorização usa o conjunto de espectadores que já existia para a animação da
+  tela.
+
+Ideias para aprofundar a divisão, nenhuma decidida:
+
+- **Celular notifica, pokébook administra.** O celular avisa "missão concluída" e mostra
+  progresso; configurar, resgatar e ver o social exigem sentar na estação.
+- **Celular só lê, pokébook escreve.** Vale para tudo que vier depois: aceitar, descartar
+  ou trocar missões seriam ações de estação.
+- **Energia.** O celular gasta, o pokébook não — um está no bolso, o outro na tomada. A
+  ideia do autor é uma **configuração booleana**, desligada por padrão, com recarga por
+  fonte disponível: algo do vanilla, algo do Cobblemon se instalado, energia se houver mod
+  de energia. Cada fonte é uma classe isolada, pelo mesmo padrão de fronteira já usado
+  três vezes aqui.
+- **Alcance.** O celular funciona em qualquer lugar; o pokébook poderia dar algo que o
+  celular não dá — mais missões ativas, ou recompensa melhor por resgatar na estação.
+
+### Receita alternativa com itens do Cobblemon
+
+Dois caminhos para o mesmo item é normal no Minecraft: são duas receitas com ids
+diferentes e o mesmo resultado. E a divisão de branches cai bem aqui — a receita que usa
+itens do Cobblemon **nasce na branch `cobblemon`**, porque uma receita que cita um item
+inexistente não carrega.
+
+## Missões diárias sorteadas
+
+Desenho do autor, ainda não implementado. É a mudança que resolve o problema real de
+hoje: missão é única, e depois de uma tarde o pokébook fica vazio.
+
+**A forma:** 3 a 5 missões por dia, sorteadas de um conjunto, com **faixas de
+dificuldade** — fácil dá menos, média dá mais, difícil dá mais ainda. A distribuição pode
+ser fixa (duas fáceis, duas médias, uma difícil) ou sorteada **com mínimos**, para não
+sair um dia inteiro de fáceis nem um inteiro de difíceis.
+
+**A ideia que muda o modelo: missão vira TIPO de missão.** Não faz sentido ter uma missão
+"derrotar 2 Pidgey" e outra "derrotar 2 Rattata" escritas à mão. Faz sentido ter um tipo
+"derrotar fácil", que sorteia **um Pokémon fácil qualquer** e uma quantidade. Outro tipo:
+"derrotar Pokémon de nível acima do seu melhor" — ou acima de um nível sorteado.
+
+> ⚠️ **Isto é uma mudança de modelo, não uma funcionalidade a mais.** Hoje uma `Mission` é
+> uma definição estática vinda de datapack, e o id dela é o caminho do arquivo. Com
+> sorteio, o arquivo de datapack vira um **molde**, e o que o jogador tem são **instâncias**
+> — "derrotar 4 Rattata, hoje". Isso exige:
+>
+> - id de instância, distinto do id do molde, para o progresso saber a que se refere;
+> - guardar as instâncias do dia **por jogador**, junto do progresso;
+> - guardar **quando** o dia virou, para saber quando sortear de novo;
+> - decidir o fuso — o do servidor é o único que não depende de cliente.
+>
+> O `MissionProgress` de hoje mapeia id → contagem, e isso continua servindo; o que entra
+> é o conjunto de instâncias ativas ao lado dele.
+
+**Consequência na interface:** com sorteio diário, "concluídas" vira uma lista que só
+cresce. O autor propôs mostrar **as últimas 10** e, ao lado, **um número** com o total
+concluído. Isso resolve tanto o tamanho do pacote quanto a rolagem infinita.
+
+**Ainda por decidir:** o que define "fácil", "médio" e "difícil"? Pode ser etiqueta no
+molde, escrita à mão, ou derivada de dado do Cobblemon — taxa de captura, estágio de
+evolução, se é lendário. Etiqueta à mão é mais simples e não quebra quando o Cobblemon
+muda.
 
 ## Aba social
 
@@ -127,5 +198,4 @@ o servidor manda as duas listas.
   escada. São métodos diferentes, não é preciso escolher.
 - **Som ao clicar** — cortado do escopo da v1 de propósito.
 - **Rolagem na lista de missões** — quando passarem de caber na moldura.
-- **Missões repetíveis** — exige decidir *quando* reinicia, e essa decisão fica melhor
-  depois de ter jogado com o sistema.
+- **Missões repetíveis** — decidido: ver "Missões diárias sorteadas" acima.

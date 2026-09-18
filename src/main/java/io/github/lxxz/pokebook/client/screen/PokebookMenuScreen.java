@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
 
@@ -20,8 +19,8 @@ import java.util.List;
 public class PokebookMenuScreen extends PokebookScreenBase {
 	private final List<MissionEntry> missions;
 
-	public PokebookMenuScreen(BlockPos pos, String nick, List<MissionEntry> missions) {
-		super(Text.translatable("screen.pokebook.title"), pos, nick);
+	public PokebookMenuScreen(PokebookSession session, List<MissionEntry> missions) {
+		super(Text.translatable("screen.pokebook.title"), session);
 		this.missions = missions;
 	}
 
@@ -29,11 +28,11 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 	protected void initPanel() {
 		int x = panelX() + 20;
 		int y = panelY() + 56;
-		int buttonWidth = PANEL_WIDTH - 40;
+		int buttonWidth = panelWidth() - 40;
 
 		addDrawableChild(ButtonWidget.builder(
 			Text.translatable("screen.pokebook.missions"),
-			button -> navigateTo(new MissionsScreen(pos, nick, missions))
+			button -> navigateTo(new MissionsScreen(session, missions))
 		).dimensions(x, y, buttonWidth, 20).build());
 
 		addDrawableChild(ButtonWidget.builder(
@@ -43,7 +42,7 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 				// chegar. Pedir aqui e não ao abrir o pokébook evita mandar a lista de todo
 				// mundo em aberturas que nunca chegam a esta aba.
 				ClientPlayNetworking.send(new RequestSocialPayload());
-				navigateTo(new SocialScreen(pos, nick, missions));
+				navigateTo(new SocialScreen(session, missions));
 			}
 		).dimensions(x, y + 26, buttonWidth, 20).build());
 	}
@@ -51,7 +50,7 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 	@Override
 	protected void renderPanel(DrawContext context, int mouseX, int mouseY, float delta) {
 		context.drawText(textRenderer,
-			Text.translatable("screen.pokebook.logged_as", nick),
+			Text.translatable("screen.pokebook.logged_as", session.nick()),
 			panelX() + 14, panelY() + 32, COLOR_ACCENT, false);
 	}
 }

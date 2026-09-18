@@ -1,0 +1,5 @@
+{
+	"parent": "pokebook:item/pokebook",
+
+	"__comment": "Provisório: o poképhone usa o modelo do pokébook até ter o seu. Herdar do modelo de ITEM e não do de bloco traz junto as transformações de exibição já ajustadas."
+}

@@ -12,6 +12,7 @@ import io.github.lxxz.pokebook.network.RequestSocialPayload;
 import io.github.lxxz.pokebook.network.SocialUpdatePayload;
 import io.github.lxxz.pokebook.registry.ModBlocks;
 import io.github.lxxz.pokebook.registry.ModItemGroups;
+import io.github.lxxz.pokebook.registry.ModItems;
 import io.github.lxxz.pokebook.server.PokebookViewers;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -30,7 +31,9 @@ public class Pokebook implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		// O bloco e o item precisam existir antes da aba do criativo, que os usa como ícone e entrada.
+		// O bloco e o item precisam existir antes da aba do criativo, que os lista.
 		ModBlocks.register();
+		ModItems.register();
 		ModItemGroups.register();
 
 		MissionTracker.register();
