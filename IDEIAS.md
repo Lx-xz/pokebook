@@ -166,20 +166,27 @@ O que era "sinalização é toda nossa" virou código: tocar, atender, recusar, 
 desistir depois de meio minuto e identificar quem liga. O aviso de chamada vive **acima da
 hotbar**, onde alcança quem não está com tela nenhuma aberta.
 
+### Grupos do SVC — resolvido
+
+**Fechado.** `VoicechatIntegration` cancela `CreateGroupEvent` e `JoinGroupEvent`.
+Conferido no bytecode do jar do mod, não por suposição: `ServerGroupManager.addGroup` e
+`.joinGroup` chamam `PluginManager.onCreateGroup`/`onJoinGroup` e retornam **antes** de
+criar o grupo ou mandar o pacote de confirmação se algum plugin cancelou — é o mecanismo
+suportado, não um efeito colateral. Ninguém cria grupo nem entra num grupo já existente
+nesta instalação; a tela de grupos do SVC continua existindo no cliente, só não faz nada
+ao confirmar.
+
 ### O que ainda não se sabe
 
-- **Como desabilitar os grupos do SVC.** Há pelo menos dois caminhos plausíveis: a API
-  expõe acesso à configuração do servidor, e a conexão de um jogador permite trocar o
-  grupo dele. Nenhum dos dois foi verificado, e nem se a imposição seria robusta (o
-  jogador poderia simplesmente entrar no grupo de novo).
-  ⚠️ **É o que falta para a ideia fechar.** Com os grupos de pé, dá para conversar longe
-  sem o aparelho — e a ligação vira mais um jeito de fazer o que já dava, em vez de ser
-  *o* jeito. A parte difícil sempre foi esta, não o áudio.
 - **Se a ligação deve vazar para quem está por perto.** Hoje não vaza: cancelar o pacote
   de microfone suprime a voz de proximidade no mesmo gesto que desvia o áudio. É o que o
   desenho pedia, mas é diferente de um telefone de verdade, e reverter é não cancelar.
 - **Chamar quem está offline.** Não existe, e provavelmente não deve: recado para quem
   não está é o degrau 2 da aba social, que é um mod inteiro por si só.
+- **Chamar quem nunca teve um poképhone.** Continua na lista e continua "tocando" do
+  lado de quem ligou — só o aviso e o toque do lado de quem não tem como atender foram
+  calados, porque avisar sem dar meio de agir só confundia. Tirar da lista de vez é outra
+  decisão, adiada de propósito.
 
 ### Considerações práticas
 

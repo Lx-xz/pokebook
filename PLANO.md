@@ -556,8 +556,51 @@ Se alguma não fechar, é um arquivo só para consertar.
    outro lado.
 6. Desconectar no meio da ligação não deixa o outro falando com um fantasma.
 
-Depois: decidir como desabilitar os grupos do SVC, que continua sendo a pergunta em
-aberto no `IDEIAS.md` — sem isso o canal não é exclusivo, e o celular volta a ser enfeite.
+**Verificado em jogo, com dois clients** (ver `TESTES.md` para o como). Os itens 1 a 6
+passaram — a ligação toca, atende, o áudio atravessa pelo SVC e desligar/recusar/desistir
+mandam a mensagem certa para cada lado.
+
+Um bug apareceu no teste: o **bipe de tocar não soava para quem estava sendo chamado**,
+só para quem estivesse perto dele no mundo. Causa: `PokebookSounds.playTo` usava
+`PlayerEntity#playSound(SoundEvent, float, float)`, que tem um comportamento não óbvio —
+toca posicionado na entidade e **exclui o próprio jogador** de ouvir, porque é pensado
+para sons que o cliente já reproduz sozinho (passos, por exemplo), não para avisar
+alguém. Trocado por `playSoundToPlayer`, confirmado via `javap` no jar remapeado. Todos
+os sons da ligação (toque, tela ligando/desligando) passavam pelo mesmo método, então o
+mesmo bug valia para os quatro.
+
+**Adicionado: favoritos na lista de ligar.** Uma estrela (★/☆) por linha, clicável,
+independente do resto da linha. Favoritos vão para o topo da lista e continuam
+aparecendo mesmo offline, com o rosto escurecido e "Offline" no lugar do "Ligar" — clicar
+na linha não manda o pacote de ligar nesse caso, porque o servidor recusaria do mesmo
+jeito. É preferência de **cliente**, não de jogador no servidor: guardada num arquivo de
+texto na pasta de config (`CallFavorites`), um apelido por linha, comparado ignorando
+maiúsculas. Não sincroniza com o servidor de propósito — é a mesma categoria de decisão
+que já existia para o filtro de abas da lista de missões, que também é só do cliente.
+
+**Depois, feito nesta rodada:**
+
+- **Mutar na ligação.** Botão novo em `ACTIVE`, ao lado de "Desligar". Servidor é quem
+  decide o estado (`CallService.toggleMute`, por participante dentro do `Call`, não um
+  mapa à parte) e manda de volta pelo `CallStatePayload`, que ganhou um terceiro campo
+  `muted`. `VoicechatIntegration` gira em torno disso: o pacote de microfone continua
+  sendo **cancelado** sempre que há ligação atendida (a proximidade continua suprimida),
+  mas só é **reenviado** ao par se quem falou não estiver mudo. Mutar não é desligar — a
+  ligação continua, só o áudio para de atravessar num sentido.
+- **Quem nunca teve poképhone não é mais avisado.** `CallService.hasPhone` confere o
+  inventário (`ModItems.POKEPHONE`, não o bloco) antes de mandar o aviso acima da hotbar
+  e o toque para quem foi chamado. Sem aparelho, o aviso só confundiria alguém que nunca
+  ouviu falar do mod — não há como abrir a tela e atender. A ligação continua "tocando"
+  do lado de quem chamou e desiste sozinha depois de meio minuto, igual a ninguém
+  atender. Quem não tem celular **continua** na lista de quem chamar — tirar é decisão
+  adiada, registrada no `IDEIAS.md`.
+- **Grupos do SVC, desabilitados.** `VoicechatIntegration` cancela `CreateGroupEvent` e
+  `JoinGroupEvent`. Era a pergunta em aberto do `IDEIAS.md`, e fechou por conferência no
+  bytecode do jar do mod (`ServerGroupManager`), não por tentativa: cancelar o evento faz
+  o próprio SVC abortar antes de criar o grupo ou confirmar a entrada. Ver a seção
+  "Grupos do SVC — resolvido" no `IDEIAS.md` para o detalhe.
+
+Nada disso foi visto em jogo ainda — só compilado (`compileJava`, limpo).
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)
