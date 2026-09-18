@@ -487,18 +487,77 @@ carrega é o **próprio Simple Voice Chat**. Sem ele instalado, ninguém lê ess
 e a classe nunca é tocada. Não precisou de nenhum `if`, ao contrário do Cobblemon.
 Dependência declarada em `suggests`, não em `depends`.
 
-Por ora o plugin só registra e loga. O caminho da ligação privada está mapeado no
-`IDEIAS.md`: enganchar `MicrophonePacketEvent`, **cancelá-lo** — o que suprime a voz de
-proximidade daquele pacote — e reenviar como *static sound packet* só para a conexão do
-destinatário. O que a API não dá é o telefone em volta: tocar, atender, desligar e
-identificar quem liga são trabalho nosso.
+### A ligação — o telefone e o fio
 
-**Nada disso foi visto em jogo.**
+Escrita em **duas metades**, e a divisão não é organização: é a regra de branch aplicada
+ao código.
 
-**Próxima ação:** `gradlew runClient` **nesta branch** e conferir no log que o Simple
-Voice Chat carrega e que aparece `Simple Voice Chat encontrado; plugin do Pokébook
-registrado.`. Isso prova o gancho. Depois, a ligação em si — e antes dela, decidir como
-desabilitar os grupos do SVC, que continua sendo a pergunta em aberto no `IDEIAS.md`.
+| metade | onde | branch a que pertence |
+|---|---|---|
+| o **telefone** — quem liga para quem, tocar, atender, recusar, desligar, desistir | `call/`, `network/`, `client/call/`, `CallScreen` | **`main`** |
+| o **fio** — o áudio indo de um para o outro | só `integration/VoicechatIntegration` | `voicechat` |
+
+A metade de cima **não menciona o Simple Voice Chat**. Os dois se falam por uma pergunta
+só: `CallService.peerOf(uuid)` devolve um `UUID` ou `null`. É a mesma fronteira do
+`MissionTarget` com o Cobblemon, pelo mesmo motivo — e é o que permite a sinalização
+inteira ser levada para a `main` com `git cherry-pick -x`.
+
+> Os dois commits desta frente são separados **de propósito**: o primeiro é o telefone e
+> está pronto para a `main`; o segundo é o fio e fica aqui.
+
+**O que a API do SVC dá, e o mecanismo:** enganchar `MicrophonePacketEvent`, **cancelá-lo**
+— o que suprime a voz de proximidade daquele pacote — e reenviar como *static sound
+packet* só para a conexão do destinatário. São de fato umas 10 linhas. O resto é nosso.
+
+⚠️ **O cancelamento tem uma consequência de desenho:** em ligação, quem está por perto
+**não ouve** este jogador. Um telefone de verdade deixa a sala ouvir metade da conversa.
+Fica assim porque é o que o desenho do `IDEIAS.md` pede — a ligação é canal fechado — mas
+é reversível: bastaria mandar o pacote e **não** cancelar. É decisão, não limitação.
+
+**Três escolhas que vale registrar:**
+
+- **O aviso vive acima da hotbar**, na sobreposição do vanilla, e não numa camada de
+  interface nossa. O aparelho toca **no bolso**: quem é chamado precisa saber sem estar
+  com tela nenhuma aberta. Esse lugar já existe no jogo, e sai sem mixin nem gancho de
+  desenho. Ele **desaparece sozinho** depois de alguns segundos, e por isso é reenviado a
+  cada segundo enquanto a ligação durar.
+- **A lista de quem chamar sai do próprio cliente** — é a mesma que a tecla Tab mostra, já
+  sincronizada pelo jogo. Não há pedido ao servidor e não há tela vazia esperando
+  resposta, ao contrário da aba social. Ligar manda o **apelido**; o servidor resolve e
+  autoriza.
+- **Abrir o aparelho tocando cai direto na ligação**, não no menu. Um clique a mais para
+  atender é um clique com alguém esperando do outro lado.
+
+⚠️ **O mapa do `CallService` é `ConcurrentHashMap` por necessidade, não por precaução.**
+`peerOf` é chamado pela **thread de áudio do SVC**, que não é a do servidor. Um `HashMap`
+comum lido de duas threads não devolve só valor velho — pode entrar em laço infinito.
+
+**Nada disso foi visto em jogo, e desta vez nem compilado.** A sessão que escreveu isto
+rodou num ambiente cuja política de rede bloqueia `maven.fabricmc.net` (403 no CONNECT),
+então o Loom não resolve e `gradlew build` não sai do lugar. Foi conferido o que dava:
+JSON válido e Java sem erro de sintaxe (`javac` sem classpath, filtrando o que é
+dependência ausente).
+
+⚠️ **Os nomes da API do SVC não passaram pelo `javap`** — o jar da API também não é
+alcançável de lá, e a regra da casa é ler os membros reais em vez de tentar variações.
+São **quatro chamadas**, todas no mesmo método, e é de propósito que estejam concentradas:
+`event.getSenderConnection()`, `event.getVoicechat()`, `api.getConnectionOf(uuid)` e
+`api.sendStaticSoundPacketTo(conexão, event.getPacket().staticSoundPacketBuilder().build())`.
+Se alguma não fechar, é um arquivo só para consertar.
+
+**Próxima ação:** `gradlew runClient` **nesta branch**, com duas instâncias, e conferir:
+
+1. O log traz `Simple Voice Chat encontrado; plugin do Pokébook registrado.`
+2. O botão **Ligações** aparece no menu do aparelho (e **não** aparece sem o SVC).
+3. Ligar de um para o outro: toca, o aviso aparece acima da hotbar dos dois, e o sino
+   soa só para quem é chamado.
+4. Atender **faz o áudio atravessar** — é o ponto que prova a frente inteira.
+5. Desligar, recusar e não atender por meio minuto, cada um com a mensagem certa do
+   outro lado.
+6. Desconectar no meio da ligação não deixa o outro falando com um fantasma.
+
+Depois: decidir como desabilitar os grupos do SVC, que continua sendo a pergunta em
+aberto no `IDEIAS.md` — sem isso o canal não é exclusivo, e o celular volta a ser enfeite.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)

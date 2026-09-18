@@ -155,15 +155,31 @@ vira enfeite. Restringir o canal é o que transforma o item em infraestrutura do
 
 Falar direto com a API do Simple Voice Chat é mais simples.
 
+### O que já está escrito
+
+A ligação em si **existe** na branch `voicechat`, em duas metades: o telefone
+(`CallService` e a tela de ligações, livres do SVC) e o fio (`VoicechatIntegration`, que
+cancela o pacote de microfone e o reenvia ao destinatário). Ver o `PLANO.md` para o
+desenho e para o que falta conferir em jogo.
+
+O que era "sinalização é toda nossa" virou código: tocar, atender, recusar, desligar,
+desistir depois de meio minuto e identificar quem liga. O aviso de chamada vive **acima da
+hotbar**, onde alcança quem não está com tela nenhuma aberta.
+
 ### O que ainda não se sabe
 
 - **Como desabilitar os grupos do SVC.** Há pelo menos dois caminhos plausíveis: a API
   expõe acesso à configuração do servidor, e a conexão de um jogador permite trocar o
   grupo dele. Nenhum dos dois foi verificado, e nem se a imposição seria robusta (o
   jogador poderia simplesmente entrar no grupo de novo).
-- **Sinalização de chamada é toda nossa.** Tocar, atender, desligar, identificação de
-  quem liga — a API não oferece nada disso. Ela entrega áudio de A para B; o telefone em
-  volta é trabalho nosso.
+  ⚠️ **É o que falta para a ideia fechar.** Com os grupos de pé, dá para conversar longe
+  sem o aparelho — e a ligação vira mais um jeito de fazer o que já dava, em vez de ser
+  *o* jeito. A parte difícil sempre foi esta, não o áudio.
+- **Se a ligação deve vazar para quem está por perto.** Hoje não vaza: cancelar o pacote
+  de microfone suprime a voz de proximidade no mesmo gesto que desvia o áudio. É o que o
+  desenho pedia, mas é diferente de um telefone de verdade, e reverter é não cancelar.
+- **Chamar quem está offline.** Não existe, e provavelmente não deve: recado para quem
+  não está é o degrau 2 da aba social, que é um mod inteiro por si só.
 
 ### Considerações práticas
 

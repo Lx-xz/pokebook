@@ -1,31 +1,45 @@
 package io.github.lxxz.pokebook.integration;
 
 import de.maxhenkel.voicechat.api.VoicechatApi;
+import de.maxhenkel.voicechat.api.VoicechatConnection;
 import de.maxhenkel.voicechat.api.VoicechatPlugin;
+import de.maxhenkel.voicechat.api.VoicechatServerApi;
 import de.maxhenkel.voicechat.api.events.EventRegistration;
 import de.maxhenkel.voicechat.api.events.MicrophonePacketEvent;
 import io.github.lxxz.pokebook.Pokebook;
+import io.github.lxxz.pokebook.call.CallService;
+
+import java.util.UUID;
 
 /**
- * Ponte com o Simple Voice Chat. Por enquanto só prova que o gancho existe.
+ * O fio: leva o áudio de quem está numa ligação até o outro lado, e só até ele.
  *
  * <p><b>Esta classe não é carregada por nós.</b> Quem a carrega é o próprio Simple Voice
  * Chat, que lê o entrypoint {@code voicechat} do nosso {@code fabric.mod.json}. Sem o mod
  * instalado, ninguém lê esse entrypoint e a classe nunca é tocada — a mesma fronteira de
- * classe usada para o Cobblemon, só que aqui o próprio mecanismo de entrypoint a garante,
+ * classe usada para o Cobblemon, só que aqui o mecanismo de entrypoint a garante sozinho,
  * sem precisar de um {@code if} em lugar nenhum.
  *
- * <p>É por isso que o Simple Voice Chat entra como dependência <b>opcional</b>: o pokébook
- * segue funcionando sem ele, apenas sem chamadas.
+ * <p><b>É a única classe do mod que menciona o Simple Voice Chat</b>, e a intenção é que
+ * continue assim. Todo o telefone — quem liga para quem, tocar, atender, desligar,
+ * desistir — está em {@code CallService}, que não sabe que este mod existe. A conversa
+ * entre os dois cabe numa pergunta: {@link CallService#peerOf(UUID)} devolve um
+ * {@link UUID} ou {@code null}. Nada além de tipos do Java atravessa, e é isso que permite
+ * o resto do sistema nascer na {@code main}.
  *
- * <p><b>O caminho para a ligação privada</b>, quando chegarmos lá, já está mapeado no
- * {@code IDEIAS.md}: enganchar {@link MicrophonePacketEvent}, <b>cancelá-lo</b> — o que
- * suprime a voz de proximidade daquele pacote — e reenviar o áudio como <em>static sound
- * packet</em> só para a conexão do destinatário. "Static" quer dizer não-posicional:
- * distância e dimensão deixam de importar. São por volta de 40 linhas.
+ * <p><b>O mecanismo</b>, que é o caso de uso canônico da API e não uma gambiarra:
+ * engancha-se o pacote de microfone, <b>cancela-se</b> e reenvia-se o áudio como
+ * <em>static sound packet</em> só para a conexão do destinatário. "Static" quer dizer
+ * não-posicional: distância e dimensão deixam de importar, que é exatamente o que uma
+ * ligação precisa.
  *
- * <p>O que a API <b>não</b> dá é o telefone em volta: tocar, atender, desligar e
- * identificar quem liga são trabalho nosso.
+ * <p>⚠️ <b>Consequência de desenho do cancelamento:</b> enquanto se está numa ligação,
+ * quem está por perto <b>não ouve</b> este jogador. É diferente de um telefone de verdade,
+ * onde quem está na sala ouve metade da conversa. É o preço de suprimir a voz de
+ * proximidade no mesmo gesto que desvia o áudio, e combina com o desenho declarado no
+ * {@code IDEIAS.md}: a ligação é um canal fechado, e é o que faz o aparelho valer alguma
+ * coisa. Reverter isso seria mandar o pacote duas vezes, sem cancelar — dá para fazer, mas
+ * é outra decisão.
  */
 public class VoicechatIntegration implements VoicechatPlugin {
 	/** Id do plugin dentro do Simple Voice Chat. Aparece nos logs dele. */
@@ -43,7 +57,44 @@ public class VoicechatIntegration implements VoicechatPlugin {
 
 	@Override
 	public void registerEvents(EventRegistration registration) {
-		// Ainda sem evento nenhum. Quando a ligação entrar, é aqui que o
-		// MicrophonePacketEvent é assinado.
+		registration.registerEvent(MicrophonePacketEvent.class, this::onMicrophonePacket);
+	}
+
+	/**
+	 * Um pacote de microfone acabou de chegar ao servidor.
+	 *
+	 * <p>Roda para <b>todo</b> pacote de <b>todo</b> jogador que estiver falando, várias
+	 * vezes por segundo. Por isso a primeira coisa é a consulta mais barata que existe —
+	 * uma busca em mapa — e a imensa maioria das chamadas termina na segunda linha.
+	 *
+	 * <p>⚠️ <b>Isto não roda na thread do servidor</b>, e sim na de áudio do Simple Voice
+	 * Chat. É a razão de o mapa do {@code CallService} ser concorrente; nada aqui pode
+	 * tocar no mundo, em entidade ou em inventário.
+	 */
+	private void onMicrophonePacket(MicrophonePacketEvent event) {
+		VoicechatConnection sender = event.getSenderConnection();
+		if (sender == null) {
+			return;
+		}
+
+		UUID peerId = CallService.peerOf(sender.getPlayer().getUuid());
+		if (peerId == null) {
+			// Não está em ligação: o pacote segue o caminho normal e vira voz de
+			// proximidade. Este é o caso comum.
+			return;
+		}
+
+		// Cancela ANTES de procurar o destinatário, e não depois. Se a conexão dele sumiu
+		// entre o nosso estado e este quadro, o certo é a ligação ficar muda — não é voltar
+		// a voz de proximidade no meio de uma conversa que os dois acham que é privada.
+		event.cancel();
+
+		VoicechatServerApi api = event.getVoicechat();
+		VoicechatConnection peer = api.getConnectionOf(peerId);
+		if (peer == null) {
+			return;
+		}
+
+		api.sendStaticSoundPacketTo(peer, event.getPacket().staticSoundPacketBuilder().build());
 	}
 }
