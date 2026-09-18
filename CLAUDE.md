@@ -121,6 +121,12 @@ Fabric mostra os nomes da Mojang, que são diferentes: `onUse` e não `useWithou
 aba que cabia em "Active" saiu cortado em "Em andamento". Ao escolher largura de botão
 ou de coluna, confira no português, não no inglês.
 
+**As sobrecargas de `drawTexture` diferem na ORDEM dos parâmetros.** Na curta, `u,v`
+vêm antes do tamanho; na longa, o tamanho vem antes de `u,v`. Todos os parâmetros são
+numéricos, então trocar a ordem **compila e desenha nada** — um retângulo de tamanho
+zero, sem erro no log. Já aconteceu: a moldura inteira da interface sumiu. Confira a
+assinatura com `javap` antes de trocar de sobrecarga.
+
 **Widget não convive com lista que rola.** Widget tem posição fixa e a lista muda de
 posição a cada quadro. Numa lista rolável, desenhe as linhas à mão e trate o clique com
 o deslocamento aplicado; guarde widgets para o que não rola.

@@ -41,7 +41,9 @@ public abstract class PokebookScreenBase extends Screen {
 	 */
 	private static final int LANDSCAPE_WIDTH = 240;
 	private static final int LANDSCAPE_HEIGHT = 160;
-	private static final int PORTRAIT_WIDTH = 160;
+	// 176 e não 160: com três abas lado a lado, 160 deixava cada uma com 48 px e os
+	// rótulos se sobrepunham. Largura de aba tem de caber no idioma mais verboso.
+	private static final int PORTRAIT_WIDTH = 176;
 	private static final int PORTRAIT_HEIGHT = 220;
 
 	// Paleta para fundo CLARO. A textura é ciano claro, então texto claro sumiria nela.
@@ -165,7 +167,10 @@ public abstract class PokebookScreenBase extends Screen {
 		// A arte é deitada; em pé ela é esticada para a moldura nova. Fica aceitável porque
 		// é um retângulo de cor sólida com borda, mas é provisório: o redesenho com sprites
 		// e nine-slice resolve isto de verdade, sem deformar canto nenhum.
-		context.drawTexture(TEXTURE, x, y, 0, 0, panelWidth(), panelHeight(),
+		// ATENÇÃO à ordem: nesta sobrecarga o TAMANHO vem antes de u,v -- ao contrário da
+		// sobrecarga curta, onde u,v vêm antes. Todos os parâmetros são numéricos, então
+		// trocar a ordem compila e desenha um retângulo de tamanho zero, sem erro nenhum.
+		context.drawTexture(TEXTURE, x, y, panelWidth(), panelHeight(), 0.0f, 0.0f,
 			LANDSCAPE_WIDTH, LANDSCAPE_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
 
 		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
