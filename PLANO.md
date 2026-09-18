@@ -345,19 +345,51 @@ código**, e por isso ele também não entrou no `depends` do `fabric.mod.json`.
 
 Tudo verificado em jogo.
 
-**Próxima ação**, na ordem imposta pelas duas máquinas — o que toca o Cobblemon só
-acontece em casa, o resto acontece em qualquer lugar:
+### Integração com o Cobblemon — feita (nesta branch)
 
-1. **Redesenho da interface** (pode ser no trabalho, na `main`) — o autor mandou um conceito com cara de macOS: barra de
-   título com ← e ✕, botões de ícone, linhas de missão como cartões arredondados, abas
-   "novas/completas". Ver `IDEIAS.md`. Decisão pendente: as abas mudam o modelo da tela,
-   não só o desenho — filtro no cliente ou duas listas do servidor?
-2. **Integração com o Cobblemon** (só em casa, na branch `cobblemon`) —
-   `POKEMON_CAPTURED`. Traz o `ObjectiveType.CAPTURE`, que é o segundo valor do enum, e
-   um alvo por espécie, que é o **segundo caso concreto** de `TargetMatcher` — é aí que
-   o codec de alvo vira despachado por `"type"`, como previsto. A classe que toca o
-   Cobblemon fica isolada, pelo mesmo padrão de fronteira usado para cliente/servidor.
-3. **Aba social, degrau 1** — ler o progresso dos outros; o dado já é persistido.
+A captura conta progresso. `ObjectiveType.CAPTURE` e um alvo por espécie entraram, e com
+eles o **segundo caso concreto** de `TargetMatcher` — o eixo de alvos deixou de ter uma
+implementação só.
+
+**O desenho mudou por uma assimetria da API.** `POKEMON_CAPTURED` entrega um
+`Pokemon` — o objeto de dados — e não a entidade, que a essa altura já saiu do mundo.
+Um alvo que só soubesse olhar `Entity` não decidiria nada sobre uma captura. Daí o
+`MissionTarget`, que carrega o que se sabe em cada caso: a entidade, ao matar; o id da
+espécie, ao capturar.
+
+> A peça que faz tudo funcionar é a **espécie viajar como `Identifier` simples**. Com
+> isso, `SpeciesMatcher` e todo o resto do sistema de missões **não mencionam o
+> Cobblemon** e vivem na `main` — compilam na máquina do trabalho. Só
+> `CobblemonIntegration` importa o mod, e é a única classe que precisaria de conserto
+> quando a API quebrar num update.
+
+Uma missão de captura **carrega numa instalação sem o Cobblemon**; ela apenas nunca
+progride, em vez de quebrar o carregamento do datapack.
+
+**Fronteira de classe, não condicional.** A JVM resolve referências ao *carregar* a
+classe, então um `if (temCobblemon)` dentro de um método já falharia — a classe que o
+contém não carregaria. É o terceiro lugar onde este padrão aparece no projeto.
+
+**Sons emprestados do Cobblemon** (`pc.on`, `pc.off`, `gui.click`), procurados no
+registro **por id**: nenhum arquivo dele é copiado para o nosso jar — copiar seria
+redistribuir asset alheio, referenciar não é — e nenhuma classe dele é mencionada, então
+isso também vive na `main`. Sem o Cobblemon, a busca devolve `null` e o mod fica em
+silêncio. O som toca só no primeiro passo de cada transição; um por nível viraria
+metralhadora.
+
+**Nada disso foi visto em jogo.**
+
+**Próxima ação:** `gradlew runClient` nesta branch e conferir:
+
+1. A missão `pokebook:three_pidgey` aparece como "Capturar Pidgey ×3".
+2. Capturar um Pidgey avança o contador; capturar outra espécie não.
+3. O log diz `Integração com o Cobblemon ativa.` na subida.
+4. A tela toca som ao acender e apagar, e a navegação toca ao trocar de tela.
+5. Na `main`, sem o Cobblemon, tudo continua subindo — só sem som e sem progresso de
+   captura.
+
+Depois: **redesenho da interface** (pode ser no trabalho, na `main`) e a **aba social,
+degrau 1**.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)
