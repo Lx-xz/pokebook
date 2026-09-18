@@ -4,7 +4,6 @@ import io.github.lxxz.pokebook.Pokebook;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -43,10 +42,21 @@ public final class MissionTracker {
 	}
 
 	private static void onKill(ServerPlayerEntity player, LivingEntity victim) {
-		advance(player, ObjectiveType.KILL, victim);
+		advance(player, ObjectiveType.KILL, MissionTarget.ofEntity(victim));
 	}
 
-	private static void advance(ServerPlayerEntity player, ObjectiveType type, Entity target) {
+	/**
+	 * Um Pokémon foi capturado.
+	 *
+	 * <p>Público porque quem chama é a classe de integração com o Cobblemon, que vive
+	 * noutro pacote e só é tocada quando o mod está presente. A espécie chega como
+	 * {@link Identifier} simples — nenhum tipo do Cobblemon atravessa esta fronteira.
+	 */
+	public static void onCapture(ServerPlayerEntity player, Identifier species) {
+		advance(player, ObjectiveType.CAPTURE, MissionTarget.ofSpecies(species));
+	}
+
+	private static void advance(ServerPlayerEntity player, ObjectiveType type, MissionTarget target) {
 		MissionProgress progress = player.getAttachedOrCreate(PROGRESS);
 		boolean changed = false;
 		for (Mission mission : Missions.all()) {

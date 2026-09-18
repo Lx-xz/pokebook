@@ -2,11 +2,14 @@ package io.github.lxxz.pokebook.client.screen;
 
 import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
+import io.github.lxxz.pokebook.sound.PokebookSounds;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.registry.Registries;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -110,6 +113,12 @@ public abstract class PokebookScreenBase extends Screen {
 	/** Troca para outra tela do pokébook sem encerrar a sessão com o bloco. */
 	protected void navigateTo(PokebookScreenBase next) {
 		keepingSession = true;
+		if (client != null && client.player != null) {
+			SoundEvent page = Registries.SOUND_EVENT.get(PokebookSounds.PAGE);
+			if (page != null) {
+				client.player.playSound(page, 0.5f, 1.0f);
+			}
+		}
 		if (client != null) {
 			client.setScreen(next);
 		}

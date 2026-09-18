@@ -1,6 +1,7 @@
 package io.github.lxxz.pokebook.server;
 
 import io.github.lxxz.pokebook.block.PokebookBlock;
+import io.github.lxxz.pokebook.sound.PokebookSounds;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -197,6 +198,14 @@ public final class PokebookViewers {
 
 		int next = current + Integer.signum(target - current);
 		world.setBlockState(pos, state.with(PokebookBlock.SCREEN, next), Block.NOTIFY_ALL);
+
+		// Só no primeiro passo de cada transição: a animação tem quatro níveis, e um som
+		// por nível viraria uma metralhadora. O som acompanha a intenção, não o quadro.
+		if (current == PokebookBlock.SCREEN_OFF) {
+			PokebookSounds.playAt(world, pos, PokebookSounds.SCREEN_ON, 0.6f, 1.0f);
+		} else if (current == PokebookBlock.SCREEN_ON && next < current) {
+			PokebookSounds.playAt(world, pos, PokebookSounds.SCREEN_OFF, 0.6f, 1.0f);
+		}
 
 		if (next != target) {
 			schedule(key, target > next ? FADE_IN_STEP_TICKS : FADE_OUT_STEP_TICKS);

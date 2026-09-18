@@ -12,5 +12,7 @@
 	"message.pokebook.inventory_full": "Free up an inventory slot to claim this reward.",
 	"objective.pokebook.kill": "Slay %s ×%s",
 	"objective.pokebook.kill.one": "Slay %s",
-	"screen.pokebook.close": "Close"
+	"screen.pokebook.close": "Close",
+	"objective.pokebook.capture": "Catch %s ×%s",
+	"objective.pokebook.capture.one": "Catch %s"
 }
