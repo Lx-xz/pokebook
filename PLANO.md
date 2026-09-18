@@ -315,10 +315,9 @@ uma vez só, e uma tela nova nasce com os dois no lugar. O `init()` da base viro
 > A tela de destino do "voltar" é criada **no clique**, não guardada: precisa nascer com
 > os dados do momento, não com os de quando a tela atual abriu.
 
-**Cobblemon — na branch `cobblemon`, não na `main`.** As mudanças de build foram
-aplicadas, o jar de 141 MB baixou e o jogo sobe com ele. Mas elas **não** entram na
-`main`, e a razão é prática: com o Cobblemon na `main`, a máquina do trabalho não
-conseguiria nem buildar o projeto — o FortiGate trava no jar (ver `CLAUDE.md`). A
+**Cobblemon — esta é a branch `cobblemon`.** As mudanças de build estão aqui, o jar de
+141 MB baixou e o jogo sobe com ele. Elas **não** entram na `main`, e a razão é prática:
+com o Cobblemon na `main`, a máquina do trabalho não conseguiria nem buildar o projeto — o FortiGate trava no jar (ver `CLAUDE.md`). A
 separação é o que mantém a `main` utilizável nas duas máquinas, e é o que permite fazer
 o redesenho da interface no trabalho enquanto a integração com o Cobblemon espera por
 casa.
