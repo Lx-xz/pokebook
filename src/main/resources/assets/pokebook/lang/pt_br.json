@@ -1,7 +1,6 @@
 {
 	"block.pokebook.pokebook": "Pokébook",
 	"itemGroup.pokebook.main": "Pokébook",
-
 	"screen.pokebook.title": "Pokébook",
 	"screen.pokebook.logged_as": "Conectado como: %s",
 	"screen.pokebook.missions": "Missões",
@@ -10,10 +9,8 @@
 	"screen.pokebook.back": "Voltar",
 	"screen.pokebook.claim": "Resgatar",
 	"screen.pokebook.claimed": "Resgatada",
-
 	"message.pokebook.inventory_full": "Libere um espaço no inventário para resgatar.",
-
-	"mission.pokebook.three_cows": "Abater 3 vacas",
-	"mission.pokebook.five_zombies": "Abater 5 zumbis",
-	"mission.pokebook.ten_chickens": "Abater 10 galinhas"
+	"objective.pokebook.kill": "Abater %s ×%s",
+	"objective.pokebook.kill.one": "Abater %s",
+	"screen.pokebook.close": "Fechar"
 }

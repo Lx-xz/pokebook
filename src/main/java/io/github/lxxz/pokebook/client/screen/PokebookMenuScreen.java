@@ -25,7 +25,7 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 	}
 
 	@Override
-	protected void init() {
+	protected void initPanel() {
 		int x = panelX() + 20;
 		int y = panelY() + 56;
 		int buttonWidth = PANEL_WIDTH - 40;

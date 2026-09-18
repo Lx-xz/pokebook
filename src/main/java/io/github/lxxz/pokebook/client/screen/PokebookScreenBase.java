@@ -4,7 +4,9 @@ import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -51,12 +53,58 @@ public abstract class PokebookScreenBase extends Screen {
 		this.nick = nick;
 	}
 
+	/** Lado dos botões quadrados de canto (voltar e fechar). */
+	protected static final int CORNER_BUTTON = 14;
+
+	/** Distância dos botões de canto até a borda da moldura. */
+	private static final int CORNER_INSET = 6;
+
 	protected int panelX() {
 		return (width - PANEL_WIDTH) / 2;
 	}
 
 	protected int panelY() {
 		return (height - PANEL_HEIGHT) / 2;
+	}
+
+	/**
+	 * A barra de título é igual em toda tela: fechar sempre no canto superior direito, e
+	 * voltar no superior esquerdo quando houver para onde voltar.
+	 *
+	 * <p>Fica aqui e não em cada tela porque "onde fica o X" é decisão de uma vez só. Uma
+	 * tela nova nasce com os dois no lugar certo sem fazer nada.
+	 */
+	@Override
+	protected final void init() {
+		addDrawableChild(ButtonWidget.builder(Text.literal("✕"), button -> close())
+			.dimensions(panelX() + PANEL_WIDTH - CORNER_INSET - CORNER_BUTTON, panelY() + CORNER_INSET,
+				CORNER_BUTTON, CORNER_BUTTON)
+			.tooltip(Tooltip.of(Text.translatable("screen.pokebook.close")))
+			.build());
+
+		PokebookScreenBase parent = parentScreen();
+		if (parent != null) {
+			addDrawableChild(ButtonWidget.builder(Text.literal("←"), button -> navigateTo(parent))
+				.dimensions(panelX() + CORNER_INSET, panelY() + CORNER_INSET, CORNER_BUTTON, CORNER_BUTTON)
+				.tooltip(Tooltip.of(Text.translatable("screen.pokebook.back")))
+				.build());
+		}
+
+		initPanel();
+	}
+
+	/**
+	 * Para onde o botão de voltar leva, ou {@code null} numa tela raiz.
+	 *
+	 * <p>Devolve uma tela nova a cada chamada de propósito: a de destino precisa ser
+	 * construída com os dados do momento do clique, não com os de quando esta abriu.
+	 */
+	protected PokebookScreenBase parentScreen() {
+		return null;
+	}
+
+	/** Widgets próprios de cada tela. O equivalente ao {@code init()} do vanilla. */
+	protected void initPanel() {
 	}
 
 	/** Troca para outra tela do pokébook sem encerrar a sessão com o bloco. */
@@ -91,9 +139,10 @@ public abstract class PokebookScreenBase extends Screen {
 		int y = panelY();
 		context.drawTexture(TEXTURE, x, y, 0, 0, PANEL_WIDTH, PANEL_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
 
-		// Não existe versão centralizada sem sombra, então o x é calculado aqui.
+		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
+		// fica na altura dos botões de canto, entre os dois.
 		int titleX = x + (PANEL_WIDTH - textRenderer.getWidth(title)) / 2;
-		context.drawText(textRenderer, title, titleX, y + 10, COLOR_TEXT, false);
+		context.drawText(textRenderer, title, titleX, y + CORNER_INSET + 3, COLOR_TEXT, false);
 
 		renderPanel(context, mouseX, mouseY, delta);
 	}
