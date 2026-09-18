@@ -17,15 +17,20 @@ comunicação.** Mas nada disso está decidido.
 
 ## Aba social
 
-Já existe como botão desabilitado no menu. Dois degraus, em ordem de custo:
+O **degrau 1 está feito**: ver o progresso dos outros, como foi previsto — nenhum sistema
+novo, só uma consulta e uma tela. Duas limitações conscientes ficaram:
 
-1. **Ver o progresso dos outros** — barato. É ler o mesmo dado que já persistimos, de
-   outros jogadores. Nenhum sistema novo, só uma consulta e uma tela.
-2. **Mensagens entre jogadores** — caro. Precisa de persistência própria, entrega para
-   quem está offline, histórico, e moderação se houver desconhecidos no servidor. É um
-   mod inteiro por si só.
+- **Só jogadores conectados.** O progresso de quem está offline mora no arquivo de save
+  do jogador, e lê-lo exigiria abrir um arquivo por jogador a cada consulta. Um placar
+  histórico é outra funcionalidade, não uma extensão desta.
+- **Resumo, não detalhe.** Vai "quantas de quantas", não a lista de missões de cada um.
+  Responde a pergunta que a aba existe para responder sem multiplicar o pacote por
+  jogadores × missões. Ver a lista de um jogador específico seria um degrau 1.5 natural:
+  clicar numa linha e pedir o detalhe só daquele.
 
-O degrau 1 entrega a aba social sem comprometer com o degrau 2.
+**Degrau 2 — mensagens entre jogadores.** Continua caro: precisa de persistência própria,
+entrega para quem está offline, histórico, e moderação se houver desconhecidos no
+servidor. É um mod inteiro por si só.
 
 ## Ligações por voz
 

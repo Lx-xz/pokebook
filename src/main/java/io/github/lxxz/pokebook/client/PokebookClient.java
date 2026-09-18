@@ -4,8 +4,10 @@ import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.client.render.EmissiveScreenModel;
 import io.github.lxxz.pokebook.client.screen.MissionsScreen;
 import io.github.lxxz.pokebook.client.screen.PokebookMenuScreen;
+import io.github.lxxz.pokebook.client.screen.SocialScreen;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
+import io.github.lxxz.pokebook.network.SocialUpdatePayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -46,6 +48,14 @@ public class PokebookClient implements ClientModInitializer {
 			// ninguém de volta para as missões se já tiver navegado para outra tela.
 			if (context.client().currentScreen instanceof MissionsScreen screen) {
 				screen.update(payload.missions());
+			}
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(SocialUpdatePayload.ID, (payload, context) -> {
+			// Pelo mesmo motivo: a resposta pode chegar depois de o jogador já ter saído
+			// da aba, e nesse caso não há nada a fazer com ela.
+			if (context.client().currentScreen instanceof SocialScreen screen) {
+				screen.update(payload.players());
 			}
 		});
 	}

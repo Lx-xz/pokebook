@@ -7,6 +7,8 @@ import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
+import io.github.lxxz.pokebook.network.RequestSocialPayload;
+import io.github.lxxz.pokebook.network.SocialUpdatePayload;
 import io.github.lxxz.pokebook.registry.ModBlocks;
 import io.github.lxxz.pokebook.registry.ModItemGroups;
 import io.github.lxxz.pokebook.server.PokebookViewers;
@@ -36,6 +38,8 @@ public class Pokebook implements ModInitializer {
 		// Este entrypoint roda tanto no cliente quanto no servidor, então é o lugar certo.
 		PayloadTypeRegistry.playS2C().register(OpenPokebookPayload.ID, OpenPokebookPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(MissionsUpdatePayload.ID, MissionsUpdatePayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(SocialUpdatePayload.ID, SocialUpdatePayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestSocialPayload.ID, RequestSocialPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(ClosePokebookPayload.ID, ClosePokebookPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(ClaimRewardPayload.ID, ClaimRewardPayload.CODEC);
 
@@ -48,6 +52,10 @@ public class Pokebook implements ModInitializer {
 
 		ServerPlayNetworking.registerGlobalReceiver(ClaimRewardPayload.ID, (payload, context) ->
 			MissionService.claim(context.player(), payload.missionId()));
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestSocialPayload.ID, (payload, context) ->
+			ServerPlayNetworking.send(context.player(),
+				new SocialUpdatePayload(MissionService.socialSnapshot(context.player().server))));
 
 		// Depois de um /reload a lista pode ter mudado, e quem está com o pokébook aberto
 		// continuaria vendo a lista velha — inclusive missões que deixaram de existir.

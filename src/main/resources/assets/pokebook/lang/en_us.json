@@ -5,7 +5,6 @@
 	"screen.pokebook.logged_as": "Signed in as: %s",
 	"screen.pokebook.missions": "Missions",
 	"screen.pokebook.social": "Social",
-	"screen.pokebook.soon": "Coming soon",
 	"screen.pokebook.back": "Back",
 	"screen.pokebook.claim": "Claim",
 	"screen.pokebook.claimed": "Claimed",
@@ -21,5 +20,8 @@
 	"screen.pokebook.tab.empty": "Nothing here yet.",
 	"objective.pokebook.battle_win": "Defeat %s ×%s",
 	"objective.pokebook.battle_win.one": "Defeat %s",
-	"target.pokebook.generation": "Generation %s"
+	"target.pokebook.generation": "Generation %s",
+	"screen.pokebook.loading": "Loading...",
+	"screen.pokebook.social.empty": "Nobody else online.",
+	"screen.pokebook.social.summary": "%s/%s complete · %s claimed"
 }
