@@ -12,8 +12,9 @@ public record EntityTypeMatcher(EntityType<?> type) implements TargetMatcher {
 		Registries.ENTITY_TYPE.getCodec().xmap(EntityTypeMatcher::new, EntityTypeMatcher::type);
 
 	@Override
-	public boolean matches(Entity entity) {
-		return entity.getType() == type;
+	public boolean matches(MissionTarget target) {
+		Entity entity = target.entity();
+		return entity != null && entity.getType() == type;
 	}
 
 	@Override

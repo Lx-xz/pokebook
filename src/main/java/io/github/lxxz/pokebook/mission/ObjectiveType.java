@@ -20,9 +20,11 @@ import net.minecraft.util.StringIdentifiable;
  */
 public enum ObjectiveType implements StringIdentifiable {
 	/** Matar uma entidade. Vale para vaca, zumbi e também para um Pokémon morto fora de batalha. */
-	KILL("kill");
-	// CAPTURE     — evento POKEMON_CAPTURED do Cobblemon
-	// BATTLE_WIN  — vencer uma batalha do Cobblemon
+	KILL("kill"),
+
+	/** Capturar um Pokémon. Depende do Cobblemon para acontecer, mas não para existir. */
+	CAPTURE("capture");
+	// BATTLE_WIN — vencer uma batalha do Cobblemon
 
 	public static final Codec<ObjectiveType> CODEC = StringIdentifiable.createCodec(ObjectiveType::values);
 
