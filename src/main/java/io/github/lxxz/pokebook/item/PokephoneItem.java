@@ -47,6 +47,9 @@ public class PokephoneItem extends Item {
 				player.playSound(sound, 0.4f, 1.2f);
 			}
 		}
-		return TypedActionResult.success(user.getStackInHand(hand), world.isClient);
+		// CONSUME em vez de SUCCESS: SUCCESS faz o braço dar o soco do vanilla, e um soco
+		// para desbloquear um celular fica estranho. CONSUME encerra a interação sem
+		// animação nenhuma.
+		return TypedActionResult.consume(user.getStackInHand(hand));
 	}
 }

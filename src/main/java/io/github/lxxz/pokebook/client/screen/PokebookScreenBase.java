@@ -112,6 +112,20 @@ public abstract class PokebookScreenBase extends Screen {
 		return (height - panelHeight()) / 2;
 	}
 
+	/**
+	 * Se a mão do jogador deve sumir enquanto esta tela estiver aberta.
+	 *
+	 * <p>Vale só para o aparelho de bolso: ele é segurado na frente do rosto, e o braço
+	 * ficaria sobrando na cena. Com o pokébook, a tela é do bloco à frente e a mão não
+	 * atrapalha nada.
+	 *
+	 * <p>Quem consulta isto é o mixin em {@code HeldItemRendererMixin} — o desenho da mão
+	 * é do jogo, não nosso.
+	 */
+	public boolean hidesHands() {
+		return session.portable();
+	}
+
 	/** Canto superior esquerdo da área clara. */
 	protected int contentX() {
 		return panelX() + CONTENT_INSET;
