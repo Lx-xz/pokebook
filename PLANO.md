@@ -457,15 +457,48 @@ apagado a seção nova em silêncio.
 
 **Nada disso foi visto em jogo.**
 
-**Próxima ação:** `gradlew runClient` e conferir:
+### Branch `voicechat` — Simple Voice Chat no ambiente
 
-1. O poképhone aparece na aba do criativo e abre a interface **em pé** ao usar.
-2. A lista de missões e a aba social se comportam na moldura estreita e alta.
-3. O botão de resgate **não** aparece no celular, e resgatar no pokébook continua indo.
-4. Pegar ferro desbloqueia a receita do pokébook no livro.
+Terceira branch, pelo mesmo critério das outras duas: **divisão por dependência**. O
+`CLAUDE.md` tem a regra — mudança que não é da dependência nasce na `main`.
 
-Depois: o **redesenho visual** (no trabalho) e as **missões diárias sorteadas**, cujo
-desenho está no `IDEIAS.md` — é mudança de modelo, não funcionalidade a mais.
+**Boa notícia para a máquina do trabalho:** o jar do Simple Voice Chat tem **5,1 MB**.
+O que travou o Cobblemon era o tamanho (141 MB), e um jar de 49 MB já passou pelo
+FortiGate. Esta frente deve ser tocável no trabalho, ao contrário da do Cobblemon.
+
+**Duas versões, de propósito diferentes:**
+
+| | |
+|---|---|
+| `voicechat_api_version=2.5.31` | `modCompileOnly` — só para compilar |
+| `voicechat_mod_version=fabric-1.21.1-2.6.10` | `modRuntimeOnly` — o mod de verdade, só no teste |
+
+Compila-se contra a API mais **antiga** que tenha o necessário e roda-se com o mod mais
+**novo**: é a direção suportada, e a recomendação do próprio autor do SVC. O contrário
+quebra. A API é `compileOnly` porque quem a fornece em jogo é o mod, que a empacota —
+declará-la como `implementation` faria o jar dela viajar dentro do nosso.
+
+**Dois repositórios**, porque os artefatos moram em lugares diferentes: o maven do autor
+(`maven.maxhenkel.de`) serve só a API; o mod em si só está no maven do Modrinth.
+
+**A fronteira de classe sai de graça aqui.** `VoicechatIntegration` implementa
+`VoicechatPlugin` e é declarada no entrypoint `voicechat` do `fabric.mod.json` — quem a
+carrega é o **próprio Simple Voice Chat**. Sem ele instalado, ninguém lê esse entrypoint
+e a classe nunca é tocada. Não precisou de nenhum `if`, ao contrário do Cobblemon.
+Dependência declarada em `suggests`, não em `depends`.
+
+Por ora o plugin só registra e loga. O caminho da ligação privada está mapeado no
+`IDEIAS.md`: enganchar `MicrophonePacketEvent`, **cancelá-lo** — o que suprime a voz de
+proximidade daquele pacote — e reenviar como *static sound packet* só para a conexão do
+destinatário. O que a API não dá é o telefone em volta: tocar, atender, desligar e
+identificar quem liga são trabalho nosso.
+
+**Nada disso foi visto em jogo.**
+
+**Próxima ação:** `gradlew runClient` **nesta branch** e conferir no log que o Simple
+Voice Chat carrega e que aparece `Simple Voice Chat encontrado; plugin do Pokébook
+registrado.`. Isso prova o gancho. Depois, a ligação em si — e antes dela, decidir como
+desabilitar os grupos do SVC, que continua sendo a pergunta em aberto no `IDEIAS.md`.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)
