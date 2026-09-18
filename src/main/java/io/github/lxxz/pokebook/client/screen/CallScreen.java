@@ -261,7 +261,7 @@ public class CallScreen extends PokebookScreenBase {
 		}
 		List<PlayerListEntry> entries = new ArrayList<>(handler.getPlayerList());
 		entries.removeIf(entry -> entry.getProfile().getName().equals(session.nick()));
-		entries.sort(Comparator.comparing(entry -> entry.getProfile().getName()));
+		entries.sort(Comparator.comparing((PlayerListEntry entry) -> entry.getProfile().getName()));
 		return entries;
 	}
 
