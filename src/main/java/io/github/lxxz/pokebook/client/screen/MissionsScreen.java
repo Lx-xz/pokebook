@@ -6,7 +6,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
@@ -60,8 +59,8 @@ public class MissionsScreen extends PokebookScreenBase {
 	private Tab tab = Tab.IN_PROGRESS;
 	private int scroll;
 
-	public MissionsScreen(BlockPos pos, String nick, List<MissionEntry> missions) {
-		super(Text.translatable("screen.pokebook.missions"), pos, nick);
+	public MissionsScreen(PokebookSession session, List<MissionEntry> missions) {
+		super(Text.translatable("screen.pokebook.missions"), session);
 		this.missions = new ArrayList<>(missions);
 	}
 
@@ -73,7 +72,7 @@ public class MissionsScreen extends PokebookScreenBase {
 
 	@Override
 	protected PokebookScreenBase parentScreen() {
-		return new PokebookMenuScreen(pos, nick, missions);
+		return new PokebookMenuScreen(session, missions);
 	}
 
 	@Override
@@ -82,7 +81,7 @@ public class MissionsScreen extends PokebookScreenBase {
 		// A moldura inteira menos uma margem fina: "Em andamento" não cabia na largura
 		// anterior e saía cortado. Rótulo de aba é texto traduzido, então o espaço tem de
 		// caber no idioma mais verboso, não no mais curto.
-		int tabWidth = (PANEL_WIDTH - 16) / tabs.length;
+		int tabWidth = (panelWidth() - 16) / tabs.length;
 		int tabX = panelX() + 8;
 
 		for (Tab candidate : tabs) {
@@ -112,7 +111,7 @@ public class MissionsScreen extends PokebookScreenBase {
 	}
 
 	private int listHeight() {
-		return PANEL_HEIGHT - LIST_TOP_INSET - LIST_BOTTOM_INSET;
+		return panelHeight() - LIST_TOP_INSET - LIST_BOTTOM_INSET;
 	}
 
 	private int maxScroll() {
@@ -127,13 +126,13 @@ public class MissionsScreen extends PokebookScreenBase {
 		if (entries.isEmpty()) {
 			Text empty = Text.translatable("screen.pokebook.tab.empty");
 			context.drawText(textRenderer, empty,
-				x + (PANEL_WIDTH - textRenderer.getWidth(empty)) / 2, listTop() + 16, COLOR_MUTED, false);
+				x + (panelWidth() - textRenderer.getWidth(empty)) / 2, listTop() + 16, COLOR_MUTED, false);
 			return;
 		}
 
 		// Recorta ao retângulo da lista: sem isto, a linha que está saindo por cima
 		// continuaria desenhada sobre as abas e sobre o título.
-		context.enableScissor(x, listTop(), x + PANEL_WIDTH, listTop() + listHeight());
+		context.enableScissor(x, listTop(), x + panelWidth(), listTop() + listHeight());
 
 		int rowY = listTop() - scroll;
 		for (MissionEntry entry : entries) {
@@ -161,8 +160,8 @@ public class MissionsScreen extends PokebookScreenBase {
 		context.drawText(textRenderer, status, x + 32, rowY + 13,
 			entry.claimed() ? COLOR_MUTED : COLOR_ACCENT, false);
 
-		if (entry.claimable()) {
-			int buttonX = x + PANEL_WIDTH - CLAIM_WIDTH - 10;
+		if (entry.claimable() && !session.portable()) {
+			int buttonX = x + panelWidth() - CLAIM_WIDTH - 10;
 			int buttonY = rowY + 3;
 			boolean hovered = mouseX >= buttonX && mouseX < buttonX + CLAIM_WIDTH
 				&& mouseY >= buttonY && mouseY < buttonY + CLAIM_HEIGHT
@@ -178,7 +177,7 @@ public class MissionsScreen extends PokebookScreenBase {
 
 	/** Barra fina à direita, só para dizer que há mais coisa e onde estamos. */
 	private void renderScrollbar(DrawContext context, int x, int rowCount) {
-		int trackX = x + PANEL_WIDTH - 6;
+		int trackX = x + panelWidth() - 6;
 		int trackTop = listTop();
 		int trackHeight = listHeight();
 
@@ -202,11 +201,11 @@ public class MissionsScreen extends PokebookScreenBase {
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (button == 0 && mouseY >= listTop() && mouseY < listTop() + listHeight()) {
 			int x = panelX();
-			int buttonX = x + PANEL_WIDTH - CLAIM_WIDTH - 10;
+			int buttonX = x + panelWidth() - CLAIM_WIDTH - 10;
 			int rowY = listTop() - scroll;
 
 			for (MissionEntry entry : visible()) {
-				if (entry.claimable()
+				if (entry.claimable() && !session.portable()
 					&& mouseX >= buttonX && mouseX < buttonX + CLAIM_WIDTH
 					&& mouseY >= rowY + 3 && mouseY < rowY + 3 + CLAIM_HEIGHT) {
 					ClientPlayNetworking.send(new ClaimRewardPayload(entry.id()));

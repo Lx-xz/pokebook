@@ -23,5 +23,7 @@
 	"target.pokebook.generation": "Generation %s",
 	"screen.pokebook.loading": "Loading...",
 	"screen.pokebook.social.empty": "Nobody else online.",
-	"screen.pokebook.social.summary": "%s/%s complete · %s claimed"
+	"screen.pokebook.social.summary": "%s/%s complete · %s claimed",
+	"item.pokebook.pokephone": "Poképhone",
+	"message.pokebook.claim_at_block": "Rewards are claimed on the Pokébook, not the Poképhone."
 }

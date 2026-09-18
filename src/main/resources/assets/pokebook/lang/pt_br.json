@@ -23,5 +23,7 @@
 	"target.pokebook.generation": "Geração %s",
 	"screen.pokebook.loading": "Carregando...",
 	"screen.pokebook.social.empty": "Ninguém mais online.",
-	"screen.pokebook.social.summary": "%s/%s concluídas · %s resgatadas"
+	"screen.pokebook.social.summary": "%s/%s concluídas · %s resgatadas",
+	"item.pokebook.pokephone": "Poképhone",
+	"message.pokebook.claim_at_block": "Recompensas são resgatadas no Pokébook, não no Poképhone."
 }

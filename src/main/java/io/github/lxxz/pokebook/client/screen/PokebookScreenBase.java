@@ -34,8 +34,15 @@ public abstract class PokebookScreenBase extends Screen {
 		Identifier.of(Pokebook.MOD_ID, "textures/gui/pokebook_gui.png");
 	private static final int TEXTURE_SIZE = 256;
 
-	protected static final int PANEL_WIDTH = 240;
-	protected static final int PANEL_HEIGHT = 160;
+	/**
+	 * A moldura, deitada ou em pé. Deixou de ser constante quando o poképhone entrou: a
+	 * mesma lista de missões precisa caber nas duas proporções, então toda medida de tela
+	 * é calculada a partir daqui em vez de ser um número escrito à mão.
+	 */
+	private static final int LANDSCAPE_WIDTH = 240;
+	private static final int LANDSCAPE_HEIGHT = 160;
+	private static final int PORTRAIT_WIDTH = 160;
+	private static final int PORTRAIT_HEIGHT = 220;
 
 	// Paleta para fundo CLARO. A textura é ciano claro, então texto claro sumiria nela.
 	// Pelo mesmo motivo o texto vai sem sombra: sombra escura sob texto escuro empasta.
@@ -44,16 +51,22 @@ public abstract class PokebookScreenBase extends Screen {
 	protected static final int COLOR_DONE = 0xFF1B6B2A;
 	protected static final int COLOR_MUTED = 0xFF5C7A86;
 
-	protected final BlockPos pos;
-	protected final String nick;
+	protected final PokebookSession session;
 
 	/** Verdadeiro enquanto trocamos para outra tela do próprio pokébook. */
 	private boolean keepingSession;
 
-	protected PokebookScreenBase(Text title, BlockPos pos, String nick) {
+	protected PokebookScreenBase(Text title, PokebookSession session) {
 		super(title);
-		this.pos = pos;
-		this.nick = nick;
+		this.session = session;
+	}
+
+	protected int panelWidth() {
+		return session.portrait() ? PORTRAIT_WIDTH : LANDSCAPE_WIDTH;
+	}
+
+	protected int panelHeight() {
+		return session.portrait() ? PORTRAIT_HEIGHT : LANDSCAPE_HEIGHT;
 	}
 
 	/** Lado dos botões quadrados de canto (voltar e fechar). */
@@ -63,11 +76,11 @@ public abstract class PokebookScreenBase extends Screen {
 	private static final int CORNER_INSET = 6;
 
 	protected int panelX() {
-		return (width - PANEL_WIDTH) / 2;
+		return (width - panelWidth()) / 2;
 	}
 
 	protected int panelY() {
-		return (height - PANEL_HEIGHT) / 2;
+		return (height - panelHeight()) / 2;
 	}
 
 	/**
@@ -80,7 +93,7 @@ public abstract class PokebookScreenBase extends Screen {
 	@Override
 	protected final void init() {
 		addDrawableChild(ButtonWidget.builder(Text.literal("✕"), button -> close())
-			.dimensions(panelX() + PANEL_WIDTH - CORNER_INSET - CORNER_BUTTON, panelY() + CORNER_INSET,
+			.dimensions(panelX() + panelWidth() - CORNER_INSET - CORNER_BUTTON, panelY() + CORNER_INSET,
 				CORNER_BUTTON, CORNER_BUTTON)
 			.tooltip(Tooltip.of(Text.translatable("screen.pokebook.close")))
 			.build());
@@ -136,9 +149,12 @@ public abstract class PokebookScreenBase extends Screen {
 		if (client == null || client.player == null) {
 			return;
 		}
-		if (client.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > MAX_DISTANCE_SQUARED) {
-			close();
-		}
+		// Um aparelho de bolso não tem de onde se afastar.
+		session.pos().ifPresent(pos -> {
+			if (client.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > MAX_DISTANCE_SQUARED) {
+				close();
+			}
+		});
 	}
 
 	@Override
@@ -146,11 +162,15 @@ public abstract class PokebookScreenBase extends Screen {
 		super.render(context, mouseX, mouseY, delta);
 		int x = panelX();
 		int y = panelY();
-		context.drawTexture(TEXTURE, x, y, 0, 0, PANEL_WIDTH, PANEL_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
+		// A arte é deitada; em pé ela é esticada para a moldura nova. Fica aceitável porque
+		// é um retângulo de cor sólida com borda, mas é provisório: o redesenho com sprites
+		// e nine-slice resolve isto de verdade, sem deformar canto nenhum.
+		context.drawTexture(TEXTURE, x, y, 0, 0, panelWidth(), panelHeight(),
+			LANDSCAPE_WIDTH, LANDSCAPE_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
 
 		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
 		// fica na altura dos botões de canto, entre os dois.
-		int titleX = x + (PANEL_WIDTH - textRenderer.getWidth(title)) / 2;
+		int titleX = x + (panelWidth() - textRenderer.getWidth(title)) / 2;
 		context.drawText(textRenderer, title, titleX, y + CORNER_INSET + 3, COLOR_TEXT, false);
 
 		renderPanel(context, mouseX, mouseY, delta);
@@ -161,8 +181,9 @@ public abstract class PokebookScreenBase extends Screen {
 
 	@Override
 	public void removed() {
+		// Só o bloco precisa saber que fechamos: é a tela dele que apaga.
 		if (!keepingSession && client != null && client.getNetworkHandler() != null) {
-			ClientPlayNetworking.send(new ClosePokebookPayload(pos));
+			session.pos().ifPresent(pos -> ClientPlayNetworking.send(new ClosePokebookPayload(pos)));
 		}
 		super.removed();
 	}

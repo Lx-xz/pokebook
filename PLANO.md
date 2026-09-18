@@ -421,9 +421,51 @@ e o bloco seguir aceso parecia defeito, não estilo), e o `CLAUDE.md` ganhou a s
 **Verificado em jogo, nas duas branches.** A aba social abre e lista, a tela apaga na
 hora, e as abas de missão não cortam mais o texto.
 
-**Próxima ação:** o que resta é o **redesenho visual** (sprites com nine-slice, cara de macOS), que
-o autor fará mais tarde. Em aberto no `IDEIAS.md`: missões repetíveis, degrau 1.5 do
-social (detalhe de um jogador), advancement de desbloqueio da receita, som ao clicar.
+### Poképhone, em versão de teste
+
+Item registrado, abrindo **a mesma interface em pé**. Usa o modelo do pokébook até ter o
+seu — o autor vai modelar.
+
+**Custou pouco, e o motivo é uma decisão de dois anos-luz atrás**: o progresso sempre foi
+**por jogador**, nunca por bloco. Celular e notebook mostram o mesmo dado sem uma linha
+de sincronização.
+
+**O que a tela em pé exigiu:** `PANEL_WIDTH`/`PANEL_HEIGHT` eram **constantes**. Viraram
+`panelWidth()`/`panelHeight()`, respondidos pela sessão. Junto veio o `PokebookSession`,
+que reúne o que as telas passavam solto de construtor em construtor — e concentra num
+lugar só a diferença entre os dois aparelhos.
+
+> `pos` ausente na sessão significa **aparelho de bolso**, e disso decorre tudo: não há
+> bloco a avisar ao fechar, não há distância máxima — ninguém se afasta do próprio bolso
+> — e a moldura é em pé. Portátil e em pé andam juntos hoje porque só há dois aparelhos;
+> se um dia divergirem, viram dois campos.
+
+**A arte da moldura é esticada** para a proporção em pé. Aceitável porque é um retângulo
+de cor sólida com borda, e provisório: o redesenho com nine-slice resolve de verdade.
+
+**Resgate só no pokébook**, conferido **no servidor**. Esconder o botão no cliente é
+aparência — o pacote de resgate continua sendo um pacote que qualquer cliente pode
+mandar. A autorização reusa o conjunto de espectadores que já existia para a animação.
+
+**Receita:** um pokébook, ouro, redstone e ametista. ⚠️ **Consome o pokébook** — decisão
+em aberto, registrada no `IDEIAS.md`.
+
+**Também nesta rodada:** a receita do pokébook agora se desbloqueia ao obter ferro,
+redstone **ou** vidraça (as condições ficam num único grupo de `requirements`, que é OU e
+não E), e o `CLAUDE.md` teve conteúdo restaurado — uma "junção de seções" minha havia
+apagado a seção nova em silêncio.
+
+**Nada disso foi visto em jogo.**
+
+**Próxima ação:** `gradlew runClient` e conferir:
+
+1. O poképhone aparece na aba do criativo e abre a interface **em pé** ao usar.
+2. A lista de missões e a aba social se comportam na moldura estreita e alta.
+3. O botão de resgate **não** aparece no celular, e resgatar no pokébook continua indo.
+4. Pegar ferro desbloqueia a receita do pokébook no livro.
+
+Depois: o **redesenho visual** (no trabalho) e as **missões diárias sorteadas**, cujo
+desenho está no `IDEIAS.md` — é mudança de modelo, não funcionalidade a mais.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)

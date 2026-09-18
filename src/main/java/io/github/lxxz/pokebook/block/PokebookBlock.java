@@ -25,6 +25,8 @@ import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
+import java.util.Optional;
+
 public class PokebookBlock extends Block {
 	public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
 
@@ -109,7 +111,7 @@ public class PokebookBlock extends Block {
 
 		PokebookViewers.open(serverWorld, pos, serverPlayer);
 		ServerPlayNetworking.send(serverPlayer, new OpenPokebookPayload(
-			pos, serverPlayer.getName().getString(), MissionService.snapshot(serverPlayer)));
+			Optional.of(pos), serverPlayer.getName().getString(), MissionService.snapshot(serverPlayer)));
 		return ActionResult.SUCCESS;
 	}
 

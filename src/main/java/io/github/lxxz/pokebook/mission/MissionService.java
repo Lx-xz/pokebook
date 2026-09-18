@@ -2,6 +2,7 @@ package io.github.lxxz.pokebook.mission;
 
 import io.github.lxxz.pokebook.network.MissionEntry;
 import io.github.lxxz.pokebook.network.SocialEntry;
+import io.github.lxxz.pokebook.server.PokebookViewers;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.item.ItemStack;
@@ -82,6 +83,15 @@ public final class MissionService {
 	public static void claim(ServerPlayerEntity player, Identifier missionId) {
 		Mission mission = Missions.byId(missionId);
 		if (mission == null) {
+			return;
+		}
+
+		// Resgate é do pokébook, não do poképhone. Sem isto, o celular faria tudo que o
+		// bloco faz e o bloco viraria decoração -- que é justamente o que o projeto não
+		// quer ser. Conferido aqui e não no cliente porque esconder o botão é aparência:
+		// o pacote continua sendo um pacote que qualquer cliente pode mandar.
+		if (!PokebookViewers.isViewingBlock(player)) {
+			player.sendMessage(Text.translatable("message.pokebook.claim_at_block"), true);
 			return;
 		}
 

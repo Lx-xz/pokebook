@@ -13,7 +13,10 @@ public final class ModItemGroups {
 	public static final ItemGroup MAIN = FabricItemGroup.builder()
 		.icon(() -> new ItemStack(ModBlocks.POKEBOOK))
 		.displayName(Text.translatable("itemGroup.pokebook.main"))
-		.entries((context, entries) -> entries.add(ModBlocks.POKEBOOK))
+		.entries((context, entries) -> {
+			entries.add(ModBlocks.POKEBOOK);
+			entries.add(ModItems.POKEPHONE);
+		})
 		.build();
 
 	private ModItemGroups() {
