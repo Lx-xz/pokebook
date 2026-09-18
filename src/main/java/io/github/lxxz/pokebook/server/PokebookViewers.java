@@ -42,17 +42,13 @@ import java.util.UUID;
  * <p>Tudo aqui roda na thread do servidor, então as coleções não precisam ser sincronizadas.
  */
 public final class PokebookViewers {
-	/** Espera antes de <em>começar</em> a apagar, depois que o último espectador sai. */
-	public static final int SHUTDOWN_DELAY_TICKS = 60;
-
 	/**
 	 * Entre um nível e o seguinte. Igual nos dois sentidos: três níveis a 2 ticks dão
 	 * 0,3 s de transição, tanto para acender quanto para apagar.
 	 *
-	 * <p>O apagar já foi lento de propósito — um segundo por nível, imitando o fade de um
-	 * monitor de verdade. Na prática ficou arrastado: a espera de {@link #SHUTDOWN_DELAY_TICKS}
-	 * já dá o tempo de "isto não desligou por acidente", e depois dela o que se quer é que
-	 * acabe logo.
+	 * <p>O apagar já foi lento de propósito — um segundo por nível, precedido de três
+	 * segundos parado, imitando o fade de um monitor de verdade. Na prática ficou
+	 * arrastado: fechar a tela e o bloco continuar aceso parecia defeito, não estilo.
 	 */
 	private static final int FADE_STEP_TICKS = 2;
 
@@ -154,18 +150,17 @@ public final class PokebookViewers {
 	}
 
 	/**
-	 * Saiu o último espectador: a tela não começa a apagar na hora.
+	 * Saiu o último espectador: a tela começa a apagar imediatamente.
 	 *
-	 * <p>A entrada é mantida de propósito, mesmo sem ninguém olhando. Se fosse removida
-	 * aqui, reabrir durante a espera faria {@link #open} ler o bloco ainda aceso e
-	 * concluir que o "sempre aceso" estava ligado — e a tela nunca mais apagaria.
+	 * <p>O "sempre aceso" é conferido dentro de {@link #step}, que relê o alvo a cada
+	 * passo — por isso não há ramo para ele aqui.
+	 *
+	 * <p>A entrada do mapa é mantida de propósito, mesmo sem ninguém olhando: se fosse
+	 * removida aqui, reabrir no meio da transição faria {@link #open} ler o bloco ainda
+	 * aceso e concluir que o "sempre aceso" estava ligado — e a tela nunca mais apagaria.
 	 */
 	private static void beginShutdown(Key key, Entry entry) {
-		if (entry.manuallyLit) {
-			step(key);
-			return;
-		}
-		schedule(key, SHUTDOWN_DELAY_TICKS);
+		step(key);
 	}
 
 	/**

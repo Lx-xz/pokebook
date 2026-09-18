@@ -1,14 +1,17 @@
 package io.github.lxxz.pokebook.mission;
 
 import io.github.lxxz.pokebook.network.MissionEntry;
+import io.github.lxxz.pokebook.network.SocialEntry;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /** Regras de missão do lado do servidor: o que o jogador vê e o que ele pode resgatar. */
@@ -30,6 +33,43 @@ public final class MissionService {
 				progress.isClaimed(mission.id())
 			));
 		}
+		return entries;
+	}
+
+	/**
+	 * O quadro de todos os jogadores **conectados**, do que fez mais para o que fez menos.
+	 *
+	 * <p>Só os conectados, e isso é limitação consciente: o progresso de quem está offline
+	 * mora no arquivo de save do jogador, e lê-lo exigiria abrir um arquivo por jogador a
+	 * cada consulta. O degrau que a aba social entrega hoje — ver quem está na frente
+	 * agora — não paga esse custo. Um placar histórico é outra funcionalidade.
+	 *
+	 * <p>Manda um resumo por jogador, não a lista de missões dele: é o que a pergunta
+	 * pede, e não cresce com o número de missões.
+	 */
+	public static List<SocialEntry> socialSnapshot(MinecraftServer server) {
+		int total = Missions.count();
+		List<SocialEntry> entries = new ArrayList<>();
+
+		for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+			MissionProgress progress = player.getAttachedOrCreate(MissionTracker.PROGRESS);
+			int completed = 0;
+			int claimed = 0;
+			for (Mission mission : Missions.all()) {
+				if (progress.isComplete(mission)) {
+					completed++;
+				}
+				if (progress.isClaimed(mission.id())) {
+					claimed++;
+				}
+			}
+			entries.add(new SocialEntry(player.getGameProfile().getName(), completed, claimed, total));
+		}
+
+		// Quem concluiu mais primeiro; empate desfeito pelo nome, para a ordem não dançar
+		// entre duas consultas seguidas com os mesmos números.
+		entries.sort(Comparator.comparingInt(SocialEntry::completed).reversed()
+			.thenComparing(SocialEntry::name));
 		return entries;
 	}
 

@@ -465,11 +465,40 @@ ubo, `(8, 8, 8)`, e este modelo não preenche o cubo — a base
 > `lefthand = righthand + 180`) não valem para modelos com frente e costas. O
 > `__comment` dentro do `models/item/pokebook.json` registra isso no próprio arquivo.
 
-**Próxima ação:** conferir em jogo a mão esquerda (passo 5 acima — única pendência
-da P1, cosmética). Em seguida, **P2** — aproximar a hitbox da tela
-inclinada empilhando três ou quatro caixas finas em degrau, em `PokebookBlock.BOXES`;
-o código de rotação já existente cuida das outras três direções sozinho. Depois
-**P3** (tela emissiva), que já é escopo de v1.1.
+### Aba social, degrau 1 — feito
+
+Ver o progresso dos outros. Como previsto, nenhum sistema novo: o dado já era persistido
+por jogador, e isto é uma consulta e uma tela.
+
+**Só jogadores conectados**, e isso é limitação consciente: o progresso de quem está
+offline mora no arquivo de save do jogador, e lê-lo exigiria abrir um arquivo por jogador
+a cada consulta. Placar histórico é outra funcionalidade.
+
+**Resumo e não detalhe** — "quantas de quantas", com barrinha de progresso para a
+comparação se ler de relance. Não cresce com o número de missões.
+
+**Pedido sob demanda**, ao clicar na aba, e não junto ao abrir o pokébook: a maioria das
+aberturas nunca chega ali, e mandar a lista de todos sempre seria pagar sempre por algo
+usado às vezes. O custo é a tela nascer vazia até a resposta chegar.
+
+Os dois receptores de cliente conferem a tela atual antes de aplicar a resposta — ela
+pode chegar depois de o jogador ter navegado para outro lugar.
+
+**Também nesta rodada:** a espera de 3 s antes de apagar a tela saiu (fechar a interface
+e o bloco seguir aceso parecia defeito, não estilo), e o `CLAUDE.md` ganhou a seção de
+**branches**, com a regra de que mudança sem Cobblemon nasce na `main`.
+
+**Nada disso foi visto em jogo.**
+
+**Próxima ação:** `gradlew runClient` e conferir:
+
+1. O botão "Social" abre e lista os jogadores; sozinho, aparece só você.
+2. A tela apaga imediatamente ao fechar, em 0,3 s.
+3. As abas da lista de missões não cortam mais o texto.
+
+Depois, o que resta é o **redesenho visual** (sprites com nine-slice, cara de macOS), que
+o autor fará mais tarde. Em aberto no `IDEIAS.md`: missões repetíveis, degrau 1.5 do
+social (detalhe de um jogador), advancement de desbloqueio da receita, som ao clicar.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)

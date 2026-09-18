@@ -1,8 +1,9 @@
 package io.github.lxxz.pokebook.client.screen;
 
 import io.github.lxxz.pokebook.network.MissionEntry;
+import io.github.lxxz.pokebook.network.RequestSocialPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -35,12 +36,16 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 			button -> navigateTo(new MissionsScreen(pos, nick, missions))
 		).dimensions(x, y, buttonWidth, 20).build());
 
-		ButtonWidget social = ButtonWidget.builder(
-			Text.translatable("screen.pokebook.social"), button -> {}
-		).dimensions(x, y + 26, buttonWidth, 20).build();
-		social.active = false;
-		social.setTooltip(Tooltip.of(Text.translatable("screen.pokebook.soon")));
-		addDrawableChild(social);
+		addDrawableChild(ButtonWidget.builder(
+			Text.translatable("screen.pokebook.social"),
+			button -> {
+				// O pedido sai junto com a navegação, e a tela nasce vazia até a resposta
+				// chegar. Pedir aqui e não ao abrir o pokébook evita mandar a lista de todo
+				// mundo em aberturas que nunca chegam a esta aba.
+				ClientPlayNetworking.send(new RequestSocialPayload());
+				navigateTo(new SocialScreen(pos, nick, missions));
+			}
+		).dimensions(x, y + 26, buttonWidth, 20).build());
 	}
 
 	@Override

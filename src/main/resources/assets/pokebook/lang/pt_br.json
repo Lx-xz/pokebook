@@ -5,7 +5,6 @@
 	"screen.pokebook.logged_as": "Conectado como: %s",
 	"screen.pokebook.missions": "Missões",
 	"screen.pokebook.social": "Social",
-	"screen.pokebook.soon": "Em breve",
 	"screen.pokebook.back": "Voltar",
 	"screen.pokebook.claim": "Resgatar",
 	"screen.pokebook.claimed": "Resgatada",
@@ -21,5 +20,8 @@
 	"screen.pokebook.tab.empty": "Nada aqui ainda.",
 	"objective.pokebook.battle_win": "Derrotar %s ×%s",
 	"objective.pokebook.battle_win.one": "Derrotar %s",
-	"target.pokebook.generation": "Geração %s"
+	"target.pokebook.generation": "Geração %s",
+	"screen.pokebook.loading": "Carregando...",
+	"screen.pokebook.social.empty": "Ninguém mais online.",
+	"screen.pokebook.social.summary": "%s/%s concluídas · %s resgatadas"
 }
