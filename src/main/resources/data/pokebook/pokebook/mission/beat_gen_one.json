@@ -1,0 +1,9 @@
+{
+	"objective": "battle_win",
+	"target": {
+		"generation": 1
+	},
+	"required": 2,
+	"reward": "minecraft:emerald",
+	"reward_count": 2
+}

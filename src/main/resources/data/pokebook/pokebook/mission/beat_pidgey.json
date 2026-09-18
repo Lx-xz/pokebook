@@ -1,0 +1,9 @@
+{
+	"objective": "battle_win",
+	"target": {
+		"species": "pidgey"
+	},
+	"required": 2,
+	"reward": "minecraft:feather",
+	"reward_count": 12
+}

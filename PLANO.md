@@ -379,16 +379,55 @@ metralhadora.
 
 **Nada disso foi visto em jogo.**
 
+### Abas, rolagem e os três objetivos — feito
+
+**A lista estourou a moldura** ao chegar na quinta missão. A correção não foi rolagem
+sozinha: as **abas por estado** — em andamento, a resgatar, concluídas — foram o que
+resolveu o problema de fundo, porque tiram da lista principal justamente as linhas que
+não pedem nada.
+
+> **Por que por estado e não por assunto.** Toda missão está num dos três estados, e
+> separar assim põe a única coisa acionável — resgatar — numa aba própria. Abas por
+> assunto (matar, capturar, derrotar) seriam **taxonomia**: organizam, mas não dizem o
+> que fazer a seguir. Com poucas missões, taxonomia é enfeite. Se um dia forem dezenas,
+> aí um filtro por assunto *dentro* de cada aba de estado faz sentido — é adição, não
+> troca.
+
+Filtro no **cliente**, como decidido: o servidor já manda tudo e cada linha já carrega o
+que a classifica, então trocar de aba não toca a rede.
+
+**As linhas deixaram de ser widgets.** Widget tem posição fixa, e numa lista que rola a
+posição muda a cada quadro — um widget por linha exigiria reposicionar todos a cada
+rolagem. Desenhar à mão e tratar o clique com o deslocamento aplicado é menos código e
+não pode dessincronizar. As abas, que não rolam, continuam widgets. `enableScissor`
+recorta a lista para a linha que sai por cima não invadir o título.
+
+**Três objetivos e quatro alvos**, que é o eixo desenhado lá atrás finalmente pagando:
+`KILL`, `CAPTURE` e `BATTLE_WIN` × entidade, espécie, tipo elemental e geração. Cinco
+missões de exemplo cobrem cada combinação nova sem uma linha de Java por missão.
+
+> **Geração é etiqueta, não campo.** O Cobblemon não guarda número de geração: guarda
+> rótulos na espécie, entre eles `gen1`. Modelar como etiqueta espelha o dado real em vez
+> de inventar um paralelo — e abre `legendary` e `paradox` de graça, se um dia quisermos.
+
+> **Tipo elemental usa `showdownId`, não `getName()`.** O segundo é nome de exibição e
+> mudaria com o idioma, fazendo a mesma missão casar numa máquina e não noutra.
+
+> **Captura selvagem também encerra batalha em vitória.** Sem o `getWasWildCapture()`, a
+> mesma ação contaria duas vezes: como captura *e* como vitória.
+
+**Nada disso foi visto em jogo.**
+
 **Próxima ação:** `gradlew runClient` nesta branch e conferir:
 
-1. A missão `pokebook:three_pidgey` aparece como "Capturar Pidgey ×3".
-2. Capturar um Pidgey avança o contador; capturar outra espécie não.
-3. O log diz `Integração com o Cobblemon ativa.` na subida.
-4. A tela toca som ao acender e apagar, e a navegação toca ao trocar de tela.
-5. Na `main`, sem o Cobblemon, tudo continua subindo — só sem som e sem progresso de
-   captura.
+1. As três abas, e que a lista rola quando passa de quatro linhas.
+2. Resgatar dentro de uma lista rolada acerta a missão certa.
+3. Capturar um Pokémon de fogo avança `catch_fire_type`; vencer batalha contra um de
+   água avança `beat_water_type`; e os de geração 1.
+4. Capturar um Pokémon selvagem **não** avança nenhuma missão de `battle_win`.
+5. Na `main`, sem o Cobblemon, tudo sobe — só sem som e sem progresso de Pokémon.
 
-Depois: **redesenho da interface** (pode ser no trabalho, na `main`) e a **aba social,
+Depois: o **redesenho visual** (sprites com nine-slice, cara de macOS) e a **aba social,
 degrau 1**.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
