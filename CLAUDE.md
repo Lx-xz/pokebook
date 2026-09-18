@@ -56,6 +56,37 @@ lógica, orientação a objetos ou controle de fluxo.
 - **Template Fabric puro**, sem architectury nem Kotlin. O Cobblemon entra depois
   como repositório Maven + dependência, não exige re-scaffolding.
 
+## Branches — leia antes de commitar
+
+O repositório tem **duas branches permanentes**, e elas não são "estável e
+experimental": a divisão é por **dependência**, e existe por uma restrição de rede.
+
+| branch | o que tem |
+|---|---|
+| `main` | tudo, **menos** a dependência do Cobblemon |
+| `cobblemon` | a `main` mais o `build.gradle`, o `gradle.properties`, a classe de integração e as missões de Pokémon |
+
+**Por que:** com a dependência do Cobblemon na `main`, a máquina do trabalho não
+conseguiria **nem buildar** o projeto — o firewall trava no jar de 141 MB (ver
+"Ambiente do autor"). A separação é o que mantém as duas máquinas úteis: o Cobblemon em
+casa, todo o resto em qualquer lugar.
+
+**A regra de ouro:** mudança que **não** seja de Cobblemon **nasce na `main`** e é
+trazida para a branch com `git merge main`. Nunca o contrário. Código que nascer na
+`cobblemon` fica preso lá até um merge que não se quer fazer — a branch nunca volta para
+a `main`, porque levaria a dependência junto.
+
+> ⚠️ Isso já foi violado uma vez, por distração de estar com a branch em check-out.
+> **Antes de commitar, confira `git branch --show-current`.** Se o commit não tocar
+> `build.gradle`, `gradle.properties`, `integration/` ou as missões de Pokémon, ele
+> pertence à `main`. Conserto: `git cherry-pick -x <sha>` para a `main`.
+
+**O que mantém isso possível** é que o sistema de missões inteiro é livre do Cobblemon.
+Nenhum tipo dele atravessa a fronteira: o que entra no `MissionTarget` é `Identifier` e
+`String`. Uma missão de Pokémon **carrega** numa instalação sem o Cobblemon; ela apenas
+nunca progride. Ao escrever coisa nova, preserve essa propriedade — se um `import
+com.cobblemon` aparecer fora de `integration/`, a divisão quebrou.
+
 ## Armadilhas específicas deste projeto
 
 **Modelos de bloco Java aceitam só 5 ângulos de rotação**: `0`, `±22.5`, `±45`.
@@ -80,6 +111,14 @@ Fabric mostra os nomes da Mojang, que são diferentes: `onUse` e não `useWithou
 `addDrawableChild` e não `addRenderableWidget`. Copiar de lá dá nome inexistente.
 
 **`Identifier` perdeu o construtor público na 1.21** — usar `Identifier.of(ns, path)`.
+
+**Texto de interface é traduzido: dimensione pelo idioma mais verboso.** Um rótulo de
+aba que cabia em "Active" saiu cortado em "Em andamento". Ao escolher largura de botão
+ou de coluna, confira no português, não no inglês.
+
+**Widget não convive com lista que rola.** Widget tem posição fixa e a lista muda de
+posição a cada quadro. Numa lista rolável, desenhe as linhas à mão e trate o clique com
+o deslocamento aplicado; guarde widgets para o que não rola.
 
 ## Sobre o Cobblemon (para quando as missões chegarem)
 
@@ -134,14 +173,23 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
 - **Dois eixos de extensão**: `ObjectiveType` (o que fazer) e `TargetMatcher` (em
   quem vale). Separá-los permite combinar "derrotar" com "tipo voador" sem uma classe
   por combinação. O alvo trabalha sobre `Entity` porque Pokémon também são entidades.
-- **Definidas em Java**, não em datapack — a forma já é a que um JSON teria, então
-  extrair depois é escrever o carregador, não redesenhar o modelo.
 - **Todas usam entidades vanilla, e isso é produto e não andaime.** É o que mantém o
   sistema verificável sem o Cobblemon, inclusive no dia em que um update dele quebrar a
   integração e for preciso saber de quem é o defeito.
 - **Progresso na API de anexo do Fabric**, não no armazenamento do Cobblemon — a API
   dele quebra entre versões menores e não pode ter o poder de corromper histórico.
   `copyOnDeath()` é obrigatório: sem ele o respawn cria uma entidade nova e apaga tudo.
+- **Definidas em datapack**, em `data/<namespace>/pokebook/mission/<nome>.json`. O id sai
+  do caminho. As missões do próprio mod passam pelo mesmo caminho, como datapack
+  embutido — **não há lista em Java**, e portanto não há um caso "de dentro" que funcione
+  diferente do "de fora". Formato documentado no `README.md`.
+- **Três objetivos × quatro alvos.** `kill`, `capture`, `battle_win` × entidade, espécie,
+  tipo elemental, geração. Combinações novas saem sem código: só JSON. Foi para isso que
+  os dois eixos existem.
+- **Nome gerado, não escrito.** O título é montado de verbo + alvo + quantidade
+  ("Capturar Pidgey ×3"); não há chave de tradução por missão. O formato é "alvo ×N"
+  porque os arquivos de idioma do Minecraft **não têm plural** e o nome de uma espécie é
+  sempre singular.
 - **Resgate por botão, não automático.** Com recompensa automática o pokébook deixaria
   de ter função — ninguém precisaria abri-lo.
 - **Inventário cheio recusa e mantém resgatável**, em vez de dropar aos pés. A
@@ -167,5 +215,5 @@ documentação oficial do Fabric hoje mostra mappings da Mojang, que dão nomes 
 
 ## Estado atual
 
-v1 e o sistema de missões estão prontos e verificados em jogo. Veja `PLANO.md` para o
-histórico e `IDEIAS.md` para o que ainda é intenção.
+v1, o sistema de missões e a integração com o Cobblemon estão prontos e verificados em
+jogo. Veja `PLANO.md` para o histórico e `IDEIAS.md` para o que ainda é intenção.
