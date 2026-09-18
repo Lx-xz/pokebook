@@ -14,5 +14,12 @@
 	"objective.pokebook.kill.one": "Slay %s",
 	"screen.pokebook.close": "Close",
 	"objective.pokebook.capture": "Catch %s ×%s",
-	"objective.pokebook.capture.one": "Catch %s"
+	"objective.pokebook.capture.one": "Catch %s",
+	"screen.pokebook.tab.in_progress": "Active",
+	"screen.pokebook.tab.claimable": "Ready",
+	"screen.pokebook.tab.done": "Done",
+	"screen.pokebook.tab.empty": "Nothing here yet.",
+	"objective.pokebook.battle_win": "Defeat %s ×%s",
+	"objective.pokebook.battle_win.one": "Defeat %s",
+	"target.pokebook.generation": "Generation %s"
 }

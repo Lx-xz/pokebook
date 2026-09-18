@@ -23,8 +23,10 @@ public enum ObjectiveType implements StringIdentifiable {
 	KILL("kill"),
 
 	/** Capturar um Pokémon. Depende do Cobblemon para acontecer, mas não para existir. */
-	CAPTURE("capture");
-	// BATTLE_WIN — vencer uma batalha do Cobblemon
+	CAPTURE("capture"),
+
+	/** Vencer uma batalha. O alvo é o Pokémon derrotado, não o treinador. */
+	BATTLE_WIN("battle_win");
 
 	public static final Codec<ObjectiveType> CODEC = StringIdentifiable.createCodec(ObjectiveType::values);
 

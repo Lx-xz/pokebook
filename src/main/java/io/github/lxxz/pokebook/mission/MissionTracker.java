@@ -49,11 +49,16 @@ public final class MissionTracker {
 	 * Um Pokémon foi capturado.
 	 *
 	 * <p>Público porque quem chama é a classe de integração com o Cobblemon, que vive
-	 * noutro pacote e só é tocada quando o mod está presente. A espécie chega como
-	 * {@link Identifier} simples — nenhum tipo do Cobblemon atravessa esta fronteira.
+	 * noutro pacote e só é tocada quando o mod está presente. O Pokémon chega já traduzido
+	 * para {@link MissionTarget} — nenhum tipo do Cobblemon atravessa esta fronteira.
 	 */
-	public static void onCapture(ServerPlayerEntity player, Identifier species) {
-		advance(player, ObjectiveType.CAPTURE, MissionTarget.ofSpecies(species));
+	public static void onCapture(ServerPlayerEntity player, MissionTarget pokemon) {
+		advance(player, ObjectiveType.CAPTURE, pokemon);
+	}
+
+	/** Uma batalha foi vencida. O alvo é cada Pokémon derrotado. */
+	public static void onBattleWin(ServerPlayerEntity player, MissionTarget defeated) {
+		advance(player, ObjectiveType.BATTLE_WIN, defeated);
 	}
 
 	private static void advance(ServerPlayerEntity player, ObjectiveType type, MissionTarget target) {
