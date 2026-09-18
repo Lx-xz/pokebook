@@ -1,0 +1,6 @@
+{
+	"target": "minecraft:cow",
+	"required": 3,
+	"reward": "minecraft:leather",
+	"reward_count": 8
+}

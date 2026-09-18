@@ -1,6 +1,5 @@
 package io.github.lxxz.pokebook.client.screen;
 
-import io.github.lxxz.pokebook.mission.Mission;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.MissionEntry;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -37,7 +36,12 @@ public class MissionsScreen extends PokebookScreenBase {
 	}
 
 	@Override
-	protected void init() {
+	protected PokebookScreenBase parentScreen() {
+		return new PokebookMenuScreen(pos, nick, missions);
+	}
+
+	@Override
+	protected void initPanel() {
 		int rowY = panelY() + 28;
 		for (MissionEntry entry : missions) {
 			if (entry.claimable()) {
@@ -48,11 +52,6 @@ public class MissionsScreen extends PokebookScreenBase {
 			}
 			rowY += ROW_HEIGHT;
 		}
-
-		addDrawableChild(ButtonWidget.builder(
-			Text.translatable("screen.pokebook.back"),
-			button -> navigateTo(new PokebookMenuScreen(pos, nick, missions))
-		).dimensions(panelX() + 10, panelY() + PANEL_HEIGHT - 28, 60, 20).build());
 	}
 
 	@Override
@@ -65,7 +64,7 @@ public class MissionsScreen extends PokebookScreenBase {
 			context.drawItemInSlot(textRenderer, entry.reward(), x + 10, rowY + 4);
 
 			int titleColor = entry.claimed() ? COLOR_MUTED : (entry.complete() ? COLOR_DONE : COLOR_TEXT);
-			context.drawText(textRenderer, Mission.titleOf(entry.id()), x + 32, rowY + 2, titleColor, false);
+			context.drawText(textRenderer, entry.title(), x + 32, rowY + 2, titleColor, false);
 
 			Text status = entry.claimed()
 				? Text.translatable("screen.pokebook.claimed")

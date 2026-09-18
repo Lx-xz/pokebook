@@ -1,0 +1,5 @@
+{
+	"target": "minecraft:enderman",
+	"required": 1,
+	"reward": "minecraft:apple"
+}

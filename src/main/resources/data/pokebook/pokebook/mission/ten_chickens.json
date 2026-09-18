@@ -1,0 +1,5 @@
+{
+	"target": "minecraft:chicken",
+	"required": 10,
+	"reward": "minecraft:golden_apple"
+}

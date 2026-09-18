@@ -23,6 +23,7 @@ public final class MissionService {
 		for (Mission mission : Missions.all()) {
 			entries.add(new MissionEntry(
 				mission.id(),
+				mission.title(),
 				progress.count(mission.id()),
 				mission.required(),
 				mission.reward(),
@@ -53,13 +54,15 @@ public final class MissionService {
 		// Por isso exigimos um espaço livre e recusamos, em vez de dropar aos pés — o
 		// jogador libera um slot e clica de novo, sem perder nada. É deliberadamente
 		// diferente do vanilla, onde quase tudo é obtenível outra vez.
-		if (player.getInventory().getEmptySlot() < 0) {
+		// Uma missão de datapack pode não dar nada; nesse caso não há o que caber.
+		if (mission.hasReward() && player.getInventory().getEmptySlot() < 0) {
 			player.sendMessage(Text.translatable("message.pokebook.inventory_full"), true);
 			return;
 		}
 
-		ItemStack reward = mission.reward();
-		player.getInventory().insertStack(reward);
+		if (mission.hasReward()) {
+			player.getInventory().insertStack(mission.reward());
+		}
 		progress.markClaimed(missionId);
 		// O anexo só é marcado como sujo ao ser reatribuído.
 		player.setAttached(MissionTracker.PROGRESS, progress);

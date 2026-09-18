@@ -1,0 +1,6 @@
+{
+	"target": "minecraft:zombie",
+	"required": 5,
+	"reward": "minecraft:diamond",
+	"reward_count": 3
+}
