@@ -157,18 +157,21 @@ public abstract class PokebookScreenBase extends Screen {
 	 */
 	@Override
 	protected final void init() {
-		addDrawableChild(ButtonWidget.builder(Text.literal("✕"), button -> close())
-			.dimensions(contentX() + contentWidth() - CORNER_BUTTON, contentY(),
-				CORNER_BUTTON, CORNER_BUTTON)
-			.tooltip(Tooltip.of(Text.translatable("screen.pokebook.close")))
-			.build());
+		SpriteButtonWidget close = new SpriteButtonWidget(
+			contentX() + contentWidth() - CORNER_BUTTON, contentY(), CORNER_BUTTON,
+			Identifier.of(Pokebook.MOD_ID, "x"),
+			Text.translatable("screen.pokebook.close"), button -> close());
+		close.setTooltip(Tooltip.of(Text.translatable("screen.pokebook.close")));
+		addDrawableChild(close);
 
 		PokebookScreenBase parent = parentScreen();
 		if (parent != null) {
-			addDrawableChild(ButtonWidget.builder(Text.literal("←"), button -> navigateTo(parent))
-				.dimensions(contentX(), contentY(), CORNER_BUTTON, CORNER_BUTTON)
-				.tooltip(Tooltip.of(Text.translatable("screen.pokebook.back")))
-				.build());
+			SpriteButtonWidget back = new SpriteButtonWidget(
+				contentX(), contentY(), CORNER_BUTTON,
+				Identifier.of(Pokebook.MOD_ID, "seta"),
+				Text.translatable("screen.pokebook.back"), button -> navigateTo(parent));
+			back.setTooltip(Tooltip.of(Text.translatable("screen.pokebook.back")));
+			addDrawableChild(back);
 		}
 
 		initPanel();

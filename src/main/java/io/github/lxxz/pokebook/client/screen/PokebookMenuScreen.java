@@ -61,10 +61,10 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 	protected void initPanel() {
 		List<Tile> tiles = new ArrayList<>();
 
-		tiles.add(new Tile("◎", null, "screen.pokebook.missions",
+		tiles.add(new Tile("◎", icon("icone_missoes"), "screen.pokebook.missions",
 			() -> navigateTo(new MissionsScreen(session, missions))));
 
-		tiles.add(new Tile("✉", null, "screen.pokebook.social", () -> {
+		tiles.add(new Tile("✉", icon("icone_mensagens"), "screen.pokebook.social", () -> {
 			// O pedido sai junto com a navegação, e a tela nasce vazia até a resposta
 			// chegar. Pedir aqui e não ao abrir o aparelho evita mandar a lista de todo
 			// mundo em aberturas que nunca chegam a esta aba.
