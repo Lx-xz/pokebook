@@ -30,6 +30,9 @@ public class IconTileWidget extends ButtonWidget {
 	/** Quanto da altura do quadrado o desenho ocupa. O resto é respiro em volta. */
 	private static final float GLYPH_FILL = 0.55f;
 
+	/** Abaixo disto a fonte de bitmap fica ilegível, e cortar passa a ser melhor. */
+	private static final float MIN_LABEL_SCALE = 0.7f;
+
 	/** Lado do desenho, em pixels. É o tamanho em que a textura foi feita. */
 	private static final int ICON_SIZE = 32;
 
@@ -77,9 +80,7 @@ public class IconTileWidget extends ButtonWidget {
 		// Sem fundo por enquanto: o quadrado branco era provisório e escondia a arte. Sem
 		// ele, quem dá a resposta ao mouse é a cor do desenho — por isso o tom escurece ao
 		// passar por cima, senão o ícone não reagiria a nada.
-		int tint = !active
-			? PokebookScreenBase.COLOR_MUTED
-			: (isHovered() ? PokebookScreenBase.COLOR_TEXT : PokebookScreenBase.COLOR_ACCENT);
+		int tint = labelTint();
 
 		if (sprite != null) {
 			// O tingimento multiplica a cor da textura pela cor pedida. Duas consequências
@@ -132,14 +133,48 @@ public class IconTileWidget extends ButtonWidget {
 		renderLabel(context, x, y);
 	}
 
-	/** O rótulo embaixo, cortado se não couber: melhor "Missõ..." do que invadir o vizinho. */
+	/**
+	 * O rótulo embaixo, encolhido só o quanto for preciso para caber.
+	 *
+	 * <p>Cortar era a solução anterior, e ela sacrificava a palavra inteira: "Ligações"
+	 * virava "Ligaçõe". Encolher preserva a palavra, e o custo aparece só onde há aperto —
+	 * um rótulo curto continua em tamanho cheio.
+	 *
+	 * <p>A fonte do jogo é de bitmap e não tem tamanho intermediário, então reduzir é
+	 * escalar a matriz: abaixo de uns 70% os pixels começam a se comer. {@link #MIN_LABEL_SCALE}
+	 * é esse piso — quem passar dele volta a ser cortado, porque ilegível é pior que curto.
+	 */
 	private void renderLabel(DrawContext context, int x, int y) {
 		var textRenderer = net.minecraft.client.MinecraftClient.getInstance().textRenderer;
-		Text label = getMessage();
-		String trimmed = textRenderer.trimToWidth(label.getString(), tileSize);
-		int labelX = x + (tileSize - textRenderer.getWidth(trimmed)) / 2;
-		context.drawText(textRenderer, trimmed, labelX, y + iconBoxHeight() + LABEL_GAP,
-			active ? PokebookScreenBase.COLOR_TEXT : PokebookScreenBase.COLOR_MUTED, false);
+
+		int tint = labelTint();
+		String text = getMessage().getString();
+		int width = textRenderer.getWidth(text);
+		int labelY = y + iconBoxHeight() + LABEL_GAP;
+
+		if (width <= tileSize) {
+			context.drawText(textRenderer, text, x + (tileSize - width) / 2, labelY, tint, false);
+			return;
+		}
+
+		float scale = Math.max(MIN_LABEL_SCALE, tileSize / (float) width);
+		if (tileSize / (float) width < MIN_LABEL_SCALE) {
+			text = textRenderer.trimToWidth(text, (int) (tileSize / MIN_LABEL_SCALE));
+			width = textRenderer.getWidth(text);
+		}
+
+		context.getMatrices().push();
+		context.getMatrices().translate(x + tileSize / 2f, labelY, 0f);
+		context.getMatrices().scale(scale, scale, 1f);
+		context.drawText(textRenderer, text, -width / 2, 0, tint, false);
+		context.getMatrices().pop();
+	}
+
+	/** A mesma cor do desenho: rótulo e ícone são uma coisa só, e reagem juntos. */
+	private int labelTint() {
+		return !active
+			? PokebookScreenBase.COLOR_MUTED
+			: (isHovered() ? PokebookScreenBase.COLOR_TEXT : PokebookScreenBase.COLOR_ACCENT);
 	}
 
 }

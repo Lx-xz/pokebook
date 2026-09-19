@@ -295,6 +295,9 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
   entidade ou inventário.
 - **Sem o SVC o botão não existe** — o cliente esconde, o servidor recusa. Sinalização
   funcionando e ninguém se ouvindo é pior do que não ter o recurso.
+- **Ligar é só do poképhone.** O pokébook não mostra o ícone. Reforça a divisão que o
+  projeto persegue — a estação administra (é onde se resgata recompensa), o aparelho de
+  bolso comunica — e é o que faz sentido: ninguém liga de um notebook parado na mesa.
 
 ## Técnica
 

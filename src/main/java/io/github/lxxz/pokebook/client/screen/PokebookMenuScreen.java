@@ -72,11 +72,16 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 			navigateTo(new SocialScreen(session, missions));
 		}));
 
-		// O ícone de ligar só existe onde há como falar. Sem o Simple Voice Chat toda a
-		// sinalização funcionaria e ninguém ouviria nada — um telefone mudo é pior do que
-		// um telefone que não está ali. O servidor recusa de qualquer forma; esconder aqui
-		// é para não oferecer o que não se pode cumprir.
-		if (CallService.available()) {
+		// Ligar é do aparelho de bolso, não da estação. Reforça a divisão que o projeto
+		// persegue — o pokébook administra (é onde se resgata recompensa), o poképhone
+		// comunica — e também é o que faz sentido: ninguém liga de um notebook parado em
+		// cima de uma mesa.
+		//
+		// A segunda condição é outra coisa: sem o Simple Voice Chat toda a sinalização
+		// funcionaria e ninguém ouviria nada, e um telefone mudo é pior do que um telefone
+		// que não está ali. O servidor recusa de qualquer forma; esconder é para não
+		// oferecer o que não se pode cumprir.
+		if (session.portable() && CallService.available()) {
 			tiles.add(new Tile("☎", icon("icone_ligacoes"), "screen.pokebook.calls",
 				() -> navigateTo(new CallScreen(session, missions))));
 		}
