@@ -145,6 +145,12 @@ faz o cliente esconder o botão sozinho. Antes de contornar o comportamento de o
 procure a chave de config no jar dele — `javap -p` na classe de config mostra os campos,
 e as strings do `.class` mostram os nomes das chaves.
 
+**Textura de ícone se desenha em BRANCO.** O tingimento multiplica a cor da textura
+pela cor pedida, então branco aceita qualquer cor que o código mandar e preto continua
+preto. Desenhar em branco é o que deixa um arquivo só servir aos estados — normal, sob o
+mouse, desabilitado. ⚠️ E `setShaderColor` é **estado global do quadro**: sem voltar a
+`(1,1,1,1)` depois de desenhar, tudo o que vier a seguir sai tingido.
+
 **A moldura vai em `renderBackground`, não em `render`.** O `render` do vanilla desenha
 o fundo **e depois** os widgets. Desenhar a moldura dentro do `render`, após
 `super.render`, a põe **por cima de todos os botões**. O defeito fica escondido por muito

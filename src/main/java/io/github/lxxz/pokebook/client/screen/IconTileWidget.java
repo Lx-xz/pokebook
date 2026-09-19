@@ -71,12 +71,31 @@ public class IconTileWidget extends ButtonWidget {
 		int tint = active ? PokebookScreenBase.COLOR_ACCENT : PokebookScreenBase.COLOR_MUTED;
 
 		if (sprite != null) {
+			// O tingimento multiplica a cor da textura pela cor pedida. Duas consequências
+			// que mandam em como o desenho deve ser feito:
+			//
+			// - o desenho tem de ser BRANCO. Branco é o neutro da multiplicação, então
+			//   aceita qualquer cor daqui. Um desenho preto continuaria preto, porque
+			//   qualquer cor vezes preto dá preto;
+			// - a cor passa a ser decidida pelo código, e é isso que deixa o ícone esmaecer
+			//   quando está desabilitado sem precisar de um segundo arquivo.
+			context.setShaderColor(
+				((tint >> 16) & 0xFF) / 255f,
+				((tint >> 8) & 0xFF) / 255f,
+				(tint & 0xFF) / 255f,
+				1f);
+
 			// A textura é desenhada no tamanho em que foi feita, nunca esticada: ampliar
 			// desenho borra, e é justamente o que o nine-slice existe para evitar. Se um dia
 			// o quadrado ficar grande demais para um ícone de 32, o certo é ampliar por
 			// número inteiro (32 para 64), não por fração.
 			context.drawGuiTexture(sprite,
 				x + (tileSize - ICON_SIZE) / 2, y + (tileSize - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
+
+			// ⚠️ Voltar ao branco é obrigatório. A cor do shader é estado global do quadro:
+			// esquecer aqui tinge tudo o que for desenhado depois, na tela inteira.
+			context.setShaderColor(1f, 1f, 1f, 1f);
+
 			renderLabel(context, x, y);
 			return;
 		}
