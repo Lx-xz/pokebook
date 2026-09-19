@@ -3,6 +3,7 @@ package io.github.lxxz.pokebook.client.screen;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 /**
  * Um ícone de tela inicial: quadrado com o desenho, rótulo embaixo.
@@ -29,12 +30,23 @@ public class IconTileWidget extends ButtonWidget {
 	/** Quanto da altura do quadrado o desenho ocupa. O resto é respiro em volta. */
 	private static final float GLYPH_FILL = 0.55f;
 
+	/** Lado do desenho, em pixels. É o tamanho em que a textura foi feita. */
+	private static final int ICON_SIZE = 32;
+
 	private final String glyph;
+	private final Identifier sprite;
 	private final int tileSize;
 
-	public IconTileWidget(int x, int y, int tileSize, int height, String glyph, Text label, PressAction onPress) {
+	/**
+	 * @param sprite a textura do ícone, ou {@code null} para usar o glifo provisório.
+	 *               Os dois convivem de propósito: as texturas chegam uma a uma, e um
+	 *               ícone sem textura ainda precisa aparecer.
+	 */
+	public IconTileWidget(int x, int y, int tileSize, int height, String glyph, Identifier sprite,
+			Text label, PressAction onPress) {
 		super(x, y, tileSize, height, label, onPress, DEFAULT_NARRATION_SUPPLIER);
 		this.glyph = glyph;
+		this.sprite = sprite;
 		this.tileSize = tileSize;
 	}
 
@@ -58,6 +70,17 @@ public class IconTileWidget extends ButtonWidget {
 
 		int tint = active ? PokebookScreenBase.COLOR_ACCENT : PokebookScreenBase.COLOR_MUTED;
 
+		if (sprite != null) {
+			// A textura é desenhada no tamanho em que foi feita, nunca esticada: ampliar
+			// desenho borra, e é justamente o que o nine-slice existe para evitar. Se um dia
+			// o quadrado ficar grande demais para um ícone de 32, o certo é ampliar por
+			// número inteiro (32 para 64), não por fração.
+			context.drawGuiTexture(sprite,
+				x + (tileSize - ICON_SIZE) / 2, y + (tileSize - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
+			renderLabel(context, x, y);
+			return;
+		}
+
 		// O glifo centrado no quadrado, ampliado para ocupar o ícone.
 		//
 		// A fonte do jogo tem um tamanho só, então aumentar um caractere é escalar a
@@ -77,8 +100,12 @@ public class IconTileWidget extends ButtonWidget {
 			-textRenderer.getWidth(glyph) / 2, -textRenderer.fontHeight / 2, tint, false);
 		context.getMatrices().pop();
 
-		// O rótulo embaixo, cortado se não couber: é melhor "Missõ..." do que texto
-		// invadindo o ícone vizinho.
+		renderLabel(context, x, y);
+	}
+
+	/** O rótulo embaixo, cortado se não couber: melhor "Missõ..." do que invadir o vizinho. */
+	private void renderLabel(DrawContext context, int x, int y) {
+		var textRenderer = net.minecraft.client.MinecraftClient.getInstance().textRenderer;
 		Text label = getMessage();
 		String trimmed = textRenderer.trimToWidth(label.getString(), tileSize);
 		int labelX = x + (tileSize - textRenderer.getWidth(trimmed)) / 2;

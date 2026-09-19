@@ -1,11 +1,13 @@
 package io.github.lxxz.pokebook.client.screen;
 
+import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.network.MissionEntry;
 import io.github.lxxz.pokebook.network.RequestSocialPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,18 +43,28 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 		this.missions = missions;
 	}
 
-	/** Uma função da tela inicial: o desenho, o nome e o que faz ao ser tocada. */
-	private record Tile(String glyph, String labelKey, Runnable action) {
+	/**
+	 * Uma função da tela inicial.
+	 *
+	 * <p>{@code sprite} nulo significa "ainda sem textura": o ícone cai no glifo. As
+	 * texturas chegam uma a uma, e a tela não pode esperar todas para funcionar.
+	 */
+	private record Tile(String glyph, Identifier sprite, String labelKey, Runnable action) {
+	}
+
+	/** Uma textura de ícone pelo nome do arquivo em {@code textures/gui/sprites/}. */
+	private static Identifier icon(String name) {
+		return Identifier.of(Pokebook.MOD_ID, name);
 	}
 
 	@Override
 	protected void initPanel() {
 		List<Tile> tiles = new ArrayList<>();
 
-		tiles.add(new Tile("◎", "screen.pokebook.missions",
+		tiles.add(new Tile("◎", null, "screen.pokebook.missions",
 			() -> navigateTo(new MissionsScreen(session, missions))));
 
-		tiles.add(new Tile("✉", "screen.pokebook.social", () -> {
+		tiles.add(new Tile("✉", null, "screen.pokebook.social", () -> {
 			// O pedido sai junto com a navegação, e a tela nasce vazia até a resposta
 			// chegar. Pedir aqui e não ao abrir o aparelho evita mandar a lista de todo
 			// mundo em aberturas que nunca chegam a esta aba.
@@ -65,7 +77,7 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 		// um telefone que não está ali. O servidor recusa de qualquer forma; esconder aqui
 		// é para não oferecer o que não se pode cumprir.
 		if (CallService.available()) {
-			tiles.add(new Tile("☎", "screen.pokebook.calls",
+			tiles.add(new Tile("☎", icon("icone_ligacoes"), "screen.pokebook.calls",
 				() -> navigateTo(new CallScreen(session, missions))));
 		}
 
@@ -81,7 +93,8 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 			int y = contentTop() + 6 + row * (cellHeight + TILE_GAP);
 
 			addDrawableChild(new IconTileWidget(x, y, tileSize, cellHeight,
-				tile.glyph(), Text.translatable(tile.labelKey()), button -> tile.action().run()));
+				tile.glyph(), tile.sprite(), Text.translatable(tile.labelKey()),
+				button -> tile.action().run()));
 		}
 	}
 
