@@ -38,6 +38,18 @@ public class IconTileWidget extends ButtonWidget {
 	private final int tileSize;
 
 	/**
+	 * A altura reservada ao desenho. É a do próprio ícone, e não a largura do componente:
+	 * antes o desenho de 32 ficava centrado num quadrado de 48, com 8 px vazios em cima e
+	 * embaixo, e era esse vazio que jogava o rótulo para longe.
+	 *
+	 * <p>A largura continua vindo da grade, porque quem a decide é o <b>rótulo</b> — o
+	 * ícone tem 32 px e o texto embaixo costuma ser mais largo que isso.
+	 */
+	private int iconBoxHeight() {
+		return ICON_SIZE;
+	}
+
+	/**
 	 * @param sprite a textura do ícone, ou {@code null} para usar o glifo provisório.
 	 *               Os dois convivem de propósito: as texturas chegam uma a uma, e um
 	 *               ícone sem textura ainda precisa aparecer.
@@ -50,9 +62,9 @@ public class IconTileWidget extends ButtonWidget {
 		this.tileSize = tileSize;
 	}
 
-	/** A altura total que um ícone ocupa: o quadrado, a folga e a linha do rótulo. */
-	public static int heightFor(int tileSize, int fontHeight) {
-		return tileSize + LABEL_GAP + fontHeight;
+	/** A altura total que um ícone ocupa: o desenho, a folga e a linha do rótulo. */
+	public static int heightFor(int fontHeight) {
+		return ICON_SIZE + LABEL_GAP + fontHeight;
 	}
 
 	@Override
@@ -62,13 +74,12 @@ public class IconTileWidget extends ButtonWidget {
 		int x = getX();
 		int y = getY();
 
-		// Fundo do ícone. Vira drawGuiTexture quando houver sprite.
-		int background = !active
-			? 0x40FFFFFF
-			: (isHovered() ? 0xFFFFFFFF : 0xE6FFFFFF);
-		context.fill(x, y, x + tileSize, y + tileSize, background);
-
-		int tint = active ? PokebookScreenBase.COLOR_ACCENT : PokebookScreenBase.COLOR_MUTED;
+		// Sem fundo por enquanto: o quadrado branco era provisório e escondia a arte. Sem
+		// ele, quem dá a resposta ao mouse é a cor do desenho — por isso o tom escurece ao
+		// passar por cima, senão o ícone não reagiria a nada.
+		int tint = !active
+			? PokebookScreenBase.COLOR_MUTED
+			: (isHovered() ? PokebookScreenBase.COLOR_TEXT : PokebookScreenBase.COLOR_ACCENT);
 
 		if (sprite != null) {
 			// O tingimento multiplica a cor da textura pela cor pedida. Duas consequências
@@ -89,8 +100,7 @@ public class IconTileWidget extends ButtonWidget {
 			// desenho borra, e é justamente o que o nine-slice existe para evitar. Se um dia
 			// o quadrado ficar grande demais para um ícone de 32, o certo é ampliar por
 			// número inteiro (32 para 64), não por fração.
-			context.drawGuiTexture(sprite,
-				x + (tileSize - ICON_SIZE) / 2, y + (tileSize - ICON_SIZE) / 2, ICON_SIZE, ICON_SIZE);
+			context.drawGuiTexture(sprite, x + (tileSize - ICON_SIZE) / 2, y, ICON_SIZE, ICON_SIZE);
 
 			// ⚠️ Voltar ao branco é obrigatório. A cor do shader é estado global do quadro:
 			// esquecer aqui tinge tudo o que for desenhado depois, na tela inteira.
@@ -108,12 +118,12 @@ public class IconTileWidget extends ButtonWidget {
 		//
 		// A escala sai do tamanho do ícone em vez de ser um número fixo, senão o glifo
 		// ficaria certo no poképhone e pequeno no pokébook, onde o quadrado é maior.
-		float scale = Math.max(1f, (tileSize * GLYPH_FILL) / textRenderer.fontHeight);
+		float scale = Math.max(1f, (iconBoxHeight() * GLYPH_FILL) / textRenderer.fontHeight);
 
 		context.getMatrices().push();
 		// Escalar multiplica a posição também, então move-se primeiro para o centro do
 		// quadrado, escala-se ali, e só então se desenha centrado na origem.
-		context.getMatrices().translate(x + tileSize / 2f, y + tileSize / 2f, 0f);
+		context.getMatrices().translate(x + tileSize / 2f, y + iconBoxHeight() / 2f, 0f);
 		context.getMatrices().scale(scale, scale, 1f);
 		context.drawText(textRenderer, glyph,
 			-textRenderer.getWidth(glyph) / 2, -textRenderer.fontHeight / 2, tint, false);
@@ -128,7 +138,7 @@ public class IconTileWidget extends ButtonWidget {
 		Text label = getMessage();
 		String trimmed = textRenderer.trimToWidth(label.getString(), tileSize);
 		int labelX = x + (tileSize - textRenderer.getWidth(trimmed)) / 2;
-		context.drawText(textRenderer, trimmed, labelX, y + tileSize + LABEL_GAP,
+		context.drawText(textRenderer, trimmed, labelX, y + iconBoxHeight() + LABEL_GAP,
 			active ? PokebookScreenBase.COLOR_TEXT : PokebookScreenBase.COLOR_MUTED, false);
 	}
 

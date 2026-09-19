@@ -41,9 +41,10 @@ public abstract class PokebookScreenBase extends Screen {
 	 */
 	private static final int LANDSCAPE_WIDTH = 240;
 	private static final int LANDSCAPE_HEIGHT = 160;
-	// 176 e não 160: com três abas lado a lado, 160 deixava cada uma com 48 px e os
-	// rótulos se sobrepunham. Largura de aba tem de caber no idioma mais verboso.
-	private static final int PORTRAIT_WIDTH = 176;
+	// A largura em pé é decidida pelo RÓTULO mais longo, não pelo ícone: três rótulos
+	// lado a lado ("Ligações" é o pior caso em português) é o que define o mínimo. 176
+	// deixava a tela com cara de tablet; 152 é o menor valor em que os três ainda cabem.
+	private static final int PORTRAIT_WIDTH = 152;
 	private static final int PORTRAIT_HEIGHT = 220;
 
 	/**
@@ -53,7 +54,7 @@ public abstract class PokebookScreenBase extends Screen {
 	 * <p>Deixe {@code false} antes de considerar qualquer visual pronto — a borda desenha
 	 * por cima de tudo, inclusive do que ela está medindo.
 	 */
-	public static final boolean LAYOUT_DEBUG = true;
+	public static final boolean LAYOUT_DEBUG = false;
 
 	/** Vermelho: a moldura inteira. */
 	protected static final int DEBUG_PANEL = 0xFFFF2040;

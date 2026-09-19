@@ -82,7 +82,7 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 		}
 
 		int tileSize = (contentWidth() - TILE_GAP * (COLUMNS - 1)) / COLUMNS;
-		int cellHeight = IconTileWidget.heightFor(tileSize, textRenderer.fontHeight);
+		int cellHeight = IconTileWidget.heightFor(textRenderer.fontHeight);
 
 		for (int i = 0; i < tiles.size(); i++) {
 			Tile tile = tiles.get(i);
