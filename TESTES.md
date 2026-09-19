@@ -13,8 +13,8 @@ ligações.
    mesmo tempo na mesma máquina. Em modo offline qualquer nome de usuário serve.
 3. Abrir dois clients, em dois terminais, com nomes diferentes:
    ```
-   gradlew runClient --args="--username Jogador1"
-   gradlew runClient --args="--username Jogador2"
+   gradlew runClient --args="--username Luiz"
+   gradlew runClient --args="--username Ruthe"
    ```
 4. Cada client conecta pelo multiplayer normal em `localhost:25565`.
 
