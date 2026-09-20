@@ -30,9 +30,6 @@ public class IconTileWidget extends ButtonWidget {
 	/** Quanto da altura do quadrado o desenho ocupa. O resto é respiro em volta. */
 	private static final float GLYPH_FILL = 0.55f;
 
-	/** Abaixo disto a fonte de bitmap fica ilegível, e cortar passa a ser melhor. */
-	private static final float MIN_LABEL_SCALE = 0.7f;
-
 	/** Lado do desenho, em pixels. É o tamanho em que a textura foi feita. */
 	private static final int ICON_SIZE = 32;
 
@@ -136,38 +133,15 @@ public class IconTileWidget extends ButtonWidget {
 	/**
 	 * O rótulo embaixo, encolhido só o quanto for preciso para caber.
 	 *
-	 * <p>Cortar era a solução anterior, e ela sacrificava a palavra inteira: "Ligações"
-	 * virava "Ligaçõe". Encolher preserva a palavra, e o custo aparece só onde há aperto —
-	 * um rótulo curto continua em tamanho cheio.
-	 *
-	 * <p>A fonte do jogo é de bitmap e não tem tamanho intermediário, então reduzir é
-	 * escalar a matriz: abaixo de uns 70% os pixels começam a se comer. {@link #MIN_LABEL_SCALE}
-	 * é esse piso — quem passar dele volta a ser cortado, porque ilegível é pior que curto.
+	 * <p>Quem encolhe é {@link PokebookScreenBase#drawFittedLabel}, que as abas das missões
+	 * também usam: o problema é o mesmo — texto traduzido dentro de uma largura fixa — e a
+	 * resposta não deveria existir em dois lugares.
 	 */
 	private void renderLabel(DrawContext context, int x, int y) {
 		var textRenderer = net.minecraft.client.MinecraftClient.getInstance().textRenderer;
 
-		int tint = labelTint();
-		String text = getMessage().getString();
-		int width = textRenderer.getWidth(text);
-		int labelY = y + iconBoxHeight() + LABEL_GAP;
-
-		if (width <= tileSize) {
-			context.drawText(textRenderer, text, x + (tileSize - width) / 2, labelY, tint, false);
-			return;
-		}
-
-		float scale = Math.max(MIN_LABEL_SCALE, tileSize / (float) width);
-		if (tileSize / (float) width < MIN_LABEL_SCALE) {
-			text = textRenderer.trimToWidth(text, (int) (tileSize / MIN_LABEL_SCALE));
-			width = textRenderer.getWidth(text);
-		}
-
-		context.getMatrices().push();
-		context.getMatrices().translate(x + tileSize / 2f, labelY, 0f);
-		context.getMatrices().scale(scale, scale, 1f);
-		context.drawText(textRenderer, text, -width / 2, 0, tint, false);
-		context.getMatrices().pop();
+		PokebookScreenBase.drawFittedLabel(context, textRenderer, getMessage().getString(),
+			x + tileSize / 2, y + iconBoxHeight() + LABEL_GAP, tileSize, labelTint());
 	}
 
 	/** A mesma cor do desenho: rótulo e ícone são uma coisa só, e reagem juntos. */

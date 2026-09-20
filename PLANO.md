@@ -287,6 +287,47 @@ não como arquivo: quem salva o PNG é o autor (`F2` no jogo escreve em
 
 ## Onde paramos
 
+### Sessão de 20/09/2026 — a moldura do poképhone
+
+O autor desenhou a moldura em pixel art e ela está **ligada e verificada em jogo**. O
+caminho até ela rendeu mais armadilhas que código; as duradouras foram para o `CLAUDE.md`.
+
+**A moldura.** `pokephone_gui.png`, nine-slice, borda `{7, 6, 7, 26}`. O queixo de 26 px
+foi escolha do autor, para caber o botão central de 14×14 com folga — dos 26, vinte são
+chassi escuro e o resto é friso e sombra.
+
+**O arquivo tem 256×256 e quase toda essa área é faixa uniforme.** Não é desperdício: é
+o que evita a emenda do ladrilhamento (ver `CLAUDE.md`). As faixas foram geradas por
+script a partir da arte de 64×64 do autor, repetindo colunas e linhas do miolo — nenhum
+pixel foi redesenhado.
+
+**`CONTENT_INSET` virou quatro constantes**, `INSET_LEFT/TOP/RIGHT/BOTTOM`. Um valor só
+funcionava enquanto a moldura era simétrica, e ela deixou de ser: o aparelho tem queixo
+grosso e testa fina, como um celular.
+
+**Rótulo encolhe em vez de cortar, e agora num lugar só.** `PokebookScreenBase
+.drawFittedLabel` — os ícones da tela inicial já faziam isso e as abas das missões não,
+então "Resgatar" aparecia como "esgata". O `TabButtonWidget` novo sobrescreve só o
+desenho do texto do botão do vanilla e herda o resto.
+
+**O botão central existe e funciona**: volta para a tela inicial, e na tela inicial
+desliga. Tem par de cores próprio (`COLOR_CHASSIS`/`COLOR_CHASSIS_HOVER`), tirado da
+própria moldura, porque a paleta do mod foi escolhida para fundo claro e sumiria no
+chassi escuro.
+
+**Cada aparelho fecha de um jeito só.** Celular pelo botão do queixo, notebook pelo ✕.
+Esc continua fechando os dois.
+
+**A próxima coisa é uma interface própria para o notebook.** A moldura de hoje é a mesma
+nos dois, e um notebook em paisagem com queixo de celular não é o desenho certo. Nada
+começou.
+
+**Continua em aberto**, sem nada feito: as abas ainda usam a moldura cinza do vanilla,
+que é o que mais destoa da arte; os ícones das missões ainda são maçãs provisórias; falta
+pixel art para cartão de missão, botão genérico, abas e barra de rolagem; e a entrevista
+sobre o que está no `IDEIAS.md` nunca aconteceu.
+
+
 ### Sessão de 18/09/2026
 
 Antes: correção do `AttachmentRegistry.builder()` `@Deprecated`, missões por datapack,

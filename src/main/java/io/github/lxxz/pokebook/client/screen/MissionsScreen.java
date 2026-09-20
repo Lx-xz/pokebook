@@ -84,9 +84,11 @@ public class MissionsScreen extends PokebookScreenBase {
 		int tabX = contentX();
 
 		for (Tab candidate : tabs) {
-			ButtonWidget button = ButtonWidget.builder(Text.translatable(candidate.key), b -> selectTab(candidate))
-				.dimensions(tabX, contentTop(), tabWidth, TAB_HEIGHT)
-				.build();
+			// TabButtonWidget e não o botão do vanilla: o rótulo é texto traduzido dentro de
+			// uma largura que é a conta "largura da tela dividida por três", e o vanilla
+			// cortaria "Resgatar" em "esgata". Aqui ele encolhe.
+			ButtonWidget button = new TabButtonWidget(tabX, contentTop(), tabWidth, TAB_HEIGHT,
+				Text.translatable(candidate.key), b -> selectTab(candidate));
 			// A aba atual não é clicável: já estamos nela, e desabilitada ela também fica
 			// visualmente distinta das outras sem precisar de sprite próprio.
 			button.active = candidate != tab;

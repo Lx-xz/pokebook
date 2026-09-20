@@ -11,6 +11,7 @@
 	"objective.pokebook.kill": "Abater %s ×%s",
 	"objective.pokebook.kill.one": "Abater %s",
 	"screen.pokebook.close": "Fechar",
+	"screen.pokebook.home": "Início",
 	"objective.pokebook.capture": "Capturar %s ×%s",
 	"objective.pokebook.capture.one": "Capturar %s",
 	"screen.pokebook.tab.in_progress": "Ativas",

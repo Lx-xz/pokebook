@@ -24,3 +24,5 @@ o comando ali e dá Enter, mesmo com o log rolando por cima:
 op Jogador1
 ```
 Ou, já dentro do jogo com um jogador operado, `/op Jogador2` pelo chat.
+
+gradlew processResources

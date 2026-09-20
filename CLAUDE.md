@@ -158,6 +158,33 @@ tempo porque botão do vanilla desenha texto e sprite em camadas que o jogo esva
 tarde, e reaparece por cima; um widget nosso que pinte o próprio fundo com `fill` some
 inteiro. Foi assim que os ícones da tela inicial nasceram invisíveis.
 
+**A 1.21.1 REPETE o nine-slice, não estica.** A classe `Scaling$NineSlice` tem três
+campos — `width`, `height`, `border` — e mais nada; o `stretch_inner`, que faz as faixas
+esticarem, só chegou na 1.21.2. Consequência: uma faixa de 52 px preenchendo 140 é
+desenhada três vezes, e **cada emenda pode aparecer como um pixel claro**. Foi o que
+sujou o queixo do poképhone. A saída na nossa versão é a textura ser larga o bastante
+para uma faixa só cobrir o maior aparelho — a moldura tem 256×256 por isso, quase toda
+ela faixa uniforme, o que comprime para menos de 1 KB. A emenda só incomoda onde há
+contraste: nas laterais ela existia desde sempre e ninguém via, porque caía no meio de
+uma faixa escura contínua.
+
+**A borda do nine-slice tem de ser maior que o canto arredondado.** Se a diagonal do
+canto avançar um pixel para dentro da faixa repetível, esse pixel é repetido ao longo de
+toda a aresta. Já aconteceu: com borda 6, a linha 57 da moldura tinha um pixel de canto
+na coluna 6, e a borda teve de virar 7. **Confira contando as colunas do arquivo**, não
+olhando o desenho.
+
+**A borda do `.mcmeta` e os `INSET_*` do `PokebookScreenBase` são a mesma medida dita
+duas vezes** — uma para o jogo recortar a textura, outra para posicionar o conteúdo. Se a
+arte mudar de espessura, os dois mudam juntos; senão o conteúdo nasce por baixo do
+chassi, sem erro no log.
+
+**A arte muda debaixo dos pés.** O autor reexporta do GIMP entre uma mensagem e outra, e
+já houve duas vezes em que as medidas em uso eram de uma versão que não existia mais.
+**Releia o PNG antes de escrever qualquer número derivado dele** — e ao gerar arte por
+script, ponha `assert` sobre o que se espera do arquivo, que foi o que pegou o erro da
+borda 6.
+
 **Widget não convive com lista que rola.** Widget tem posição fixa e a lista muda de
 posição a cada quadro. Numa lista rolável, desenhe as linhas à mão e trate o clique com
 o deslocamento aplicado; guarde widgets para o que não rola.

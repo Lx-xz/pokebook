@@ -20,17 +20,34 @@ import net.minecraft.util.Identifier;
  */
 public class SpriteButtonWidget extends ButtonWidget {
 	private final Identifier sprite;
+	private final int color;
+	private final int hoverColor;
 
+	/** Sobre a tela acesa: as cores da paleta clara. */
 	public SpriteButtonWidget(int x, int y, int size, Identifier sprite, Text label, PressAction onPress) {
+		this(x, y, size, sprite, label, onPress,
+			PokebookScreenBase.COLOR_TEXT, PokebookScreenBase.COLOR_ACCENT);
+	}
+
+	/**
+	 * Com cores próprias, para quem não é desenhado sobre a tela acesa.
+	 *
+	 * <p>Quem precisa disto é o botão central, que fica no chassi escuro: a paleta padrão foi
+	 * escolhida para fundo claro e sumiria ali.
+	 */
+	public SpriteButtonWidget(int x, int y, int size, Identifier sprite, Text label, PressAction onPress,
+			int color, int hoverColor) {
 		super(x, y, size, size, label, onPress, DEFAULT_NARRATION_SUPPLIER);
 		this.sprite = sprite;
+		this.color = color;
+		this.hoverColor = hoverColor;
 	}
 
 	@Override
 	protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
 		int tint = !active
 			? PokebookScreenBase.COLOR_MUTED
-			: (isHovered() ? PokebookScreenBase.COLOR_ACCENT : PokebookScreenBase.COLOR_TEXT);
+			: (isHovered() ? hoverColor : color);
 
 		context.setShaderColor(
 			((tint >> 16) & 0xFF) / 255f,

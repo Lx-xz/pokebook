@@ -11,6 +11,7 @@
 	"objective.pokebook.kill": "Slay %s ×%s",
 	"objective.pokebook.kill.one": "Slay %s",
 	"screen.pokebook.close": "Close",
+	"screen.pokebook.home": "Home",
 	"objective.pokebook.capture": "Catch %s ×%s",
 	"objective.pokebook.capture.one": "Catch %s",
 	"screen.pokebook.tab.in_progress": "Active",
