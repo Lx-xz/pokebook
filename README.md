@@ -57,6 +57,11 @@ A ideia por trás das ligações: com o Simple Voice Chat instalado para voz de
 proximidade, o Pokébook desabilitaria o sistema de grupos dele — e a única forma de
 conversar à distância passaria a ser ligar pelo celular.
 
+A ligação em si já está escrita na branch `voicechat` — tocar, atender, recusar,
+desligar, e o áudio indo só para o outro lado. A caixa fica desmarcada porque nada disso
+foi visto em jogo ainda, e porque desabilitar os grupos do SVC, que é o que torna o canal
+exclusivo, continua em aberto.
+
 Ver [IDEIAS.md](IDEIAS.md) para o que já foi pesquisado sobre isso.
 
 ### Ideias para depois

@@ -1,12 +1,18 @@
 package io.github.lxxz.pokebook;
 
+import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.integration.CobblemonIntegration;
 import io.github.lxxz.pokebook.mission.MissionLoader;
 import io.github.lxxz.pokebook.mission.MissionService;
 import io.github.lxxz.pokebook.mission.MissionTracker;
+import io.github.lxxz.pokebook.network.AnswerCallPayload;
+import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
+import io.github.lxxz.pokebook.network.DialCallPayload;
+import io.github.lxxz.pokebook.network.HangUpCallPayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
+import io.github.lxxz.pokebook.network.MuteCallPayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
 import io.github.lxxz.pokebook.network.RequestSocialPayload;
 import io.github.lxxz.pokebook.network.SocialUpdatePayload;
@@ -17,6 +23,7 @@ import io.github.lxxz.pokebook.server.PokebookViewers;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -50,9 +57,14 @@ public class Pokebook implements ModInitializer {
 		PayloadTypeRegistry.playS2C().register(OpenPokebookPayload.ID, OpenPokebookPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(MissionsUpdatePayload.ID, MissionsUpdatePayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(SocialUpdatePayload.ID, SocialUpdatePayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(CallStatePayload.ID, CallStatePayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(RequestSocialPayload.ID, RequestSocialPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(ClosePokebookPayload.ID, ClosePokebookPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(ClaimRewardPayload.ID, ClaimRewardPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(DialCallPayload.ID, DialCallPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(AnswerCallPayload.ID, AnswerCallPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(HangUpCallPayload.ID, HangUpCallPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(MuteCallPayload.ID, MuteCallPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ClosePokebookPayload.ID, (payload, context) -> {
 			// Este pacote vem do cliente, que não é confiável. A validação não precisa ser
@@ -68,6 +80,24 @@ public class Pokebook implements ModInitializer {
 			ServerPlayNetworking.send(context.player(),
 				new SocialUpdatePayload(MissionService.socialSnapshot(context.player().server))));
 
+		// Os quatro da ligação. Nenhum deles confia no que veio: quem pode ligar, atender,
+		// desligar ou mutar o quê é decidido inteiro dentro do CallService.
+		ServerPlayNetworking.registerGlobalReceiver(DialCallPayload.ID, (payload, context) ->
+			CallService.dial(context.player(), payload.target()));
+
+		ServerPlayNetworking.registerGlobalReceiver(AnswerCallPayload.ID, (payload, context) ->
+			CallService.answer(context.player()));
+
+		ServerPlayNetworking.registerGlobalReceiver(HangUpCallPayload.ID, (payload, context) ->
+			CallService.hangUp(context.player()));
+
+		ServerPlayNetworking.registerGlobalReceiver(MuteCallPayload.ID, (payload, context) ->
+			CallService.toggleMute(context.player()));
+
+		// O telefone precisa de tempo passando: é o que repete o aviso acima da hotbar e o
+		// que desiste de quem não atende. Sai barato — sem ligação nenhuma, não faz nada.
+		ServerTickEvents.END_SERVER_TICK.register(CallService::tick);
+
 		// Depois de um /reload a lista pode ter mudado, e quem está com o pokébook aberto
 		// continuaria vendo a lista velha — inclusive missões que deixaram de existir.
 		ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, resourceManager, success) -> {
@@ -78,9 +108,17 @@ public class Pokebook implements ModInitializer {
 			}
 		});
 
-		// Quem desconecta nunca vai mandar o pacote de fechamento.
-		ServerPlayConnectionEvents.DISCONNECT.register(
-			(handler, server) -> PokebookViewers.removePlayer(handler.getPlayer()));
+		// Quem entra pode ter chegado depois de a última transição de ligação ter passado.
+		// Mandar o estado aqui é o que faz o cliente nascer sabendo — e IDLE é o caso
+		// normal, então isto é quase sempre um pacote de nada.
+		ServerPlayConnectionEvents.JOIN.register(
+			(handler, sender, server) -> CallService.sendState(handler.getPlayer()));
+
+		// Quem desconecta nunca vai mandar o pacote de fechamento — nem desligar o telefone.
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			PokebookViewers.removePlayer(handler.getPlayer());
+			CallService.disconnect(handler.getPlayer());
+		});
 
 		LOGGER.info("Pokébook carregado.");
 	}

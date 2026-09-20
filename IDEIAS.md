@@ -155,15 +155,65 @@ vira enfeite. Restringir o canal é o que transforma o item em infraestrutura do
 
 Falar direto com a API do Simple Voice Chat é mais simples.
 
+### O que já está escrito
+
+A ligação em si **existe** na branch `voicechat`, em duas metades: o telefone
+(`CallService` e a tela de ligações, livres do SVC) e o fio (`VoicechatIntegration`, que
+cancela o pacote de microfone e o reenvia ao destinatário). Ver o `PLANO.md` para o
+desenho e para o que falta conferir em jogo.
+
+O que era "sinalização é toda nossa" virou código: tocar, atender, recusar, desligar,
+desistir depois de meio minuto e identificar quem liga. O aviso de chamada vive **acima da
+hotbar**, onde alcança quem não está com tela nenhuma aberta.
+
+### Grupos do SVC — resolvido, em duas camadas
+
+**A forma certa é uma opção nativa do próprio Simple Voice Chat**, e ela só apareceu
+depois que o autor reclamou do botão que não fazia nada. No config do servidor
+(`config/voicechat/voicechat-server.properties`):
+
+```properties
+# If group chats are allowed
+enable_groups=false
+```
+
+Três classes do mod leem essa opção, e juntas resolvem o problema inteiro sem uma linha
+nossa: `ServerGroupManager` recusa no servidor, `VoiceChatScreen` **esconde o botão** no
+cliente, e `SecretPacket` sincroniza a opção do servidor para o cliente ao conectar. É o
+caminho suportado, então não quebra quando o SVC atualizar — ao contrário de um mixin na
+tela dele, que era a outra alternativa considerada.
+
+> ⚠️ **Correção a uma afirmação antiga deste arquivo.** Dizia-se que "a API expõe acesso
+> à configuração do servidor", como caminho plausível para desabilitar grupos por código.
+> **É falso.** O `ConfigAccessor` da API tem só `hasKey`, `getValue`, `getString`,
+> `getBoolean`, `getInt` e `getDouble` — nenhum setter. Dá para *ler* a configuração, não
+> para mudá-la. Conferido com `javap` no jar da API.
+
+**A segunda camada é a rede de segurança.** `VoicechatIntegration` continua cancelando
+`CreateGroupEvent` e `JoinGroupEvent`, agora **explicando ao jogador** por que nada
+aconteceu. Isso cobre o servidor onde ninguém configurou a opção — e cancelar sem
+explicar era exatamente o defeito original: o botão parecia quebrado.
+
+O cancelamento foi conferido no bytecode do jar, não por suposição:
+`ServerGroupManager.addGroup` e `.joinGroup` chamam
+`PluginManager.onCreateGroup`/`onJoinGroup` e retornam **antes** de criar o grupo ou
+mandar o pacote de confirmação se algum plugin cancelou.
+
+> ⚠️ A mensagem é enviada com `player.server.execute(...)`. O evento chega pela thread do
+> Simple Voice Chat, e mandar pacote para um jogador de fora da thread do servidor é o
+> tipo de coisa que passa no teste e quebra num servidor cheio.
+
 ### O que ainda não se sabe
 
-- **Como desabilitar os grupos do SVC.** Há pelo menos dois caminhos plausíveis: a API
-  expõe acesso à configuração do servidor, e a conexão de um jogador permite trocar o
-  grupo dele. Nenhum dos dois foi verificado, e nem se a imposição seria robusta (o
-  jogador poderia simplesmente entrar no grupo de novo).
-- **Sinalização de chamada é toda nossa.** Tocar, atender, desligar, identificação de
-  quem liga — a API não oferece nada disso. Ela entrega áudio de A para B; o telefone em
-  volta é trabalho nosso.
+- **Se a ligação deve vazar para quem está por perto.** Hoje não vaza: cancelar o pacote
+  de microfone suprime a voz de proximidade no mesmo gesto que desvia o áudio. É o que o
+  desenho pedia, mas é diferente de um telefone de verdade, e reverter é não cancelar.
+- **Chamar quem está offline.** Não existe, e provavelmente não deve: recado para quem
+  não está é o degrau 2 da aba social, que é um mod inteiro por si só.
+- **Chamar quem nunca teve um poképhone.** Continua na lista e continua "tocando" do
+  lado de quem ligou — só o aviso e o toque do lado de quem não tem como atender foram
+  calados, porque avisar sem dar meio de agir só confundia. Tirar da lista de vez é outra
+  decisão, adiada de propósito.
 
 ### Considerações práticas
 
@@ -186,8 +236,26 @@ direita, botões de **ícone** em vez de texto no menu, linhas de missão como *
 arredondados** claros sobre o fundo ciano, e abas "NOVAS / COMPLETAS" separando as
 missões por estado. O fundo tem um padrão de silhuetas de Pokémon em marca-d'água.
 
-Os botões de canto já existem. O resto é desenho, e o caminho técnico é o **sistema de
-sprites de GUI** da 1.21, não `drawTexture` com coordenadas na mão:
+Os botões de canto já existem, e o menu já virou **grade de ícones** — três por linha,
+como a tela inicial de um celular, nos dois aparelhos. Os ícones de hoje são caracteres da
+fonte (◎ missões, ✉ social, ☎ ligações) e existem só para segurar o lugar até as texturas.
+
+**Fixo ou nine-slice? A regra é: estica, nine-slice; não estica, fixo.**
+
+| peça | como |
+|---|---|
+| ícone (o desenho) | **PNG fixo**, 32×32 |
+| quadrado atrás do ícone | **PNG fixo** se todos forem do mesmo tamanho |
+| moldura da tela | **nine-slice** — tem duas proporções, deitada e em pé |
+| cartão de missão | **nine-slice** — a largura muda com a moldura |
+| botão de largura variável | **nine-slice** |
+
+Nine-slice onde não precisa é trabalho a mais no desenho (recortar bordas, escrever o
+`.mcmeta`) sem ganho nenhum. E ícone esticado fica borrado, que é o defeito que o
+nine-slice existe para evitar.
+
+O resto é desenho, e o caminho técnico é o **sistema de sprites de GUI** da 1.21, não
+`drawTexture` com coordenadas na mão:
 
 - Cada peça vira um PNG em `assets/pokebook/textures/gui/sprites/<nome>.png`, referida
   por id (`pokebook:<nome>`), e desenhada com `context.drawGuiTexture(id, x, y, w, h)`.

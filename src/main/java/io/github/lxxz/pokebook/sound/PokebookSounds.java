@@ -1,6 +1,7 @@
 package io.github.lxxz.pokebook.sound;
 
 import net.minecraft.registry.Registries;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
@@ -32,6 +33,15 @@ public final class PokebookSounds {
 	/** Navegação entre telas da interface. */
 	public static final Identifier PAGE = Identifier.of("cobblemon", "gui.click");
 
+	/**
+	 * O toque da ligação.
+	 *
+	 * <p>Este é do <b>vanilla</b>, não do Cobblemon, e de propósito: o toque é o único som
+	 * daqui que o jogador <em>precisa</em> ouvir — perdê-lo é perder a ligação, não perder
+	 * um detalhe. Um sino existe em qualquer instalação; um som emprestado, não.
+	 */
+	public static final Identifier RING = Identifier.of("minecraft", "block.note_block.bell");
+
 	private PokebookSounds() {
 	}
 
@@ -40,6 +50,27 @@ public final class PokebookSounds {
 		SoundEvent sound = Registries.SOUND_EVENT.get(soundId);
 		if (sound != null) {
 			world.playSound(null, pos, sound, SoundCategory.BLOCKS, volume, pitch);
+		}
+	}
+
+	/**
+	 * Toca só para este jogador, onde quer que ele esteja.
+	 *
+	 * <p>É o que uma ligação precisa: o telefone toca <b>no bolso de quem é chamado</b>, e
+	 * não num ponto do mundo. Quem está ao lado não tem por que ouvir o aparelho dos
+	 * outros.
+	 *
+	 * <p>⚠️ {@code PlayerEntity#playSound(SoundEvent, float, float)} não serve aqui: ele
+	 * toca posicionado na entidade e <b>exclui o próprio jogador</b> de ouvir — é pensado
+	 * para sons que o cliente já reproduz por conta própria (passos, por exemplo), não para
+	 * avisar alguém. Com ele, cada jogador ouvia o bipe do celular do outro (por estar
+	 * perto no mundo) e nunca o do seu. {@code playSoundToPlayer} é o método pensado para
+	 * mandar um som só para este jogador, sem excluí-lo.
+	 */
+	public static void playTo(ServerPlayerEntity player, Identifier soundId, float volume, float pitch) {
+		SoundEvent sound = Registries.SOUND_EVENT.get(soundId);
+		if (sound != null) {
+			player.playSoundToPlayer(sound, SoundCategory.PLAYERS, volume, pitch);
 		}
 	}
 }
