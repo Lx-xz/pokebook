@@ -287,6 +287,47 @@ não como arquivo: quem salva o PNG é o autor (`F2` no jogo escreve em
 
 ## Onde paramos
 
+### Sessão de 20/09/2026 — a moldura do poképhone
+
+O autor desenhou a moldura em pixel art e ela está **ligada e verificada em jogo**. O
+caminho até ela rendeu mais armadilhas que código; as duradouras foram para o `CLAUDE.md`.
+
+**A moldura.** `pokephone_gui.png`, nine-slice, borda `{7, 6, 7, 26}`. O queixo de 26 px
+foi escolha do autor, para caber o botão central de 14×14 com folga — dos 26, vinte são
+chassi escuro e o resto é friso e sombra.
+
+**O arquivo tem 256×256 e quase toda essa área é faixa uniforme.** Não é desperdício: é
+o que evita a emenda do ladrilhamento (ver `CLAUDE.md`). As faixas foram geradas por
+script a partir da arte de 64×64 do autor, repetindo colunas e linhas do miolo — nenhum
+pixel foi redesenhado.
+
+**`CONTENT_INSET` virou quatro constantes**, `INSET_LEFT/TOP/RIGHT/BOTTOM`. Um valor só
+funcionava enquanto a moldura era simétrica, e ela deixou de ser: o aparelho tem queixo
+grosso e testa fina, como um celular.
+
+**Rótulo encolhe em vez de cortar, e agora num lugar só.** `PokebookScreenBase
+.drawFittedLabel` — os ícones da tela inicial já faziam isso e as abas das missões não,
+então "Resgatar" aparecia como "esgata". O `TabButtonWidget` novo sobrescreve só o
+desenho do texto do botão do vanilla e herda o resto.
+
+**O botão central existe e funciona**: volta para a tela inicial, e na tela inicial
+desliga. Tem par de cores próprio (`COLOR_CHASSIS`/`COLOR_CHASSIS_HOVER`), tirado da
+própria moldura, porque a paleta do mod foi escolhida para fundo claro e sumiria no
+chassi escuro.
+
+**Cada aparelho fecha de um jeito só.** Celular pelo botão do queixo, notebook pelo ✕.
+Esc continua fechando os dois.
+
+**A próxima coisa é uma interface própria para o notebook.** A moldura de hoje é a mesma
+nos dois, e um notebook em paisagem com queixo de celular não é o desenho certo. Nada
+começou.
+
+**Continua em aberto**, sem nada feito: as abas ainda usam a moldura cinza do vanilla,
+que é o que mais destoa da arte; os ícones das missões ainda são maçãs provisórias; falta
+pixel art para cartão de missão, botão genérico, abas e barra de rolagem; e a entrevista
+sobre o que está no `IDEIAS.md` nunca aconteceu.
+
+
 ### Sessão de 18/09/2026
 
 Antes: correção do `AttachmentRegistry.builder()` `@Deprecated`, missões por datapack,
@@ -457,15 +498,173 @@ apagado a seção nova em silêncio.
 
 **Nada disso foi visto em jogo.**
 
-**Próxima ação:** `gradlew runClient` e conferir:
+### Branch `voicechat` — Simple Voice Chat no ambiente
 
-1. O poképhone aparece na aba do criativo e abre a interface **em pé** ao usar.
-2. A lista de missões e a aba social se comportam na moldura estreita e alta.
-3. O botão de resgate **não** aparece no celular, e resgatar no pokébook continua indo.
-4. Pegar ferro desbloqueia a receita do pokébook no livro.
+Terceira branch, pelo mesmo critério das outras duas: **divisão por dependência**. O
+`CLAUDE.md` tem a regra — mudança que não é da dependência nasce na `main`.
 
-Depois: o **redesenho visual** (no trabalho) e as **missões diárias sorteadas**, cujo
-desenho está no `IDEIAS.md` — é mudança de modelo, não funcionalidade a mais.
+**Boa notícia para a máquina do trabalho:** o jar do Simple Voice Chat tem **5,1 MB**.
+O que travou o Cobblemon era o tamanho (141 MB), e um jar de 49 MB já passou pelo
+FortiGate. Esta frente deve ser tocável no trabalho, ao contrário da do Cobblemon.
+
+**Duas versões, de propósito diferentes:**
+
+| | |
+|---|---|
+| `voicechat_api_version=2.5.31` | `modCompileOnly` — só para compilar |
+| `voicechat_mod_version=fabric-1.21.1-2.6.10` | `modRuntimeOnly` — o mod de verdade, só no teste |
+
+Compila-se contra a API mais **antiga** que tenha o necessário e roda-se com o mod mais
+**novo**: é a direção suportada, e a recomendação do próprio autor do SVC. O contrário
+quebra. A API é `compileOnly` porque quem a fornece em jogo é o mod, que a empacota —
+declará-la como `implementation` faria o jar dela viajar dentro do nosso.
+
+**Dois repositórios**, porque os artefatos moram em lugares diferentes: o maven do autor
+(`maven.maxhenkel.de`) serve só a API; o mod em si só está no maven do Modrinth.
+
+**A fronteira de classe sai de graça aqui.** `VoicechatIntegration` implementa
+`VoicechatPlugin` e é declarada no entrypoint `voicechat` do `fabric.mod.json` — quem a
+carrega é o **próprio Simple Voice Chat**. Sem ele instalado, ninguém lê esse entrypoint
+e a classe nunca é tocada. Não precisou de nenhum `if`, ao contrário do Cobblemon.
+Dependência declarada em `suggests`, não em `depends`.
+
+### A ligação — o telefone e o fio
+
+Escrita em **duas metades**, e a divisão não é organização: é a regra de branch aplicada
+ao código.
+
+| metade | onde | branch a que pertence |
+|---|---|---|
+| o **telefone** — quem liga para quem, tocar, atender, recusar, desligar, desistir | `call/`, `network/`, `client/call/`, `CallScreen` | **`main`** |
+| o **fio** — o áudio indo de um para o outro | só `integration/VoicechatIntegration` | `voicechat` |
+
+A metade de cima **não menciona o Simple Voice Chat**. Os dois se falam por uma pergunta
+só: `CallService.peerOf(uuid)` devolve um `UUID` ou `null`. É a mesma fronteira do
+`MissionTarget` com o Cobblemon, pelo mesmo motivo — e é o que permite a sinalização
+inteira ser levada para a `main` com `git cherry-pick -x`.
+
+> Os dois commits desta frente são separados **de propósito**: o primeiro é o telefone e
+> está pronto para a `main`; o segundo é o fio e fica aqui.
+
+**O que a API do SVC dá, e o mecanismo:** enganchar `MicrophonePacketEvent`, **cancelá-lo**
+— o que suprime a voz de proximidade daquele pacote — e reenviar como *static sound
+packet* só para a conexão do destinatário. São de fato umas 10 linhas. O resto é nosso.
+
+⚠️ **O cancelamento tem uma consequência de desenho:** em ligação, quem está por perto
+**não ouve** este jogador. Um telefone de verdade deixa a sala ouvir metade da conversa.
+Fica assim porque é o que o desenho do `IDEIAS.md` pede — a ligação é canal fechado — mas
+é reversível: bastaria mandar o pacote e **não** cancelar. É decisão, não limitação.
+
+**Três escolhas que vale registrar:**
+
+- **O aviso vive acima da hotbar**, na sobreposição do vanilla, e não numa camada de
+  interface nossa. O aparelho toca **no bolso**: quem é chamado precisa saber sem estar
+  com tela nenhuma aberta. Esse lugar já existe no jogo, e sai sem mixin nem gancho de
+  desenho. Ele **desaparece sozinho** depois de alguns segundos, e por isso é reenviado a
+  cada segundo enquanto a ligação durar.
+- **A lista de quem chamar sai do próprio cliente** — é a mesma que a tecla Tab mostra, já
+  sincronizada pelo jogo. Não há pedido ao servidor e não há tela vazia esperando
+  resposta, ao contrário da aba social. Ligar manda o **apelido**; o servidor resolve e
+  autoriza.
+- **Abrir o aparelho tocando cai direto na ligação**, não no menu. Um clique a mais para
+  atender é um clique com alguém esperando do outro lado.
+
+⚠️ **O mapa do `CallService` é `ConcurrentHashMap` por necessidade, não por precaução.**
+`peerOf` é chamado pela **thread de áudio do SVC**, que não é a do servidor. Um `HashMap`
+comum lido de duas threads não devolve só valor velho — pode entrar em laço infinito.
+
+**Nada disso foi visto em jogo, e desta vez nem compilado.** A sessão que escreveu isto
+rodou num ambiente cuja política de rede bloqueia `maven.fabricmc.net` (403 no CONNECT),
+então o Loom não resolve e `gradlew build` não sai do lugar. Foi conferido o que dava:
+JSON válido e Java sem erro de sintaxe (`javac` sem classpath, filtrando o que é
+dependência ausente).
+
+⚠️ **Os nomes da API do SVC não passaram pelo `javap`** — o jar da API também não é
+alcançável de lá, e a regra da casa é ler os membros reais em vez de tentar variações.
+São **quatro chamadas**, todas no mesmo método, e é de propósito que estejam concentradas:
+`event.getSenderConnection()`, `event.getVoicechat()`, `api.getConnectionOf(uuid)` e
+`api.sendStaticSoundPacketTo(conexão, event.getPacket().staticSoundPacketBuilder().build())`.
+Se alguma não fechar, é um arquivo só para consertar.
+
+**Próxima ação:** `gradlew runClient` **nesta branch**, com duas instâncias, e conferir:
+
+1. O log traz `Simple Voice Chat encontrado; plugin do Pokébook registrado.`
+2. O botão **Ligações** aparece no menu do aparelho (e **não** aparece sem o SVC).
+3. Ligar de um para o outro: toca, o aviso aparece acima da hotbar dos dois, e o sino
+   soa só para quem é chamado.
+4. Atender **faz o áudio atravessar** — é o ponto que prova a frente inteira.
+5. Desligar, recusar e não atender por meio minuto, cada um com a mensagem certa do
+   outro lado.
+6. Desconectar no meio da ligação não deixa o outro falando com um fantasma.
+
+**Testado em jogo, com dois clients** (ver `TESTES.md` para o como) — **checklist
+inteiro confirmado**: toca, atende, o áudio atravessa pelo SVC, desligar e recusar dão a
+mensagem certa dos dois lados, não atender por meio minuto desiste sozinho, e desconectar
+no meio da ligação desliga em vez de deixar alguém falando com um fantasma.
+
+Um bug apareceu no teste: o **bipe de tocar não soava para quem estava sendo chamado**,
+só para quem estivesse perto dele no mundo. Causa: `PokebookSounds.playTo` usava
+`PlayerEntity#playSound(SoundEvent, float, float)`, que tem um comportamento não óbvio —
+toca posicionado na entidade e **exclui o próprio jogador** de ouvir, porque é pensado
+para sons que o cliente já reproduz sozinho (passos, por exemplo), não para avisar
+alguém. Trocado por `playSoundToPlayer`, confirmado via `javap` no jar remapeado. Todos
+os sons da ligação (toque, tela ligando/desligando) passavam pelo mesmo método, então o
+mesmo bug valia para os quatro.
+
+**Adicionado: favoritos na lista de ligar.** Uma estrela (★/☆) por linha, clicável,
+independente do resto da linha. Favoritos vão para o topo da lista e continuam
+aparecendo mesmo offline, com o rosto escurecido e "Offline" no lugar do "Ligar" — clicar
+na linha não manda o pacote de ligar nesse caso, porque o servidor recusaria do mesmo
+jeito. É preferência de **cliente**, não de jogador no servidor: guardada num arquivo de
+texto na pasta de config (`CallFavorites`), um apelido por linha, comparado ignorando
+maiúsculas. Não sincroniza com o servidor de propósito — é a mesma categoria de decisão
+que já existia para o filtro de abas da lista de missões, que também é só do cliente.
+
+**Depois, feito nesta rodada:**
+
+- **Mutar na ligação.** Botão novo em `ACTIVE`, ao lado de "Desligar". Servidor é quem
+  decide o estado (`CallService.toggleMute`, por participante dentro do `Call`, não um
+  mapa à parte) e manda de volta pelo `CallStatePayload`, que ganhou um terceiro campo
+  `muted`. `VoicechatIntegration` gira em torno disso: o pacote de microfone continua
+  sendo **cancelado** sempre que há ligação atendida (a proximidade continua suprimida),
+  mas só é **reenviado** ao par se quem falou não estiver mudo. Mutar não é desligar — a
+  ligação continua, só o áudio para de atravessar num sentido.
+- **Quem nunca teve poképhone não é mais avisado.** `CallService.hasPhone` confere o
+  inventário (`ModItems.POKEPHONE`, não o bloco) antes de mandar o aviso acima da hotbar
+  e o toque para quem foi chamado. Sem aparelho, o aviso só confundiria alguém que nunca
+  ouviu falar do mod — não há como abrir a tela e atender. A ligação continua "tocando"
+  do lado de quem chamou e desiste sozinha depois de meio minuto, igual a ninguém
+  atender. Quem não tem celular **continua** na lista de quem chamar — tirar é decisão
+  adiada, registrada no `IDEIAS.md`.
+- **Grupos do SVC, desabilitados.** `VoicechatIntegration` cancela `CreateGroupEvent` e
+  `JoinGroupEvent`. Era a pergunta em aberto do `IDEIAS.md`, e fechou por conferência no
+  bytecode do jar do mod (`ServerGroupManager`), não por tentativa: cancelar o evento faz
+  o próprio SVC abortar antes de criar o grupo ou confirmar a entrada. Ver a seção
+  "Grupos do SVC — resolvido" no `IDEIAS.md` para o detalhe.
+
+**Tudo verificado em jogo:** mutar, favoritos, não avisar quem não tem celular, e os
+grupos desabilitados.
+
+### Grupos do SVC: a opção nativa
+
+O autor notou que clicar em "criar grupo" não fazia nada **e não dizia por quê** — o
+botão parecia quebrado. Isso levou a uma descoberta que muda a solução:
+
+**O Simple Voice Chat já tem a opção.** `enable_groups=false` no
+`config/voicechat/voicechat-server.properties`. Três classes do mod a leem —
+`ServerGroupManager` recusa no servidor, `VoiceChatScreen` **esconde o botão** no
+cliente, `SecretPacket` sincroniza do servidor para o cliente. Zero código nosso, e é o
+caminho suportado, então não quebra em update.
+
+> ⚠️ Isso **corrige** uma afirmação do `IDEIAS.md`: dizia-se que a API do SVC expunha
+> acesso à configuração do servidor. Não expõe. O `ConfigAccessor` só tem getters —
+> conferido com `javap`. Dá para ler a config, não para mudá-la.
+
+O cancelamento de evento que já existia **fica**, mudando de papel: deixa de ser a
+solução e passa a ser a **rede de segurança** para o servidor onde ninguém configurou. E
+agora ele **explica ao jogador**, que era o defeito que o autor apontou. A mensagem sai
+por `player.server.execute(...)`: o evento chega pela thread do SVC, e mandar pacote de
+outra thread é o tipo de coisa que passa no teste e quebra num servidor cheio.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)

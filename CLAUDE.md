@@ -66,13 +66,21 @@ lógica, orientação a objetos ou controle de fluxo.
 
 ## Branches — leia antes de commitar
 
-O repositório tem **duas branches permanentes**, e elas não são "estável e
-experimental": a divisão é por **dependência**, e existe por uma restrição de rede.
+O repositório tem **três branches permanentes**, e elas não são "estável e
+experimental": a divisão é por **dependência**. A do Cobblemon existe por uma restrição de
+rede; a do voice chat, para o mod continuar utilizável por quem não tem o Simple Voice Chat.
 
 | branch | o que tem |
 |---|---|
-| `main` | tudo, **menos** a dependência do Cobblemon |
+| `main` | tudo, **menos** as dependências do Cobblemon e do Simple Voice Chat |
 | `cobblemon` | a `main` mais o `build.gradle`, o `gradle.properties`, a classe de integração e as missões de Pokémon |
+| `voicechat` | a `main` mais **quatro arquivos**: `integration/VoicechatIntegration.java`, `build.gradle`, `gradle.properties` e o entrypoint no `fabric.mod.json` |
+
+⚠️ **Quatro arquivos, e mais nenhum.** O telefone inteiro — `call/`, `network/`,
+`CallScreen`, o som — é da `main`: ele menciona o Simple Voice Chat só como **string de
+mod id** em `CallService.available()`, sem importar uma classe dele, e por isso compila
+sem a dependência. Se um arquivo fora dessa lista precisar existir só na `voicechat`, a
+fronteira quebrou.
 
 **Por que:** com a dependência do Cobblemon na `main`, a máquina do trabalho não
 conseguiria **nem buildar** o projeto — o firewall trava no jar de 141 MB (ver
@@ -84,10 +92,20 @@ trazida para a branch com `git merge main`. Nunca o contrário. Código que nasc
 `cobblemon` fica preso lá até um merge que não se quer fazer — a branch nunca volta para
 a `main`, porque levaria a dependência junto.
 
-> ⚠️ Isso já foi violado uma vez, por distração de estar com a branch em check-out.
-> **Antes de commitar, confira `git branch --show-current`.** Se o commit não tocar
-> `build.gradle`, `gradle.properties`, `integration/` ou as missões de Pokémon, ele
-> pertence à `main`. Conserto: `git cherry-pick -x <sha>` para a `main`.
+> ⚠️ **Isso já foi violado duas vezes, e a segunda foi cara.** Uma sessão inteira de
+> trabalho de núcleo — grade de ícones, texturas, moldura em nine-slice, e o telefone
+> inteiro — nasceu na `voicechat` e ficou 22 commits sem chegar à `main`. Ninguém percebe
+> na hora: a branch compila, o jogo roda, e só um `git cherry -v main <branch>` mostra o
+> tamanho do buraco.
+>
+> **Antes de commitar, confira `git branch --show-current`.** Se o commit não tocar um dos
+> arquivos listados na tabela acima, ele pertence à `main`.
+>
+> Conserto de um commit: `git cherry-pick -x <sha>` para a `main`. Conserto de muitos: não
+> tente 20 cherry-picks, que conflitam em cadeia — vá **por conteúdo**. Com a `main` em
+> check-out, `git checkout <branch> -- .`, devolva à versão da `main` os arquivos que são
+> da branch, **builde para provar que a fronteira aguenta**, comite, e então
+> `git merge main` de volta na branch. Nada é reescrito e nada se perde.
 
 **O que mantém isso possível** é que o sistema de missões inteiro é livre do Cobblemon.
 Nenhum tipo dele atravessa a fronteira: o que entra no `MissionTarget` é `Identifier` e
@@ -137,6 +155,53 @@ continua sendo **API pública primeiro**; mixin é o último recurso, porque que
 update do jogo sem aviso de compilação. Se um método tiver sobrecargas, escreva o
 descritor inteiro: só assim o alvo é o certo. Os nomes se escrevem em Yarn e o Loom os
 remapeia — verificado no jar, a anotação sai com `class_759`.
+
+**Mod de terceiro costuma já ter a opção — procure antes de escrever código.** Para
+desabilitar os grupos do Simple Voice Chat cogitou-se cancelar eventos e até um mixin na
+tela dele; a resposta era `enable_groups=false` no config do servidor do próprio mod, que
+faz o cliente esconder o botão sozinho. Antes de contornar o comportamento de outro mod,
+procure a chave de config no jar dele — `javap -p` na classe de config mostra os campos,
+e as strings do `.class` mostram os nomes das chaves.
+
+**Textura de ícone se desenha em BRANCO.** O tingimento multiplica a cor da textura
+pela cor pedida, então branco aceita qualquer cor que o código mandar e preto continua
+preto. Desenhar em branco é o que deixa um arquivo só servir aos estados — normal, sob o
+mouse, desabilitado. ⚠️ E `setShaderColor` é **estado global do quadro**: sem voltar a
+`(1,1,1,1)` depois de desenhar, tudo o que vier a seguir sai tingido.
+
+**A moldura vai em `renderBackground`, não em `render`.** O `render` do vanilla desenha
+o fundo **e depois** os widgets. Desenhar a moldura dentro do `render`, após
+`super.render`, a põe **por cima de todos os botões**. O defeito fica escondido por muito
+tempo porque botão do vanilla desenha texto e sprite em camadas que o jogo esvazia mais
+tarde, e reaparece por cima; um widget nosso que pinte o próprio fundo com `fill` some
+inteiro. Foi assim que os ícones da tela inicial nasceram invisíveis.
+
+**A 1.21.1 REPETE o nine-slice, não estica.** A classe `Scaling$NineSlice` tem três
+campos — `width`, `height`, `border` — e mais nada; o `stretch_inner`, que faz as faixas
+esticarem, só chegou na 1.21.2. Consequência: uma faixa de 52 px preenchendo 140 é
+desenhada três vezes, e **cada emenda pode aparecer como um pixel claro**. Foi o que
+sujou o queixo do poképhone. A saída na nossa versão é a textura ser larga o bastante
+para uma faixa só cobrir o maior aparelho — a moldura tem 256×256 por isso, quase toda
+ela faixa uniforme, o que comprime para menos de 1 KB. A emenda só incomoda onde há
+contraste: nas laterais ela existia desde sempre e ninguém via, porque caía no meio de
+uma faixa escura contínua.
+
+**A borda do nine-slice tem de ser maior que o canto arredondado.** Se a diagonal do
+canto avançar um pixel para dentro da faixa repetível, esse pixel é repetido ao longo de
+toda a aresta. Já aconteceu: com borda 6, a linha 57 da moldura tinha um pixel de canto
+na coluna 6, e a borda teve de virar 7. **Confira contando as colunas do arquivo**, não
+olhando o desenho.
+
+**A borda do `.mcmeta` e os `INSET_*` do `PokebookScreenBase` são a mesma medida dita
+duas vezes** — uma para o jogo recortar a textura, outra para posicionar o conteúdo. Se a
+arte mudar de espessura, os dois mudam juntos; senão o conteúdo nasce por baixo do
+chassi, sem erro no log.
+
+**A arte muda debaixo dos pés.** O autor reexporta do GIMP entre uma mensagem e outra, e
+já houve duas vezes em que as medidas em uso eram de uma versão que não existia mais.
+**Releia o PNG antes de escrever qualquer número derivado dele** — e ao gerar arte por
+script, ponha `assert` sobre o que se espera do arquivo, que foi o que pegou o erro da
+borda 6.
 
 **Widget não convive com lista que rola.** Widget tem posição fixa e a lista muda de
 posição a cada quadro. Numa lista rolável, desenhe as linhas à mão e trate o clique com
@@ -249,6 +314,35 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
   consulta não se paga. O pedido sai ao clicar na aba, não ao abrir o pokébook.
 - O **redesenho visual** (cara de macOS, sprites com nine-slice) está desenhado e **não
   implementado**. Ver `IDEIAS.md`.
+
+## Ligações
+
+- **Duas metades, e a divisão é a regra de branch.** O *telefone* (quem liga para quem,
+  tocar, atender, recusar, desligar, desistir) é `call/` + `network/` + `CallScreen`, e
+  **não menciona o Simple Voice Chat** — nasce na `main`. O *fio* (o áudio) é só
+  `integration/VoicechatIntegration`, e fica na branch `voicechat`. Os dois se falam por
+  uma pergunta: `CallService.peerOf(uuid)` devolve `UUID` ou `null`.
+- **Quatro estados, não um booleano** — `IDLE`, `DIALING`, `RINGING`, `ACTIVE`, e o estado
+  é **do jogador**, não da ligação: chamar e ser chamado oferecem botões diferentes.
+  `peerOf` só responde com a ligação **atendida**, senão quem chamou seria ouvido antes de
+  atenderem.
+- **O aviso vive acima da hotbar** (a sobreposição do vanilla), não numa camada nossa: o
+  aparelho toca no bolso, e quem é chamado precisa saber sem tela aberta. Ela some sozinha
+  em alguns segundos, então é reenviada a cada segundo enquanto durar.
+- **A lista de quem chamar sai do cliente**, a mesma da tecla Tab. Sem pacote de pedido e
+  sem tela vazia esperando. Liga-se pelo **apelido**; quem autoriza é o servidor.
+- **Um pacote só para desligar.** Recusar, desistir e desligar são a mesma frase em
+  momentos diferentes, e o servidor já sabe em qual deles o jogador está. Quem precisa da
+  distinção é o outro lado, e ela aparece só na mensagem.
+- ⚠️ **O mapa de ligações é concorrente por necessidade.** `peerOf` é chamado pela thread
+  de áudio do SVC, não pela do servidor. `HashMap` lido de duas threads pode entrar em
+  laço infinito, não só devolver valor velho. Nada no gancho de áudio pode tocar em mundo,
+  entidade ou inventário.
+- **Sem o SVC o botão não existe** — o cliente esconde, o servidor recusa. Sinalização
+  funcionando e ninguém se ouvindo é pior do que não ter o recurso.
+- **Ligar é só do poképhone.** O pokébook não mostra o ícone. Reforça a divisão que o
+  projeto persegue — a estação administra (é onde se resgata recompensa), o aparelho de
+  bolso comunica — e é o que faz sentido: ninguém liga de um notebook parado na mesa.
 
 ## Técnica
 

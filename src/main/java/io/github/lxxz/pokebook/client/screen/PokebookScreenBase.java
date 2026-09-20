@@ -4,6 +4,7 @@ import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import io.github.lxxz.pokebook.sound.PokebookSounds;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.screen.Screen;
@@ -29,10 +30,21 @@ public abstract class PokebookScreenBase extends Screen {
 	/** Mesma folga que baú e fornalha usam (8 blocos). */
 	private static final double MAX_DISTANCE_SQUARED = 64.0;
 
-	/** A arte ocupa 240x160 no canto superior esquerdo de um arquivo 256x256. */
-	private static final Identifier TEXTURE =
-		Identifier.of(Pokebook.MOD_ID, "textures/gui/pokebook_gui.png");
-	private static final int TEXTURE_SIZE = 256;
+	/**
+	 * A moldura, como <b>sprite de nine-slice</b>.
+	 *
+	 * <p>A arte antiga era um retângulo de 240x160 <em>esticado</em> para o tamanho da
+	 * tela: no poképhone, de 240x160 para 152x220, o que deformava os cantos arredondados
+	 * e afinava a borda de um lado enquanto engordava do outro.
+	 *
+	 * <p>Com nine-slice, um arquivo de 32x32 serve às duas telas e a borda tem sempre a
+	 * mesma espessura — quem estica é só o miolo, que é cor chapada. A regra está no
+	 * {@code .png.mcmeta} ao lado do arquivo, não aqui.
+	 *
+	 * <p>Os dois aparelhos usam a mesma moldura por ora. Dar uma própria ao pokébook é um
+	 * arquivo a mais e uma pergunta à sessão — não exige mexer em mais nada.
+	 */
+	private static final Identifier FRAME = Identifier.of(Pokebook.MOD_ID, "pokephone_gui");
 
 	/**
 	 * A moldura, deitada ou em pé. Deixou de ser constante quando o poképhone entrou: a
@@ -41,9 +53,10 @@ public abstract class PokebookScreenBase extends Screen {
 	 */
 	private static final int LANDSCAPE_WIDTH = 240;
 	private static final int LANDSCAPE_HEIGHT = 160;
-	// 176 e não 160: com três abas lado a lado, 160 deixava cada uma com 48 px e os
-	// rótulos se sobrepunham. Largura de aba tem de caber no idioma mais verboso.
-	private static final int PORTRAIT_WIDTH = 176;
+	// A largura em pé é decidida pelo RÓTULO mais longo, não pelo ícone: três rótulos
+	// lado a lado ("Ligações" é o pior caso em português) é o que define o mínimo. 176
+	// deixava a tela com cara de tablet; 152 é o menor valor em que os três ainda cabem.
+	private static final int PORTRAIT_WIDTH = 152;
 	private static final int PORTRAIT_HEIGHT = 220;
 
 	/**
@@ -53,7 +66,7 @@ public abstract class PokebookScreenBase extends Screen {
 	 * <p>Deixe {@code false} antes de considerar qualquer visual pronto — a borda desenha
 	 * por cima de tudo, inclusive do que ela está medindo.
 	 */
-	public static final boolean LAYOUT_DEBUG = true;
+	public static final boolean LAYOUT_DEBUG = false;
 
 	/** Vermelho: a moldura inteira. */
 	protected static final int DEBUG_PANEL = 0xFFFF2040;
@@ -72,6 +85,17 @@ public abstract class PokebookScreenBase extends Screen {
 	protected static final int COLOR_ACCENT = 0xFF0D5A70;
 	protected static final int COLOR_DONE = 0xFF1B6B2A;
 	protected static final int COLOR_MUTED = 0xFF5C7A86;
+
+	/**
+	 * As duas cores de quem é desenhado <b>sobre o chassi</b>, e não sobre a tela acesa.
+	 *
+	 * <p>São necessárias porque o resto da paleta foi escolhida para fundo claro: um ícone
+	 * em {@link #COLOR_TEXT}, que é quase preto, desaparece no queixo escuro do aparelho.
+	 * Os dois tons saem da própria moldura — o de repouso é a cor da sombra, o de destaque é
+	 * a do friso —, então o botão parece parte da peça em vez de colado por cima.
+	 */
+	protected static final int COLOR_CHASSIS = 0xFF5E696B;
+	protected static final int COLOR_CHASSIS_HOVER = 0xFFC3C6C6;
 
 	protected final PokebookSession session;
 
@@ -92,17 +116,37 @@ public abstract class PokebookScreenBase extends Screen {
 	}
 
 	/**
-	 * Margem entre a borda da moldura e o conteúdo.
+	 * Margem entre a borda da moldura e o conteúdo, <b>um valor por lado</b>.
 	 *
-	 * <p>A arte tem borda escura e canto arredondado; o azul claro só começa aqui dentro.
-	 * Conteúdo encostado na borda fica em cima do contorno e "escorrega" pelo canto
-	 * redondo. <b>Toda medida de tela sai de {@link #contentX()} e companhia</b>, nunca de
-	 * {@code panelX()} — é o que garante que nada nasça fora da área clara.
+	 * <p>São quatro e não um porque a moldura não é simétrica: o aparelho tem chassi mais
+	 * alto embaixo que em cima, como um celular de verdade. Estes números <b>têm de ser os
+	 * mesmos</b> do {@code border} em {@code pokephone_gui.png.mcmeta} — são a mesma
+	 * medida dita duas vezes, uma para o recorte da textura e outra para o posicionamento.
+	 * Se a arte mudar de espessura, os dois lugares mudam juntos, senão o conteúdo nasce
+	 * por baixo do chassi.
+	 *
+	 * <p><b>Toda medida de tela sai de {@link #contentX()} e companhia</b>, nunca de
+	 * {@code panelX()} — é o que garante que nada nasça fora da parte acesa.
 	 */
-	protected static final int CONTENT_INSET = 10;
+	protected static final int INSET_LEFT = 7;
+	protected static final int INSET_TOP = 6;
+	protected static final int INSET_RIGHT = 7;
+	protected static final int INSET_BOTTOM = 26;
 
 	/** Lado dos botões quadrados de canto (voltar e fechar). */
 	protected static final int CORNER_BUTTON = 14;
+
+	/** Lado do botão central do queixo. É o tamanho em que a textura foi desenhada. */
+	private static final int HOME_BUTTON = 14;
+
+	/**
+	 * Folga entre o topo do queixo e o botão.
+	 *
+	 * <p>O queixo tem {@link #INSET_BOTTOM} px, mas só os 20 primeiros são chassi escuro —
+	 * o resto é o friso claro e a sombra. Com 3 px de folga, o botão de 14 termina no 17 e
+	 * não encosta no friso.
+	 */
+	private static final int HOME_MARGIN = 3;
 
 	protected int panelX() {
 		return (width - panelWidth()) / 2;
@@ -128,19 +172,19 @@ public abstract class PokebookScreenBase extends Screen {
 
 	/** Canto superior esquerdo da área clara. */
 	protected int contentX() {
-		return panelX() + CONTENT_INSET;
+		return panelX() + INSET_LEFT;
 	}
 
 	protected int contentY() {
-		return panelY() + CONTENT_INSET;
+		return panelY() + INSET_TOP;
 	}
 
 	protected int contentWidth() {
-		return panelWidth() - CONTENT_INSET * 2;
+		return panelWidth() - INSET_LEFT - INSET_RIGHT;
 	}
 
 	protected int contentHeight() {
-		return panelHeight() - CONTENT_INSET * 2;
+		return panelHeight() - INSET_TOP - INSET_BOTTOM;
 	}
 
 	/** Primeira linha livre abaixo da barra de título. */
@@ -157,21 +201,64 @@ public abstract class PokebookScreenBase extends Screen {
 	 */
 	@Override
 	protected final void init() {
-		addDrawableChild(ButtonWidget.builder(Text.literal("✕"), button -> close())
-			.dimensions(contentX() + contentWidth() - CORNER_BUTTON, contentY(),
-				CORNER_BUTTON, CORNER_BUTTON)
-			.tooltip(Tooltip.of(Text.translatable("screen.pokebook.close")))
-			.build());
+		// Cada aparelho fecha de um jeito só, e é o jeito que combina com ele: o celular pelo
+		// botão do queixo, o notebook pelo ✕. Ter os dois em qualquer um deles seria oferecer
+		// duas portas para a mesma saída, e o botão central é justamente o que faz o aparelho
+		// de bolso parecer um celular — ao lado de um ✕ ele vira enfeite.
+		//
+		// Esc continua fechando os dois, como em toda tela do jogo. Nenhum dos dois caminhos
+		// é a única saída.
+		if (session.portable()) {
+			SpriteButtonWidget home = new SpriteButtonWidget(
+				panelX() + (panelWidth() - HOME_BUTTON) / 2,
+				panelY() + panelHeight() - INSET_BOTTOM + HOME_MARGIN,
+				HOME_BUTTON,
+				Identifier.of(Pokebook.MOD_ID, "botao_central"),
+				Text.translatable("screen.pokebook.home"), button -> pressHome(),
+				COLOR_CHASSIS, COLOR_CHASSIS_HOVER);
+			home.setTooltip(Tooltip.of(Text.translatable("screen.pokebook.home")));
+			addDrawableChild(home);
+		} else {
+			SpriteButtonWidget close = new SpriteButtonWidget(
+				contentX() + contentWidth() - CORNER_BUTTON, contentY(), CORNER_BUTTON,
+				Identifier.of(Pokebook.MOD_ID, "x"),
+				Text.translatable("screen.pokebook.close"), button -> close());
+			close.setTooltip(Tooltip.of(Text.translatable("screen.pokebook.close")));
+			addDrawableChild(close);
+		}
 
 		PokebookScreenBase parent = parentScreen();
 		if (parent != null) {
-			addDrawableChild(ButtonWidget.builder(Text.literal("←"), button -> navigateTo(parent))
-				.dimensions(contentX(), contentY(), CORNER_BUTTON, CORNER_BUTTON)
-				.tooltip(Tooltip.of(Text.translatable("screen.pokebook.back")))
-				.build());
+			SpriteButtonWidget back = new SpriteButtonWidget(
+				contentX(), contentY(), CORNER_BUTTON,
+				Identifier.of(Pokebook.MOD_ID, "seta"),
+				Text.translatable("screen.pokebook.back"), button -> navigateTo(parent));
+			back.setTooltip(Tooltip.of(Text.translatable("screen.pokebook.back")));
+			addDrawableChild(back);
 		}
 
 		initPanel();
+	}
+
+	/**
+	 * O botão central: volta para a tela inicial, e dali desliga o aparelho.
+	 *
+	 * <p>É o comportamento do botão de um celular, e resolve o problema de ele não ter o que
+	 * fazer quando já se está em casa: em vez de virar um botão morto, ele fecha. Num
+	 * aparelho que o jogador abriu para uma consulta rápida, sair é justamente o que ele
+	 * quer a seguir.
+	 *
+	 * <p>⚠️ <b>"Casa" hoje é {@link #parentScreen()} porque a navegação tem um nível só</b> —
+	 * toda tela é filha do menu. No dia em que uma tela tiver neta, isto precisa subir até a
+	 * raiz em vez de um degrau, senão o botão vira um segundo "voltar".
+	 */
+	private void pressHome() {
+		PokebookScreenBase parent = parentScreen();
+		if (parent == null) {
+			close();
+			return;
+		}
+		navigateTo(parent);
 	}
 
 	/**
@@ -222,33 +309,54 @@ public abstract class PokebookScreenBase extends Screen {
 		});
 	}
 
+	/**
+	 * A moldura e o título, <b>antes</b> dos widgets.
+	 *
+	 * <p>Isto vive em {@code renderBackground} e não em {@code render} por uma razão de
+	 * ordem: o {@code render} do vanilla desenha o fundo <em>e depois</em> os widgets. A
+	 * moldura estava sendo desenhada depois de {@code super.render}, ou seja, <b>por cima
+	 * de todos os botões</b>.
+	 *
+	 * <p>Isso passou despercebido por muito tempo porque botão do vanilla desenha texto e
+	 * sprite em camadas que o jogo esvazia mais tarde, então ele reaparecia por cima. Um
+	 * widget nosso que pinte o próprio fundo com {@code fill} não tem essa sorte: sumia
+	 * inteiro. Foi o que aconteceu com os ícones da tela inicial.
+	 */
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
+	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+		super.renderBackground(context, mouseX, mouseY, delta);
+
 		int x = panelX();
 		int y = panelY();
-		// A arte é deitada; em pé ela é esticada para a moldura nova. Fica aceitável porque
-		// é um retângulo de cor sólida com borda, mas é provisório: o redesenho com sprites
-		// e nine-slice resolve isto de verdade, sem deformar canto nenhum.
-		// ATENÇÃO à ordem: nesta sobrecarga o TAMANHO vem antes de u,v -- ao contrário da
-		// sobrecarga curta, onde u,v vêm antes. Todos os parâmetros são numéricos, então
-		// trocar a ordem compila e desenha um retângulo de tamanho zero, sem erro nenhum.
-		context.drawTexture(TEXTURE, x, y, panelWidth(), panelHeight(), 0.0f, 0.0f,
-			LANDSCAPE_WIDTH, LANDSCAPE_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
+
+		context.drawGuiTexture(FRAME, x, y, panelWidth(), panelHeight());
 
 		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
-		// fica na altura dos botões de canto, entre os dois.
-		// Centralizado na área clara, e na altura dos botões de canto.
-		int titleX = contentX() + (contentWidth() - textRenderer.getWidth(title)) / 2;
-		int titleY = contentY() + (CORNER_BUTTON - textRenderer.fontHeight) / 2 + 1;
-		context.drawText(textRenderer, title, titleX, titleY, COLOR_TEXT, false);
+		// fica centralizado na área clara, na altura dos botões de canto.
+		context.drawText(textRenderer, title, titleX(), titleY(), COLOR_TEXT, false);
+	}
 
+	private int titleX() {
+		return contentX() + (contentWidth() - textRenderer.getWidth(title)) / 2;
+	}
+
+	private int titleY() {
+		return contentY() + (CORNER_BUTTON - textRenderer.fontHeight) / 2 + 1;
+	}
+
+	@Override
+	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+		// Desenha o fundo (moldura e título) e depois os widgets, nesta ordem.
+		super.render(context, mouseX, mouseY, delta);
+
+		// O conteúdo próprio da tela vem por último, sobre os widgets. Nas telas atuais os
+		// dois não se sobrepõem: as abas ficam acima da lista, e a lista é desenhada à mão.
 		renderPanel(context, mouseX, mouseY, delta);
 
 		if (LAYOUT_DEBUG) {
-			outline(context, x, y, panelWidth(), panelHeight(), DEBUG_PANEL);
+			outline(context, panelX(), panelY(), panelWidth(), panelHeight(), DEBUG_PANEL);
 			outline(context, contentX(), contentY(), contentWidth(), contentHeight(), DEBUG_AREA);
-			outlineText(context, title, titleX, titleY, DEBUG_TEXT);
+			outlineText(context, title, titleX(), titleY(), DEBUG_TEXT);
 			// Os botões se desenham sozinhos; aqui só marcamos onde eles de fato estão.
 			for (net.minecraft.client.gui.Element child : children()) {
 				if (child instanceof net.minecraft.client.gui.widget.ClickableWidget widget) {
@@ -287,5 +395,48 @@ public abstract class PokebookScreenBase extends Screen {
 			session.pos().ifPresent(pos -> ClientPlayNetworking.send(new ClosePokebookPayload(pos)));
 		}
 		super.removed();
+	}
+
+	/** Abaixo disto a fonte de bitmap fica ilegível, e cortar passa a ser melhor. */
+	public static final float MIN_LABEL_SCALE = 0.7f;
+
+	/**
+	 * Desenha um rótulo centrado, <b>encolhendo-o em vez de cortá-lo</b> quando não couber.
+	 *
+	 * <p>Cortar sacrifica a palavra inteira: "Resgatar" vira "esgata" e o jogador fica sem
+	 * saber o que a aba faz. Encolher preserva a palavra, e o custo aparece só onde há
+	 * aperto — um rótulo curto continua em tamanho cheio.
+	 *
+	 * <p>A fonte do Minecraft é de bitmap e <b>tem um tamanho só</b>: não existe "fonte
+	 * menor" para pedir. Reduzir é escalar a matriz de desenho, e por isso o texto sai com
+	 * os pixels encolhidos. Abaixo de uns 70% ({@link #MIN_LABEL_SCALE}) eles começam a se
+	 * comer, e aí cortar volta a ser o mal menor — ilegível é pior que curto.
+	 *
+	 * <p>Vive aqui, e não num widget, porque tudo que tem rótulo apertado precisa disto: os
+	 * ícones da tela inicial, as abas das missões e o que vier com texto traduzido dentro de
+	 * uma largura fixa.
+	 */
+	public static void drawFittedLabel(DrawContext context, TextRenderer textRenderer, String text,
+			int centerX, int y, int maxWidth, int color) {
+		int textWidth = textRenderer.getWidth(text);
+
+		if (textWidth <= maxWidth) {
+			context.drawText(textRenderer, text, centerX - textWidth / 2, y, color, false);
+			return;
+		}
+
+		float scale = Math.max(MIN_LABEL_SCALE, maxWidth / (float) textWidth);
+		if (maxWidth / (float) textWidth < MIN_LABEL_SCALE) {
+			text = textRenderer.trimToWidth(text, (int) (maxWidth / MIN_LABEL_SCALE));
+			textWidth = textRenderer.getWidth(text);
+		}
+
+		context.getMatrices().push();
+		// Escalar multiplica a posição também, então move-se primeiro para o centro, escala-se
+		// ali, e só então se desenha centrado na origem.
+		context.getMatrices().translate(centerX, y, 0f);
+		context.getMatrices().scale(scale, scale, 1f);
+		context.drawText(textRenderer, text, -textWidth / 2, 0, color, false);
+		context.getMatrices().pop();
 	}
 }
