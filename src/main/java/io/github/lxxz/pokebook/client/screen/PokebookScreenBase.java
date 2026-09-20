@@ -29,10 +29,21 @@ public abstract class PokebookScreenBase extends Screen {
 	/** Mesma folga que baú e fornalha usam (8 blocos). */
 	private static final double MAX_DISTANCE_SQUARED = 64.0;
 
-	/** A arte ocupa 240x160 no canto superior esquerdo de um arquivo 256x256. */
-	private static final Identifier TEXTURE =
-		Identifier.of(Pokebook.MOD_ID, "textures/gui/pokebook_gui.png");
-	private static final int TEXTURE_SIZE = 256;
+	/**
+	 * A moldura, como <b>sprite de nine-slice</b>.
+	 *
+	 * <p>A arte antiga era um retângulo de 240x160 <em>esticado</em> para o tamanho da
+	 * tela: no poképhone, de 240x160 para 152x220, o que deformava os cantos arredondados
+	 * e afinava a borda de um lado enquanto engordava do outro.
+	 *
+	 * <p>Com nine-slice, um arquivo de 32x32 serve às duas telas e a borda tem sempre a
+	 * mesma espessura — quem estica é só o miolo, que é cor chapada. A regra está no
+	 * {@code .png.mcmeta} ao lado do arquivo, não aqui.
+	 *
+	 * <p>Os dois aparelhos usam a mesma moldura por ora. Dar uma própria ao pokébook é um
+	 * arquivo a mais e uma pergunta à sessão — não exige mexer em mais nada.
+	 */
+	private static final Identifier FRAME = Identifier.of(Pokebook.MOD_ID, "pokephone_gui");
 
 	/**
 	 * A moldura, deitada ou em pé. Deixou de ser constante quando o poképhone entrou: a
@@ -246,14 +257,7 @@ public abstract class PokebookScreenBase extends Screen {
 		int x = panelX();
 		int y = panelY();
 
-		// A arte é deitada; em pé ela é esticada para a moldura nova. Fica aceitável porque
-		// é um retângulo de cor sólida com borda, mas é provisório: o redesenho com sprites
-		// e nine-slice resolve isto de verdade, sem deformar canto nenhum.
-		// ATENÇÃO à ordem: nesta sobrecarga o TAMANHO vem antes de u,v -- ao contrário da
-		// sobrecarga curta, onde u,v vêm antes. Todos os parâmetros são numéricos, então
-		// trocar a ordem compila e desenha um retângulo de tamanho zero, sem erro nenhum.
-		context.drawTexture(TEXTURE, x, y, panelWidth(), panelHeight(), 0.0f, 0.0f,
-			LANDSCAPE_WIDTH, LANDSCAPE_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
+		context.drawGuiTexture(FRAME, x, y, panelWidth(), panelHeight());
 
 		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
 		// fica centralizado na área clara, na altura dos botões de canto.
