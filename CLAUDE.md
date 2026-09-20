@@ -66,13 +66,21 @@ lógica, orientação a objetos ou controle de fluxo.
 
 ## Branches — leia antes de commitar
 
-O repositório tem **duas branches permanentes**, e elas não são "estável e
-experimental": a divisão é por **dependência**, e existe por uma restrição de rede.
+O repositório tem **três branches permanentes**, e elas não são "estável e
+experimental": a divisão é por **dependência**. A do Cobblemon existe por uma restrição de
+rede; a do voice chat, para o mod continuar utilizável por quem não tem o Simple Voice Chat.
 
 | branch | o que tem |
 |---|---|
-| `main` | tudo, **menos** a dependência do Cobblemon |
+| `main` | tudo, **menos** as dependências do Cobblemon e do Simple Voice Chat |
 | `cobblemon` | a `main` mais o `build.gradle`, o `gradle.properties`, a classe de integração e as missões de Pokémon |
+| `voicechat` | a `main` mais **quatro arquivos**: `integration/VoicechatIntegration.java`, `build.gradle`, `gradle.properties` e o entrypoint no `fabric.mod.json` |
+
+⚠️ **Quatro arquivos, e mais nenhum.** O telefone inteiro — `call/`, `network/`,
+`CallScreen`, o som — é da `main`: ele menciona o Simple Voice Chat só como **string de
+mod id** em `CallService.available()`, sem importar uma classe dele, e por isso compila
+sem a dependência. Se um arquivo fora dessa lista precisar existir só na `voicechat`, a
+fronteira quebrou.
 
 **Por que:** com a dependência do Cobblemon na `main`, a máquina do trabalho não
 conseguiria **nem buildar** o projeto — o firewall trava no jar de 141 MB (ver
@@ -84,10 +92,20 @@ trazida para a branch com `git merge main`. Nunca o contrário. Código que nasc
 `cobblemon` fica preso lá até um merge que não se quer fazer — a branch nunca volta para
 a `main`, porque levaria a dependência junto.
 
-> ⚠️ Isso já foi violado uma vez, por distração de estar com a branch em check-out.
-> **Antes de commitar, confira `git branch --show-current`.** Se o commit não tocar
-> `build.gradle`, `gradle.properties`, `integration/` ou as missões de Pokémon, ele
-> pertence à `main`. Conserto: `git cherry-pick -x <sha>` para a `main`.
+> ⚠️ **Isso já foi violado duas vezes, e a segunda foi cara.** Uma sessão inteira de
+> trabalho de núcleo — grade de ícones, texturas, moldura em nine-slice, e o telefone
+> inteiro — nasceu na `voicechat` e ficou 22 commits sem chegar à `main`. Ninguém percebe
+> na hora: a branch compila, o jogo roda, e só um `git cherry -v main <branch>` mostra o
+> tamanho do buraco.
+>
+> **Antes de commitar, confira `git branch --show-current`.** Se o commit não tocar um dos
+> arquivos listados na tabela acima, ele pertence à `main`.
+>
+> Conserto de um commit: `git cherry-pick -x <sha>` para a `main`. Conserto de muitos: não
+> tente 20 cherry-picks, que conflitam em cadeia — vá **por conteúdo**. Com a `main` em
+> check-out, `git checkout <branch> -- .`, devolva à versão da `main` os arquivos que são
+> da branch, **builde para provar que a fronteira aguenta**, comite, e então
+> `git merge main` de volta na branch. Nada é reescrito e nada se perde.
 
 **O que mantém isso possível** é que o sistema de missões inteiro é livre do Cobblemon.
 Nenhum tipo dele atravessa a fronteira: o que entra no `MissionTarget` é `Identifier` e
