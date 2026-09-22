@@ -1,0 +1,17 @@
+# Quebras de linha dos scripts do wrapper do Gradle.
+#
+# Isto não é preferência de estilo: o cmd.exe interpreta um .bat com quebras LF de
+# forma instável -- rótulos param de ser encontrados, `goto` erra o destino e as
+# mensagens de erro saem misturadas. O sintoma é o script reclamar que JAVA_HOME não
+# está definida E que aponta para um diretório inválido, na mesma execução.
+#
+# Sem isto o resultado depende do `core.autocrlf` de cada máquina, que é justamente o
+# que não se pode assumir aqui: o autor trabalha em duas, e a do trabalho não tem a
+# mesma configuração de Git da de casa.
+
+# O script do Windows PRECISA de CRLF.
+*.bat           text eol=crlf
+
+# O do Unix precisa de LF -- com CRLF o shell falha com "bad interpreter".
+/gradlew        text eol=lf
+*.sh            text eol=lf
