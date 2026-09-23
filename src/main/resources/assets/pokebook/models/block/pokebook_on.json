@@ -1,6 +1,8 @@
 {
+	"__comment": "So troca o atlas pelo de tela acesa; a geometria inteira vem do pai.",
 	"parent": "pokebook:block/pokebook",
 	"textures": {
-		"1": "pokebook:block/screen_on"
+		"1": "pokebook:block/pokebook",
+		"particle": "pokebook:block/pokebook"
 	}
 }

@@ -1,0 +1,38 @@
+{
+	"parent": "pokebook:block/pokebook",
+
+	"__comment": "O modelo de bloco vem do Blockbench sem 'parent', então não herda o display do minecraft:block/block. gui, ground, fixed e thirdperson_righthand são os valores do vanilla, declarados aqui para sobreviverem a um reexport do modelo de bloco. Os dois de primeira pessoa foram ajustados à mão: o modelo não preenche o cubo, e as transformações giram em torno do centro (8,8,8), então com o deslocamento zero do vanilla ele caía fora do enquadramento. As rotações 135 e 225 são 180 menos e mais 45 - as duas vistas de 3/4 com a tela voltada para a camera. Nao usar a convencao vanilla de lefthand = righthand + 180: ela so funciona para cubos simetricos, e aqui mostraria as costas do notebook.",
+
+	"display": {
+		"gui": {
+			"rotation": [30, 225, 0],
+			"translation": [0, 0, 0],
+			"scale": [0.625, 0.625, 0.625]
+		},
+		"ground": {
+			"rotation": [0, 0, 0],
+			"translation": [0, 3, 0],
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"fixed": {
+			"rotation": [0, 0, 0],
+			"translation": [0, 0, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"thirdperson_righthand": {
+			"rotation": [75, 45, 0],
+			"translation": [0, 2.5, 0],
+			"scale": [0.375, 0.375, 0.375]
+		},
+		"firstperson_righthand": {
+			"rotation": [0, 135, 0],
+			"translation": [0, 4.5, 1],
+			"scale": [0.35, 0.35, 0.35]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, 135, 0],
+			"translation": [0, 4.5, 1],
+			"scale": [0.35, 0.35, 0.35]
+		}
+	}
+}

@@ -52,6 +52,19 @@ public final class PokebookViewers {
 	 */
 	private static final int FADE_STEP_TICKS = 2;
 
+	/**
+	 * Se a tela percorre os níveis ou salta direto ao alvo.
+	 *
+	 * <p>Desligada enquanto a v2 tem só duas artes. Percorrer com duas artes produzia uma
+	 * assimetria incômoda: ao ligar, os níveis 1 e 2 mostram a arte APAGADA, então a tela
+	 * só acendia no terceiro passo; ao desligar, o primeiro passo já saía do nível 3 e era
+	 * visível na hora. Ligar parecia lento e desligar instantâneo.
+	 *
+	 * <p>Com o salto direto, os dois sentidos respondem no mesmo quadro. Quando as quatro
+	 * artes existirem, volte para {@code true}.
+	 */
+	private static final boolean ANIMATION_ENABLED = false;
+
 	/** Posição sozinha não identifica um bloco: as mesmas coordenadas existem em cada dimensão. */
 	private record Key(ServerWorld world, BlockPos pos) {
 	}
@@ -215,7 +228,8 @@ public final class PokebookViewers {
 			return;
 		}
 
-		int next = current + Integer.signum(target - current);
+		// Sem animação não há quadro intermediário que valha a pena: vai direto ao alvo.
+		int next = ANIMATION_ENABLED ? current + Integer.signum(target - current) : target;
 		world.setBlockState(pos, state.with(PokebookBlock.SCREEN, next), Block.NOTIFY_ALL);
 
 		// Só no primeiro passo de cada transição: a animação tem quatro níveis, e um som

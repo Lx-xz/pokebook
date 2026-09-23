@@ -35,8 +35,15 @@ public class PokebookBlock extends Block {
 	public static final int SCREEN_ON = 3;
 	public static final IntProperty SCREEN = IntProperty.of("screen", SCREEN_OFF, SCREEN_ON);
 
-	/** Luz emitida por nível. Escalonada junto com a imagem, senão o ambiente pisca. */
-	private static final int[] LIGHT_BY_LEVEL = { 0, 2, 5, 7 };
+	/**
+	 * Luz emitida por nível.
+	 *
+	 * <p>Binária enquanto a animação está desligada: a v2 tem só duas artes de tela, e os
+	 * níveis intermediários mostram a apagada. Emitir luz 2 ou 5 com a tela visivelmente
+	 * escura seria incoerente. Quando as quatro artes existirem, volta a ser
+	 * {@code { 0, 2, 5, 7 }} — é a única linha a mexer.
+	 */
+	private static final int[] LIGHT_BY_LEVEL = { 0, 0, 0, 7 };
 
 	public static int lightFor(int level) {
 		return LIGHT_BY_LEVEL[level];
@@ -44,21 +51,19 @@ public class PokebookBlock extends Block {
 
 	// Caixas do modelo, em pixels (0..16), para o bloco virado ao norte.
 	//
-	// VoxelShape só conhece caixas alinhadas aos eixos — não existe caixa rotacionada
-	// no Minecraft. Os 22.5° da tampa existem apenas no modelo visual, então aqui ela
-	// é aproximada por uma escada de quatro degraus que acompanha a inclinação.
+	// VoxelShape só conhece caixas alinhadas aos eixos. Na v1 a tampa era inclinada a
+	// 22.5° e exigia uma escada de quatro degraus para acompanhar a diagonal; na v2 ela
+	// é VERTICAL, então duas caixas bastam e a escada deixou de fazer sentido.
 	//
-	// Valores derivados da geometria real do modelo: o painel da tampa, depois de
-	// rotacionado, ocupa y 0.617..10.239 e z 11.0..15.751 (a tela fica dentro desse
-	// envelope). Se o modelo mudar, recalcule — não ajuste no olho.
+	// Valores derivados do envelope real do modelo, com as rotações aplicadas:
+	// x 1..15, y 0..11.5, z 2..14. As duas peças a -45° (as dobradiças) descem até
+	// y ≈ 0.57, e é por isso que a caixa da tampa começa em 0.5 e não em 1.5.
+	// Se o modelo mudar, recalcule — não ajuste no olho.
 	private static final double[][] BOXES = {
-		// base: chassi + teclado + touchpad
-		{ 0, 0,      1,       16, 1.25,  11      },
-		// tampa inclinada, de baixo para cima
-		{ 0, 0.625,  11,      16, 3,     12.9375 },
-		{ 0, 3,      11.625,  16, 5.4375, 13.9375 },
-		{ 0, 5.4375, 12.625,  16, 7.8125, 14.9375 },
-		{ 0, 7.8125, 13.625,  16, 10.25, 15.75   },
+		// base: chassi + teclado
+		{ 1, 0,   2,  15, 2,    12 },
+		// tampa vertical + dobradiças
+		{ 1, 0.5, 12, 15, 11.5, 14 },
 	};
 
 	// A forma não muda em tempo de execução: só depende do FACING. Montar a união a
