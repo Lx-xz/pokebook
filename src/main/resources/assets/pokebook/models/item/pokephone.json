@@ -1,5 +1,5 @@
 {
-	"__comment": "Geometria nova do Blockbench; o bloco display abaixo NAO vem do export e foi ajustado olhando em jogo - em pe, com a tela voltada para a camera em primeira pessoa. Reexportar apaga o display e o namespace das texturas; os dois sao repostos a mao. texture_size e obrigatorio: as UVs foram escritas para o atlas nesse tamanho.",
+	"__comment": "Geometria nova do Blockbench; o bloco display abaixo NAO vem do export e foi ajustado olhando em jogo. Reexportar apaga o display e o namespace das texturas; os dois sao repostos a mao. texture_size e obrigatorio: as UVs foram escritas para o atlas nesse tamanho. O gui NAO e a vista frontal: em [0,180,0] via-se so a face de 10x16 e o icone lia como retangulo chapado, porque o celular tem 2.25 de espessura. Em [15,205,0] aparece a lateral e um pouco do topo, e a tela continua dominante - num celular a tela e a identidade, entao virar mais (25/215) daria mais profundidade as custas de estreitar o que identifica o item. A escala 0.95 e CALCULADA: a inclinacao leva a altura projetada de 16.00 para 16.80, e 0.95 devolve o tamanho visual de antes. A translacao fica zero porque o modelo ja e simetrico em torno de (8,8). Se a geometria mudar, RECALCULE. As vistas de mao foram ajustadas a parte: em pe, com a tela voltada para a camera em primeira pessoa; em terceira pessoa girado para a tela ficar voltada para dentro e inclinada para cima.",
 	"texture_size": [
 		32,
 		32
@@ -11,8 +11,8 @@
 	"display": {
 		"gui": {
 			"rotation": [
-				0,
-				180,
+				15,
+				205,
 				0
 			],
 			"translation": [
@@ -21,9 +21,9 @@
 				0
 			],
 			"scale": [
-				1,
-				1,
-				1
+				0.95,
+				0.95,
+				0.95
 			]
 		},
 		"ground": {
