@@ -52,5 +52,8 @@
 	"message.pokebook.call.declined": "%s declined the call.",
 	"message.pokebook.call.gave_up": "The call was cancelled.",
 	"message.pokebook.call.no_answer": "%s did not answer.",
-	"message.pokebook.groups_disabled": "Voice chat groups are disabled here. Use the Poképhone to call someone."
+	"message.pokebook.groups_disabled": "Voice chat groups are disabled here. Use the Poképhone to call someone.",
+	"block.pokebook.pokebook_red": "Red Pokébook",
+	"block.pokebook.pokebook_blue": "Blue Pokébook",
+	"block.pokebook.pokebook_lime": "Lime Pokébook"
 }
