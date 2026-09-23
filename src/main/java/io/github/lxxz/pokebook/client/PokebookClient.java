@@ -12,6 +12,8 @@ import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
 import io.github.lxxz.pokebook.network.SocialUpdatePayload;
+import io.github.lxxz.pokebook.registry.ModBlocks;
+import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -39,6 +41,15 @@ public class PokebookClient implements ClientModInitializer {
 				? new EmissiveScreenModel(model)
 				: model;
 		}));
+
+		// A cor de cada pokébook colorido. O provedor devolve a cor para qualquer tintindex
+		// presente no modelo; as faces sem tintindex — tela e teclado — não passam por aqui.
+		// Sem provedor registrado o jogo usa branco, que é por que o pokébook comum não muda.
+		ModBlocks.TINTED.forEach((nome, bloco) -> {
+			int cor = ModBlocks.TINTS.get(nome);
+			ColorProviderRegistry.BLOCK.register((state, view, pos, tintIndex) -> cor, bloco);
+			ColorProviderRegistry.ITEM.register((stack, tintIndex) -> cor, bloco.asItem());
+		});
 
 		// Em 1.21.1 estes handlers já rodam na render thread, então dá para chamar métodos
 		// de cliente direto. O client.execute(...) que os tutoriais de 1.19 exigem virou

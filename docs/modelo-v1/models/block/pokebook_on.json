@@ -1,0 +1,6 @@
+{
+	"parent": "pokebook:block/pokebook",
+	"textures": {
+		"1": "pokebook:block/screen_on"
+	}
+}

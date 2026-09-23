@@ -1,6 +1,9 @@
 {
 	"replace": false,
 	"values": [
-		"pokebook:pokebook"
+		"pokebook:pokebook",
+		"pokebook:pokebook_red",
+		"pokebook:pokebook_blue",
+		"pokebook:pokebook_lime"
 	]
 }

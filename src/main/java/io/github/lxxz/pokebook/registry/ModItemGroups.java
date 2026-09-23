@@ -15,6 +15,7 @@ public final class ModItemGroups {
 		.displayName(Text.translatable("itemGroup.pokebook.main"))
 		.entries((context, entries) -> {
 			entries.add(ModBlocks.POKEBOOK);
+			ModBlocks.TINTED.values().forEach(entries::add);
 			entries.add(ModItems.POKEPHONE);
 		})
 		.build();

@@ -52,5 +52,8 @@
 	"message.pokebook.call.declined": "%s recusou a ligação.",
 	"message.pokebook.call.gave_up": "A ligação foi cancelada.",
 	"message.pokebook.call.no_answer": "%s não atendeu.",
-	"message.pokebook.groups_disabled": "Grupos de voz estão desabilitados aqui. Use o Poképhone para ligar para alguém."
+	"message.pokebook.groups_disabled": "Grupos de voz estão desabilitados aqui. Use o Poképhone para ligar para alguém.",
+	"block.pokebook.pokebook_red": "Pokébook Vermelho",
+	"block.pokebook.pokebook_blue": "Pokébook Azul",
+	"block.pokebook.pokebook_lime": "Pokébook Verde-limão"
 }
