@@ -4,6 +4,10 @@
 		"pokebook:pokebook",
 		"pokebook:pokebook_red",
 		"pokebook:pokebook_blue",
-		"pokebook:pokebook_lime"
+		"pokebook:pokebook_lime",
+		"pokebook:pokebook_cyan",
+		"pokebook:pokebook_magenta",
+		"pokebook:pokebook_yellow",
+		"pokebook:pokebook_black"
 	]
 }

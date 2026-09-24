@@ -38,7 +38,7 @@ public class PokebookBlock extends Block {
 	/**
 	 * Luz emitida por nível.
 	 *
-	 * <p>Binária enquanto a animação está desligada: a v2 tem só duas artes de tela, e os
+	 * <p>Binária enquanto a animação está desligada: a v3 tem só duas artes de tela, e os
 	 * níveis intermediários mostram a apagada. Emitir luz 2 ou 5 com a tela visivelmente
 	 * escura seria incoerente. Quando as quatro artes existirem, volta a ser
 	 * {@code { 0, 2, 5, 7 }} — é a única linha a mexer.
@@ -51,19 +51,17 @@ public class PokebookBlock extends Block {
 
 	// Caixas do modelo, em pixels (0..16), para o bloco virado ao norte.
 	//
-	// VoxelShape só conhece caixas alinhadas aos eixos. Na v1 a tampa era inclinada a
-	// 22.5° e exigia uma escada de quatro degraus para acompanhar a diagonal; na v2 ela
-	// é VERTICAL, então duas caixas bastam e a escada deixou de fazer sentido.
+	// VoxelShape só conhece caixas alinhadas aos eixos, e a v3 não tem rotação nenhuma:
+	// a tampa é vertical e a base é plana, então duas caixas bastam.
 	//
-	// Valores derivados do envelope real do modelo, com as rotações aplicadas:
-	// x 1..15, y 0..11.5, z 2..14. As duas peças a -45° (as dobradiças) descem até
-	// y ≈ 0.57, e é por isso que a caixa da tampa começa em 0.5 e não em 1.5.
-	// Se o modelo mudar, recalcule — não ajuste no olho.
+	// Envelope do modelo: x 1..15, y 0..12, z 2..14. As duas dobradiças cruzam z=12 e
+	// não cabem inteiras em nenhuma das caixas — mas a UNIÃO as cobre, que é o que vale.
+	// Verificado por amostragem, não no olho. Se o modelo mudar, recalcule.
 	private static final double[][] BOXES = {
-		// base: chassi + teclado
-		{ 1, 0,   2,  15, 2,    12 },
-		// tampa vertical + dobradiças
-		{ 1, 0.5, 12, 15, 11.5, 14 },
+		// base: chassi + teclado + touchpad
+		{ 1, 0,   2,  15, 2.75, 12 },
+		// tampa vertical: bisel, painel de trás e o resto das dobradiças
+		{ 1, 1.5, 12, 15, 12,   14 },
 	};
 
 	// A forma não muda em tempo de execução: só depende do FACING. Montar a união a
