@@ -275,6 +275,93 @@ o servidor manda as duas listas.
 
 ---
 
+## Apps e funcionalidades — levantamento de 24/09
+
+Lista do autor mais propostas, com complexidade estimada. **Baixa** cabe numa sessão;
+**média** leva algumas; **alta** leva dias e tem risco de desenho, não só de código.
+Nada aqui foi decidido — é inventário para escolher a ordem.
+
+### Fundações — o que várias funcionalidades pedem ao mesmo tempo
+
+Construir uma vez e reaproveitar. Sem elas, cada app reinventaria a sua.
+
+- **Contatos** — *média*. Lista por jogador de quem ele salvou, com o nome guardado
+  junto do UUID (para aparecer mesmo com o contato offline). Em servidor grande é o que
+  impede a lista de ligações de mostrar todo mundo. Mais importante: vira a **camada de
+  consentimento** — só contato recebe mensagem, vê sua localização ou te liga. Decidir:
+  adicionar é unilateral ou exige aceite dos dois lados?
+- **Atualização ao vivo** — *baixa/média*. Hoje o servidor manda um retrato das
+  missões só ao abrir a tela (decisão Q6 da v2). Rastreio no HUD, notificações e
+  mensagens exigem o servidor empurrar mudanças com a tela fechada. É reabrir aquela
+  decisão, agora com motivo.
+- **Central de notificações** — *baixa/média*. Um aviso único para missão concluída,
+  ligação perdida, mensagem nova, alarme. Toast do vanilla ou camada própria no HUD.
+- **Armazenamento de mundo** — *média*. O progresso de hoje mora no anexo do jogador,
+  que só existe com ele conectado. Tudo que envolve jogador **offline** — mensagem para
+  quem saiu, nome de contato, ranking — precisa de um `PersistentState` do mundo.
+- **Campo de texto** — *baixa*. Notas, mensagens e nome de ponto de interesse usam o
+  mesmo widget de edição. O vanilla tem um multilinha.
+- **Camada de HUD** — *baixa*. Um único dono do que o mod desenha na tela durante o
+  jogo (rastreio de missão, seta, notificações), para as coisas não se sobreporem.
+- **Configuração do servidor** — *baixa*. Radar, compartilhar localização e fotos
+  variam muito de servidor para servidor; o dono precisa poder desligar cada um.
+
+### As ideias do autor
+
+| Funcionalidade | Complexidade | O que pesa |
+|---|---|---|
+| Notas | baixa | campo de texto e anexo do jogador; limite de tamanho |
+| Alarme / timer | baixa | tudo no cliente; alarme por hora do mundo ou real; precisa tocar com o aparelho fechado |
+| Localização pelo chat | baixa | texto clicável que roda um comando nosso (`/pokebook rastrear x y z`) — o vanilla não tem ação de clique melhor que comando |
+| Pontos de interesse | baixa/média | lista por jogador com nome, posição, dimensão e ícone |
+| Seta apontando para o ponto | baixa/média | ângulo entre o olhar e o alvo, desenhado girado no HUD; decidir o que mostrar em outra dimensão |
+| Rastreio de missão no HUD | baixa/média | depende da atualização ao vivo |
+| Contatos | média | fundação — ver acima |
+| Compartilhar localização / seguir | média | o cliente não sabe onde está quem está longe; o servidor tem de mandar a posição periodicamente, e só com consentimento. Em servidor de PvP é arma |
+| Radar de Pokémon | média | só na branch `cobblemon`; limitado ao que o cliente carrega (distância de rastreio de entidades). Radar que mostra lendário e shiny desequilibra — configurável |
+| Mensagens | média/alta | entrega para offline, histórico, limite de tamanho e de frequência; em servidor público o dono vai querer registro |
+| Mapa da área próxima | média/alta | o "próxima" é o que o torna viável: o cliente já tem os chunks carregados e sabe a cor de cada bloco (`MapColor`). Gerar a imagem aos poucos e guardar em cache, senão trava |
+| Fotos — galeria local | média | captura de tela do cliente, guardada no cliente |
+| Fotos — compartilhar | alta | o limite de pacote cliente→servidor é da ordem de 32 KB, então a imagem vai em pedaços; armazenamento no servidor; e **moderação de imagem**, que num servidor público é problema real |
+
+### Propostas a mais
+
+- **Último local de morte** — *baixa*. Ponto de interesse criado sozinho ao morrer. A
+  bússola de recuperação do vanilla faz isso, mas custa eco shard.
+- **Relógio e clima** — *baixa*. Dia do mundo, fase da lua, e quanto falta para a
+  chuva — o servidor sabe, o cliente não.
+- **Não perturbe / modo avião** — *baixa*. Bloqueia ligações, mensagens e
+  localização. Complemento natural dos contatos.
+- **Papel de parede e capa** — *baixa*. Usa o que já existe de tingimento.
+- **Acesso remoto ao PC do Cobblemon** — *média*, branch `cobblemon`. A pesquisa
+  achou o `PCLinkManager`, feito para bloco customizado dar acesso ao PC. Só no
+  pokébook: reforça que a estação administra.
+- **Desafio de batalha pelo celular** — *média*, branch `cobblemon`.
+- **Ranking de missões** — *média*. Precisa do armazenamento de mundo para incluir
+  quem está offline.
+- **Missões cooperativas** entre contatos — *alta*. Progresso compartilhado muda o
+  modelo de dados.
+- **Lanterna** — *alta* sozinho; *baixa* se houver mod de luz dinâmica instalado para
+  integrar, na mesma fronteira de classe de sempre.
+
+### Onde cada coisa mora
+
+Segue a divisão já adotada — **a estação administra, o bolso comunica**:
+
+- **Poképhone**: ligações, mensagens, seta e rastreio, radar, compartilhar
+  localização, câmera, alarme, notificações.
+- **Pokébook**: resgate de recompensa, PC remoto, ranking, mapa em tela grande.
+- **Os dois**: contatos, pontos de interesse, notas.
+
+### Ordem sugerida
+
+1. **Fundações baratas**: contatos, atualização ao vivo, central de notificações.
+2. **Ganhos rápidos**: pontos de interesse com seta, último local de morte, localização
+   pelo chat, rastreio de missão no HUD, alarme, relógio e clima, notas.
+3. **Social**: compartilhar localização, mensagens.
+4. **Cobblemon**: radar, PC remoto, desafio de batalha.
+5. **Pesados**: mapa, fotos, missões cooperativas.
+
 ## Outras pendências menores
 
 - **Contorno cheio de linhas** — a escada de quatro caixas desenha quatro wireframes
