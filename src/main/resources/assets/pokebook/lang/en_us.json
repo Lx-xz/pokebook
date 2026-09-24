@@ -55,5 +55,9 @@
 	"message.pokebook.groups_disabled": "Voice chat groups are disabled here. Use the Poképhone to call someone.",
 	"block.pokebook.pokebook_red": "Red Pokébook",
 	"block.pokebook.pokebook_blue": "Blue Pokébook",
-	"block.pokebook.pokebook_lime": "Lime Pokébook"
+	"block.pokebook.pokebook_lime": "Lime Pokébook",
+	"block.pokebook.pokebook_cyan": "Cyan Pokébook",
+	"block.pokebook.pokebook_magenta": "Magenta Pokébook",
+	"block.pokebook.pokebook_yellow": "Yellow Pokébook",
+	"block.pokebook.pokebook_black": "Black Pokébook"
 }

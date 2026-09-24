@@ -1,0 +1,4 @@
+{
+	"__comment": "Herda do item/pokebook: mesma geometria e mesmo display. A cor vem do provedor de cor registrado no cliente, nao de textura propria.",
+	"parent": "pokebook:item/pokebook"
+}

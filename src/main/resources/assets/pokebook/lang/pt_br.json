@@ -55,5 +55,9 @@
 	"message.pokebook.groups_disabled": "Grupos de voz estão desabilitados aqui. Use o Poképhone para ligar para alguém.",
 	"block.pokebook.pokebook_red": "Pokébook Vermelho",
 	"block.pokebook.pokebook_blue": "Pokébook Azul",
-	"block.pokebook.pokebook_lime": "Pokébook Verde-limão"
+	"block.pokebook.pokebook_lime": "Pokébook Verde-limão",
+	"block.pokebook.pokebook_cyan": "Pokébook Ciano",
+	"block.pokebook.pokebook_magenta": "Pokébook Magenta",
+	"block.pokebook.pokebook_yellow": "Pokébook Amarelo",
+	"block.pokebook.pokebook_black": "Pokébook Preto"
 }
