@@ -44,10 +44,16 @@ import java.util.function.Supplier;
  * textura ao conjunto abaixo.
  */
 public class EmissiveScreenModel extends ForwardingBakedModel {
-	/** As texturas que representam tela ligada. A apagada fica de fora de propósito. */
+	/**
+	 * As texturas que representam tela ligada. A apagada fica de fora de propósito.
+	 *
+	 * <p>Era um conjunto de três enquanto a tela tinha quatro níveis de brilho. Com a v3 a
+	 * tela voltou a ser binária — {@code screen_on} e {@code screen_off} —, e os nomes dos
+	 * níveis intermediários foram removidos daqui porque as texturas deixaram de existir.
+	 * Continuar listando-os não quebrava nada (nenhum sprite casaria), mas mentia sobre o
+	 * que o mod tem.
+	 */
 	private static final Set<Identifier> LIT_SPRITES = Set.of(
-		Identifier.of(Pokebook.MOD_ID, "block/screen_1"),
-		Identifier.of(Pokebook.MOD_ID, "block/screen_2"),
 		Identifier.of(Pokebook.MOD_ID, "block/screen_on")
 	);
 

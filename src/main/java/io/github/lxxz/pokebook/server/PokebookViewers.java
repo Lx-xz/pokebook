@@ -55,7 +55,7 @@ public final class PokebookViewers {
 	/**
 	 * Se a tela percorre os níveis ou salta direto ao alvo.
 	 *
-	 * <p>Desligada enquanto a v2 tem só duas artes. Percorrer com duas artes produzia uma
+	 * <p>Desligada enquanto há só duas artes de tela (apagada e acesa). Percorrer com duas artes produzia uma
 	 * assimetria incômoda: ao ligar, os níveis 1 e 2 mostram a arte APAGADA, então a tela
 	 * só acendia no terceiro passo; ao desligar, o primeiro passo já saía do nível 3 e era
 	 * visível na hora. Ligar parecia lento e desligar instantâneo.
