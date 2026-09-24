@@ -18,15 +18,16 @@ public final class ModBlocks {
 	public static final Block POKEBOOK = new PokebookBlock(settings());
 
 	/**
-	 * Cores de protótipo, com o valor RGB do corante correspondente do vanilla.
+	 * As cores disponíveis, com o valor RGB do corante correspondente do vanilla.
 	 *
 	 * <p><b>Não existe arte por cor.</b> Todas usam o mesmo atlas e os mesmos dois modelos;
 	 * a cor entra por tingimento, que multiplica a textura pela cor pedida. O chassi foi
 	 * desenhado claro (74% dos pixels acima de 204 de luminância), e é isso que permite
 	 * cores vivas — multiplicação só escurece.
 	 *
-	 * <p>As faces da tela e do teclado <b>não</b> levam {@code tintindex} no modelo, senão
-	 * um pokébook vermelho ganharia tela vermelha.
+	 * <p>A tela, o teclado e o touchpad <b>não</b> levam {@code tintindex} no modelo. A tela
+	 * porque tem textura própria e estado próprio; os outros dois porque perderiam
+	 * legibilidade — um touchpad tingido esconde os dois botões.
 	 *
 	 * <p>Blocos separados por cor, e não uma propriedade de blockstate, pelo mesmo motivo
 	 * que a lã e o concreto do vanilla são blocos separados: o item carrega a cor de graça
@@ -38,9 +39,15 @@ public final class ModBlocks {
 	public static final Map<String, Block> TINTED = new LinkedHashMap<>();
 
 	static {
+		// RGB
 		TINTS.put("red", 0xB02E26);
 		TINTS.put("blue", 0x3C44AA);
 		TINTS.put("lime", 0x80C71F);
+		// CMYK
+		TINTS.put("cyan", 0x169C9C);
+		TINTS.put("magenta", 0xC74EBD);
+		TINTS.put("yellow", 0xFED83D);
+		TINTS.put("black", 0x1D1D21);
 		for (String name : TINTS.keySet()) {
 			TINTED.put(name, new PokebookBlock(settings()));
 		}

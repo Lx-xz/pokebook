@@ -1,13 +1,13 @@
 {
-	"__comment": "Geometria exportada do Blockbench. O export vem SEM namespace nas texturas e sem particle - ambos acrescentados aqui. texture_size 64 e obrigatorio: as UVs foram escritas para um atlas 64x64 e sem ele saem multiplicadas por 4. Os tintindex TAMBEM sao acrescentados aqui: marcam o que recebe a cor do bloco. A face da TELA e as do TECLADO ficam de fora de proposito - sem isso um pokebook vermelho ganharia tela vermelha. Um reexport apaga tudo isso; rode o script que redetecta a face da tela pela azulidade da UV em vez de refazer a mao.",
 	"format_version": "26.3",
 	"texture_size": [
-		64,
-		64
+		32,
+		32
 	],
 	"textures": {
-		"1": "pokebook:block/pokebook_off",
-		"particle": "pokebook:block/pokebook_off"
+		"2": "pokebook:block/screen_off",
+		"3": "pokebook:block/components",
+		"particle": "pokebook:block/components"
 	},
 	"elements": [
 		{
@@ -18,7 +18,7 @@
 			],
 			"to": [
 				15,
-				1.5,
+				2,
 				12
 			],
 			"rotation": {
@@ -33,62 +33,64 @@
 			"faces": {
 				"north": {
 					"uv": [
-						3,
-						5.5,
-						6.5,
-						6
+						1,
+						12,
+						8,
+						13
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"east": {
 					"uv": [
-						3,
-						6.5,
-						5.5,
-						7
+						0,
+						7,
+						1,
+						12
 					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"south": {
 					"uv": [
-						3,
+						1,
 						6,
-						6.5,
-						6.5
+						8,
+						7
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						6.5,
-						5.5,
+						8,
+						7,
 						9,
-						6
+						12
 					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"up": {
 					"uv": [
-						0,
-						0,
-						3.5,
-						2.5
+						1,
+						7,
+						8,
+						12
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"down": {
 					"uv": [
-						0,
-						2.75,
-						3.5,
-						5.25
+						9,
+						7,
+						16,
+						12
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
@@ -96,12 +98,12 @@
 		{
 			"from": [
 				1,
-				1.5,
+				2,
 				12
 			],
 			"to": [
 				15,
-				2.5,
+				3,
 				13
 			],
 			"rotation": {
@@ -109,69 +111,59 @@
 				"axis": "y",
 				"origin": [
 					13,
-					0,
+					0.5,
 					12
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						5.75,
-						6.5,
-						9.25,
-						6.75
+						8,
+						2,
+						15,
+						2.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"east": {
 					"uv": [
-						2.5,
-						7.25,
-						2.75,
-						7.5
+						15,
+						0.5,
+						15.5,
+						1
 					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"south": {
-					"uv": [
-						6.5,
-						6,
-						10,
-						6.25
-					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						7.25,
-						2.5,
-						7.5,
-						2.75
+						15.5,
+						0.5,
+						16,
+						1
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"up": {
 					"uv": [
-						6.5,
-						6.25,
-						10,
-						6.5
+						8,
+						1.5,
+						15,
+						2
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"down": {
 					"uv": [
-						5.75,
-						6.75,
-						9.25,
-						7
+						8,
+						2.5,
+						15,
+						3
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
@@ -179,12 +171,12 @@
 		{
 			"from": [
 				1,
-				2.5,
+				3,
 				12
 			],
 			"to": [
 				2,
-				10.5,
+				11,
 				13
 			],
 			"rotation": {
@@ -192,69 +184,42 @@
 				"axis": "y",
 				"origin": [
 					13,
-					2.5,
+					3,
 					12
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						3.75,
-						7,
-						4,
-						9
+						8,
+						5,
+						12,
+						5.5
 					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"east": {
 					"uv": [
-						4,
-						7,
-						4.25,
-						9
-					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"south": {
-					"uv": [
-						4.25,
-						7,
+						8,
 						4.5,
-						9
+						12,
+						5
 					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						4.5,
-						7,
-						4.75,
-						9
+						8,
+						5.5,
+						12,
+						6
 					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"up": {
-					"uv": [
-						2.75,
-						7.25,
-						3,
-						7.5
-					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"down": {
-					"uv": [
-						7.25,
-						2.75,
-						7.5,
-						3
-					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
@@ -262,12 +227,12 @@
 		{
 			"from": [
 				1,
-				10.5,
+				11,
 				12
 			],
 			"to": [
 				15,
-				11.5,
+				12,
 				13
 			],
 			"rotation": {
@@ -275,69 +240,59 @@
 				"axis": "y",
 				"origin": [
 					13,
-					10.5,
+					11,
 					12
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						0,
-						7,
-						3.5,
-						7.25
+						8,
+						0.5,
+						15,
+						1
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"east": {
 					"uv": [
-						3,
-						7.25,
-						3.25,
-						7.5
-					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"south": {
-					"uv": [
-						7,
+						15,
 						0,
-						10.5,
-						0.25
+						15.5,
+						0.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						7.25,
-						3,
-						7.5,
-						3.25
+						15.5,
+						0,
+						16,
+						0.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"up": {
 					"uv": [
-						7,
-						0.25,
-						10.5,
+						8,
+						0,
+						15,
 						0.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"down": {
 					"uv": [
-						7,
-						0.5,
-						10.5,
-						0.75
+						8,
+						1,
+						15,
+						1.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
@@ -345,12 +300,12 @@
 		{
 			"from": [
 				14,
-				2.5,
+				3,
 				12
 			],
 			"to": [
 				15,
-				10.5,
+				11,
 				13
 			],
 			"rotation": {
@@ -358,69 +313,42 @@
 				"axis": "y",
 				"origin": [
 					26,
-					2.5,
+					3,
 					12
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						4.75,
-						7,
-						5,
-						9
+						8,
+						3.5,
+						12,
+						4
 					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"east": {
 					"uv": [
-						5,
-						7,
-						5.25,
-						9
+						8,
+						3,
+						12,
+						3.5
 					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"south": {
-					"uv": [
-						5.25,
-						7,
-						5.5,
-						9
-					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						5.5,
-						7,
-						5.75,
-						9
+						8,
+						4,
+						12,
+						4.5
 					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"up": {
-					"uv": [
-						3.25,
-						7.25,
-						3.5,
-						7.5
-					],
-					"texture": "#1",
-					"tintindex": 0
-				},
-				"down": {
-					"uv": [
-						7.25,
-						3.25,
-						7.5,
-						3.5
-					],
-					"texture": "#1",
+					"rotation": 90,
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
@@ -428,12 +356,12 @@
 		{
 			"from": [
 				1,
-				1.5,
+				2,
 				13
 			],
 			"to": [
 				15,
-				11.5,
+				12,
 				14
 			],
 			"rotation": {
@@ -441,68 +369,68 @@
 				"axis": "y",
 				"origin": [
 					13,
-					7.5,
+					8,
 					13
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						3.5,
 						0,
-						7,
-						2.5
+						0,
+						16,
+						16
 					],
-					"texture": "#1"
+					"texture": "#2"
 				},
 				"east": {
 					"uv": [
-						7,
-						1.75,
-						7.25,
-						4.25
+						0,
+						5.5,
+						0.5,
+						0.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"south": {
 					"uv": [
-						3.5,
-						2.75,
-						7,
-						5.25
+						0.53572,
+						0.5,
+						7.53572,
+						5.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						3.5,
-						7,
-						3.75,
-						9.5
+						7.5,
+						5.5,
+						8,
+						0.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"up": {
 					"uv": [
-						7,
-						0.75,
-						10.5,
-						1
+						0.5,
+						0,
+						7.5,
+						0.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"down": {
 					"uv": [
-						7,
-						1,
-						10.5,
-						1.25
+						0.5,
+						5.5,
+						7.5,
+						6
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
@@ -510,236 +438,271 @@
 		{
 			"from": [
 				2,
-				1,
-				5.25
+				1.75,
+				6
 			],
 			"to": [
 				14,
-				2,
-				11.25
+				2.75,
+				11
 			],
 			"rotation": {
 				"angle": 0,
 				"axis": "y",
 				"origin": [
 					2,
-					0.25,
-					9
+					1,
+					9.75
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						7,
-						1.25,
-						10,
-						1.5
+						9.5,
+						15.5,
+						15.5,
+						15
 					],
-					"texture": "#1"
+					"texture": "#3"
 				},
 				"east": {
 					"uv": [
-						8.5,
-						4.5,
-						7,
-						4.75
+						9.5,
+						15,
+						9,
+						12.5
 					],
-					"texture": "#1"
+					"rotation": 90,
+					"texture": "#3"
 				},
 				"south": {
 					"uv": [
-						7,
-						1.5,
-						10,
-						1.75
+						15.5,
+						12.5,
+						9.5,
+						12
 					],
-					"texture": "#1"
+					"texture": "#3"
 				},
 				"west": {
 					"uv": [
-						8.5,
-						4.75,
-						7,
-						5
+						16,
+						15,
+						15.5,
+						12.5
 					],
-					"texture": "#1"
+					"rotation": 90,
+					"texture": "#3"
 				},
 				"up": {
 					"uv": [
-						3,
-						7,
-						0,
-						5.5
+						15.5,
+						15,
+						9.5,
+						12.5
 					],
-					"texture": "#1"
+					"texture": "#3"
 				}
 			}
 		},
 		{
 			"from": [
 				12,
-				0.75,
-				11.75
+				1.5,
+				11.5
 			],
 			"to": [
 				14,
-				1.5,
-				13.25
+				2.5,
+				12.5
 			],
 			"rotation": {
-				"angle": -45,
-				"axis": "x",
+				"angle": 0,
+				"axis": "y",
 				"origin": [
 					12,
-					0.75,
-					12
+					1.5,
+					11.75
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						0,
-						7.25,
-						0.5,
-						7.5
+						15,
+						5.5,
+						16,
+						6
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"east": {
 					"uv": [
-						0.5,
-						7.25,
-						1,
-						7.5
+						15,
+						3.5,
+						15.5,
+						4
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"south": {
 					"uv": [
-						1,
-						7.25,
-						1.5,
-						7.5
+						15,
+						4.5,
+						16,
+						5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						1.5,
-						7.25,
-						2,
-						7.5
+						15.5,
+						3.5,
+						16,
+						4
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"up": {
 					"uv": [
-						7,
-						5,
-						7.5,
-						5.5
+						15,
+						4,
+						16,
+						4.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"down": {
 					"uv": [
-						5.75,
-						7,
-						6.25,
-						7.5
+						15,
+						5,
+						16,
+						5.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
 		},
 		{
 			"from": [
+				6,
+				2.01,
+				3
+			],
+			"to": [
+				10,
+				2.01,
+				5
+			],
+			"rotation": {
+				"angle": 0,
+				"axis": "y",
+				"origin": [
+					8,
+					0,
+					3
+				]
+			},
+			"faces": {
+				"up": {
+					"uv": [
+						9,
+						15.5,
+						7,
+						14.5
+					],
+					"texture": "#3"
+				}
+			}
+		},
+		{
+			"from": [
 				2,
-				0.75,
-				11.75
+				1.5,
+				11.5
 			],
 			"to": [
 				4,
-				1.5,
-				13.25
+				2.5,
+				12.5
 			],
 			"rotation": {
-				"angle": -45,
-				"axis": "x",
+				"angle": 0,
+				"axis": "y",
 				"origin": [
 					2,
-					0.75,
-					12
+					1.5,
+					11.75
 				]
 			},
 			"faces": {
 				"north": {
 					"uv": [
-						7.25,
-						1.75,
-						7.75,
-						2
+						15,
+						2.5,
+						16,
+						3
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"east": {
 					"uv": [
-						2,
-						7.25,
-						2.5,
-						7.5
+						15,
+						3,
+						15.5,
+						3.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"south": {
 					"uv": [
-						7.25,
-						2,
-						7.75,
-						2.25
+						15,
+						1.5,
+						16,
+						2
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"west": {
 					"uv": [
-						7.25,
-						2.25,
-						7.75,
-						2.5
+						15.5,
+						3,
+						16,
+						3.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"up": {
 					"uv": [
-						6.25,
-						7,
-						6.75,
-						7.5
+						15,
+						1,
+						16,
+						1.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				},
 				"down": {
 					"uv": [
-						6.75,
-						7,
-						7.25,
-						7.5
+						15,
+						2,
+						16,
+						2.5
 					],
-					"texture": "#1",
+					"texture": "#3",
 					"tintindex": 0
 				}
 			}
 		}
-	]
+	],
+	"__comment": "GERADO por docs/instalar-modelo.cjs a partir de pokebook.json. Não edite à mão: rode o script de novo depois de reexportar do Blockbench. Ele repõe o namespace e o particle, remove as faces #missing do export, aplica os tintindex de chassi (deixando fora tela, teclado e touchpad) e afasta o touchpad da base para não dar z-fighting."
 }

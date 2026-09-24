@@ -1,8 +1,7 @@
 {
-	"__comment": "So troca o atlas pelo de tela acesa; a geometria inteira vem do pai.",
+	"__comment": "GERADO por docs/instalar-modelo.cjs. Só troca a textura da tela; a geometria vem do pai. O brilho emissivo não é declarado aqui — o EmissiveScreenModel seleciona por SPRITE, e block/screen_on já está na lista dele.",
 	"parent": "pokebook:block/pokebook",
 	"textures": {
-		"1": "pokebook:block/pokebook",
-		"particle": "pokebook:block/pokebook"
+		"2": "pokebook:block/screen_on"
 	}
 }
