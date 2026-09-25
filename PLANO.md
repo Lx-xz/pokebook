@@ -821,6 +821,90 @@ instâncias e:
 8. Capa: poképhone + corante na mesa de trabalho → chassi tingido, tela intacta.
 9. `config/pokebook-server.json` com `"radar": false` some com o radar ao reentrar.
 
+### Sessão de 25–26/09/2026 — branch `apps-completo`: as médias da Cobblemon e as difíceis
+
+Pedido: uma branch à parte, **com Cobblemon e voice chat juntos**, com tudo o que já
+existia mais o que faltava do levantamento — para o autor revisar e decidir o que entra na
+`main`. A branch é `apps-completo`: a `voicechat-nnczo3` (os apps baixos e médios) com
+`origin/cobblemon` e `origin/voicechat` mescladas por cima, e o trabalho novo em cima disso.
+
+⚠️ **Esta branch viola a regra de ouro de propósito**: ela junta as duas dependências, e
+nada nela deve ser mesclado inteiro na `main`. É vitrine para triagem. O que for aprovado
+vai para a `main` **por conteúdo** (ver `CLAUDE.md`, "Conserto de muitos"), deixando para
+trás os quatro arquivos do voice chat, o `build.gradle`/`gradle.properties` e a classe de
+integração do Cobblemon.
+
+**O que entrou, e para onde iria**
+
+| funcionalidade | aparelho | depende de | iria para |
+|---|---|---|---|
+| PC remoto | pokébook | Cobblemon (`CobblemonIntegration.openPc`) | pacote e botão na `main`; a abertura do PC na `cobblemon` |
+| Desafio de batalha | poképhone (⚔ nos contatos) | Cobblemon (`CobblemonIntegration.startBattle`) | `BattleChallenges` e o comando na `main`; o `Starter` na `cobblemon` |
+| Mensagens | poképhone | — | `main` |
+| Fotos em mensagem | poképhone | — | `main` |
+| Mapa da área | pokébook | — | `main` |
+| Lanterna | poképhone | — | `main` |
+| Grupos e missões cooperativas | os dois | — | `main` |
+
+A divisão que torna isso possível é a de sempre: `BattleChallenges` não menciona o
+Cobblemon — a integração instala um `Starter` ao carregar, e sem ele o botão some e o
+servidor recusa. O mesmo vale para o PC: o pacote e o botão são nossos, a abertura é dele.
+
+**Decisões que valem registro**
+
+- **Consentimento para quem está offline: `ContactDirectory`.** Mensagem chega a quem salvou
+  quem manda, mas os contatos de um jogador offline estão no save dele. Um espelho só dos
+  UUIDs, no mundo principal, atualizado a cada mudança de contatos e corrigido na entrada.
+  Divergência cai para o lado seguro: quem não entrou depois da atualização recebe só online.
+- **Mensagens num anexo do mundo**, até 100 por conversa. A tela nunca mostra mensagem antes
+  de o servidor a gravar. Cada envio vai para o log do servidor — é o registro que o dono de
+  servidor público vai querer.
+- **Foto em pedaços de 24 KB**, reduzida no cliente (lado de 320, reduzindo mais até caber em
+  256 KB). O servidor confere a assinatura PNG, guarda em `<mundo>/pokebook_photos/<uuid>.png`
+  e registra no log quem mandou para quem. O id da foto é validado como UUID canônico antes
+  de virar caminho — sem isso, `../` num pacote leria qualquer arquivo do servidor.
+  **Moderação de imagem não existe**; o que existe é a chave `photo_sharing` e o log.
+- **O mapa é do cliente e não pede nada ao servidor.** Mostra o que o cliente já carregou, nas
+  cores e no sombreado do mapa do vanilla, 128×128 blocos em volta do pokébook, oito linhas
+  por quadro. Reabrir no mesmo lugar em até 30 s reaproveita a imagem.
+- **A lanterna é um bloco de luz do vanilla** (`minecraft:light`, nível 13) na cabeça do
+  jogador, levado a cada dois ticks e **só em ar** — nunca substitui bloco nenhum, então
+  apagar nunca destrói nada. É do servidor: a luz é de verdade e impede monstro de nascer.
+  As posições acesas ficam num anexo do mundo; ao ligar o servidor, o que uma queda deixou é
+  apagado. O caminho barato de antes (mod de luz dinâmica) continua sendo alternativa, mas
+  seria dependência nova.
+- **Missão cooperativa: contador no grupo, resgate pessoal.** Ao concluir, cada membro
+  ganha a missão como concluída no próprio progresso (`MissionProgress.fill`). Sair do grupo
+  depois não tira de ninguém; entrar noutro não deixa resgatar de novo; ranking e aba social
+  contam sem saber que grupo existe. Offline na conclusão fica anotado e é entregue na
+  entrada. Sem grupo, a missão não anda — e aparece com "· em grupo" no título para dizer
+  por quê. A marca vai no título e não num campo novo do pacote: a lista não mudou de forma.
+- **Quem sai do grupo não leva o contador**, e um grupo com uma pessoa só deixa de existir.
+- **Convites (grupo e batalha) por texto clicável no chat**, com `/pokebook grupo|batalha
+  aceitar|recusar <nome>`. O nome serve só para achar o convite; quem autoriza é o registro
+  de espera, que só o servidor escreve.
+
+**Nada disso foi compilado nem visto em jogo** — mesma restrição de rede da sessão anterior.
+Conferido: nomes Yarn e da Fabric API nos fontes clonados, a API do Cobblemon no fonte da tag
+1.8.0 (GitLab), `javac` sem classpath e as checagens de membros, idioma e fronteira.
+
+**Próxima ação:** `gradlew build` na `apps-completo`, em casa. Depois `runClient` com duas
+instâncias:
+
+1. Mensagens: salvar um ao outro; mandar texto; sair um dos dois, mandar, entrar — chega o
+   aviso "N novas". Sem ser salvo: "essa pessoa não salvou você".
+2. Fotos: galeria → Enviar → contato. A conversa mostra "[Foto]"; clicar abre. Conferir
+   `<mundo>/pokebook_photos/` e o log.
+3. Mapa: pokébook → Mapa. Desenha de cima para baixo; mouse mostra X/Z; clicar num ponto liga
+   a seta.
+4. Lanterna: à noite, poképhone → Lanterna. Andar, entrar na água (apaga), sair (volta).
+   Largar o poképhone no chão apaga. Derrubar o servidor com ela acesa e religar: o log diz
+   quantas luzes foram limpas.
+5. Grupo: convidar, aceitar pelo chat, matar esqueletos alternando — o contador é um só.
+   Aos 20, os dois recebem "seu grupo concluiu" e resgatam cada um no pokébook.
+6. Cobblemon: PC no pokébook abre o PC; afastar-se fecha. ⚔ num contato online manda o
+   desafio; aceitar começa a batalha 1v1.
+
 ---
 
 # Cobblemon — o que aplicar em casa

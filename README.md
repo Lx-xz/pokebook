@@ -50,7 +50,10 @@ Fechar o ciclo básico do mod, sem nenhuma dependência externa.
 
 - [ ] Aba social: ver o progresso de missões dos outros jogadores
 - [ ] Poképhone: um irmão portátil do pokébook
-- [ ] Mensagens entre jogadores
+- [ ] Mensagens entre jogadores, com entrega para quem está offline e fotos — escritas na
+      branch `apps-completo`, ainda não vistas em jogo
+- [ ] Na `apps-completo`, também: mapa da área (pokébook), lanterna (poképhone), grupos e
+      missões cooperativas, PC remoto (pokébook) e desafio de batalha (Cobblemon)
 - [ ] Ligações por voz, integrando o [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat)
 - [ ] Apps do aparelho: contatos, pontos de interesse com seta no HUD, notas, relógio com
       previsão e alarme, fotos, ajustes, ranking, radar, central de avisos — escritos,
@@ -118,6 +121,7 @@ Isso já vale: matar um creeper, sem recompensa. Os outros campos têm padrão:
 | `reward` | nenhuma | o item da recompensa |
 | `reward_count` | `1` | quantos itens |
 | `title` | gerado | o nome na tela |
+| `cooperative` | `false` | só anda em grupo — ver abaixo |
 
 ### Objetivos
 
@@ -174,6 +178,16 @@ idioma do Minecraft **não têm plural** e o nome de uma espécie é sempre sing
 "Capturar 3 Pidgey" sairia errado em qualquer idioma. Com `title`, o texto é usado como
 está — útil para a missão que merecer um nome próprio, ao custo de não ser traduzido.
 
+**Missão cooperativa** (`"cooperative": true`): o contador é do **grupo**, não de cada um.
+Sem grupo ela fica parada — e aparece como "… · em grupo" para dizer por quê. Quando o
+grupo chega ao `required`, cada membro recebe a missão como concluída e resgata a própria
+recompensa no pokébook; quem estava offline recebe ao entrar. Grupos têm até quatro
+pessoas, formados pela tela Grupo, e só se convida quem salvou você nos contatos.
+
+```json
+{ "target": "minecraft:skeleton", "required": 20, "reward": "minecraft:diamond", "cooperative": true }
+```
+
 `/reload` recarrega as missões com o mundo aberto, e quem estiver com o pokébook na
 tela recebe a lista nova na hora. Um arquivo inválido é registrado no log e pulado:
 um erro de digitação numa missão não apaga a lista inteira.
@@ -182,6 +196,21 @@ Por enquanto `target` é só o id de um tipo de entidade e `objective` só aceit
 Quando houver um segundo tipo de alvo — espécie de Pokémon, tipo elemental — o campo
 passa a aceitar também um objeto `{"type": ..., ...}`, que é distinguível de uma
 string; os datapacks escritos hoje continuam válidos.
+
+## Config do servidor
+
+`config/pokebook-server.json`, criado na primeira vez com tudo ligado. Cada chave desliga
+um recurso para todos; o cliente esconde o ícone e o servidor recusa o pacote.
+
+| chave | o que desliga |
+|---|---|
+| `location_sharing` | compartilhar localização com contatos |
+| `chat_location` | mandar ponto no chat |
+| `radar` | radar de Pokémon |
+| `photos` | câmera e galeria |
+| `messages` | mensagens entre jogadores |
+| `photo_sharing` | mandar foto em mensagem (as fotos ficam em `<mundo>/pokebook_photos/`, e cada envio vai para o log — é o que o dono tem para moderar) |
+| `flashlight` | lanterna |
 
 ## Como rodar
 

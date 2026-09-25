@@ -76,6 +76,11 @@ rede; a do voice chat, para o mod continuar utilizável por quem não tem o Simp
 | `cobblemon` | a `main` mais o `build.gradle`, o `gradle.properties`, a classe de integração e as missões de Pokémon |
 | `voicechat` | a `main` mais **quatro arquivos**: `integration/VoicechatIntegration.java`, `build.gradle`, `gradle.properties` e o entrypoint no `fabric.mod.json` |
 
+> **`apps-completo`** é uma quarta branch, **temporária e fora da regra**: junta Cobblemon e
+> voice chat para o autor revisar os apps de uma vez. Nunca se mescla inteira em lugar
+> nenhum — o que for aprovado vai para a `main` por conteúdo, deixando para trás o que é
+> das outras duas. Ver `PLANO.md`, sessão de 25–26/09.
+
 ⚠️ **Quatro arquivos, e mais nenhum.** O telefone inteiro — `call/`, `network/`,
 `CallScreen`, o som — é da `main`: ele menciona o Simple Voice Chat só como **string de
 mod id** em `CallService.available()`, sem importar uma classe dele, e por isso compila
@@ -137,6 +142,12 @@ Fabric mostra os nomes da Mojang, que são diferentes: `onUse` e não `useWithou
 `addDrawableChild` e não `addRenderableWidget`. Copiar de lá dá nome inexistente.
 
 **`Identifier` perdeu o construtor público na 1.21** — usar `Identifier.of(ns, path)`.
+
+**Sem classpath, o `javac` inventa erro de inferência.** Numa sessão sem acesso ao Maven,
+a checagem de sintaxe roda sem as dependências, e `Map.of()` com tipo do Minecraft no
+parâmetro sai "inferred type does not conform". Não é erro real; argumentos de tipo
+explícitos (`Map.<UUID, Group>of()`) calam. E o `javac` com milhares de erros de símbolo
+despeja um `javac.<data>.args` no diretório atual — rode-o fora do repositório.
 
 **Texto de interface é traduzido: dimensione pelo idioma mais verboso.** Um rótulo de
 aba que cabia em "Active" saiu cortado em "Em andamento". Ao escolher largura de botão
@@ -375,6 +386,18 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
   comando do texto clicável no chat, e um `§` ali faria o servidor expulsar quem clicou.
 - ⚠️ **`PositionedSoundInstance.master(som, TOM, volume)`** — o tom vem antes. Mesma armadilha
   de ordem do `drawTexture`: tudo `float`, compila e toca errado.
+- **Dado de vários jogadores mora no mundo principal**, em anexo: caixa de mensagens,
+  espelho de contatos (`ContactDirectory`, para decidir consentimento com quem está offline),
+  grupos, luzes da lanterna. O que é de um jogador só continua no jogador.
+- ⚠️ **Caminho montado com dado do cliente passa por validação estrita.** O id de foto vira
+  nome de arquivo; ele é conferido como UUID canônico antes, senão `../` leria o disco do
+  servidor.
+- **A lanterna só ocupa ar.** Bloco de luz do vanilla, nunca substituindo nada — é o que
+  garante que apagar não destrói bloco de ninguém. As posições ficam anotadas no mundo e são
+  limpas ao ligar o servidor.
+- **Missão cooperativa: contador no grupo, resgate pessoal.** Concluir marca a missão como
+  concluída no progresso de cada membro (`MissionProgress.fill`); o resto do sistema —
+  resgate, ranking, aba social — nem sabe que grupo existe.
 - **A capa do poképhone é o vanilla que tinge**: tag `#dyeable` + provedor de cor no
   `tintindex` 0. O modelo tem `tintindex` em toda face **menos a tela** — se o autor
   reexportar do Blockbench, isso some e precisa ser reposto.

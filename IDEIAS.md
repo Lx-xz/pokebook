@@ -283,6 +283,12 @@ o servidor manda as duas listas.
 > lanterna (alta sozinha; o caminho barato exige dependência nova), e **PC remoto** e
 > **desafio de batalha**, que são médias mas nascem na branch `cobblemon`. O radar entrou
 > na `main`, sem shiny nem lendário.
+>
+> **Estado em 26/09:** as que tinham ficado de fora foram escritas na branch
+> `apps-completo`, que junta Cobblemon e voice chat para revisão — mensagens, fotos em
+> mensagem, mapa, lanterna (com bloco de luz do vanilla, sem dependência nova), grupos e
+> missões cooperativas, PC remoto e desafio de batalha. Ver `PLANO.md`, sessão de 25–26/09.
+> Também não compiladas.
 
 Lista do autor mais propostas, com complexidade estimada. **Baixa** cabe numa sessão;
 **média** leva algumas; **alta** leva dias e tem risco de desenho, não só de código.
