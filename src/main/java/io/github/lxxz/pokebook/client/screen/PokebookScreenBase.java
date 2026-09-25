@@ -1,6 +1,7 @@
 package io.github.lxxz.pokebook.client.screen;
 
 import io.github.lxxz.pokebook.Pokebook;
+import io.github.lxxz.pokebook.client.phone.ClientPhone;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import io.github.lxxz.pokebook.sound.PokebookSounds;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -248,9 +249,10 @@ public abstract class PokebookScreenBase extends Screen {
 	 * aparelho que o jogador abriu para uma consulta rápida, sair é justamente o que ele
 	 * quer a seguir.
 	 *
-	 * <p>⚠️ <b>"Casa" hoje é {@link #parentScreen()} porque a navegação tem um nível só</b> —
-	 * toda tela é filha do menu. No dia em que uma tela tiver neta, isto precisa subir até a
-	 * raiz em vez de um degrau, senão o botão vira um segundo "voltar".
+	 * <p><b>Sobe até a raiz, não um degrau.</b> Enquanto toda tela era filha do menu, subir
+	 * um degrau era chegar em casa. Com telas netas — editar uma nota, editar um ponto — um
+	 * degrau só faria do botão um segundo "voltar". Cada {@link #parentScreen()} constrói uma
+	 * tela nova, então subir a cadeia inteira custa algumas alocações por clique, nada mais.
 	 */
 	private void pressHome() {
 		PokebookScreenBase parent = parentScreen();
@@ -258,7 +260,11 @@ public abstract class PokebookScreenBase extends Screen {
 			close();
 			return;
 		}
-		navigateTo(parent);
+		PokebookScreenBase root = parent;
+		for (PokebookScreenBase up = root.parentScreen(); up != null; up = root.parentScreen()) {
+			root = up;
+		}
+		navigateTo(root);
 	}
 
 	/**
@@ -330,6 +336,17 @@ public abstract class PokebookScreenBase extends Screen {
 		int y = panelY();
 
 		context.drawGuiTexture(FRAME, x, y, panelWidth(), panelHeight());
+
+		// O papel de parede é do celular: é o aparelho pessoal, o que se personaliza. O
+		// pokébook é uma estação na mesa, e pode ser de qualquer um que sente na frente.
+		// Pintado por cima da área acesa com alfa baixo — um tom, não uma troca; ver
+		// PhoneSettings.WALLPAPERS.
+		if (session.portable()) {
+			int wallpaper = ClientPhone.data().settings().wallpaperColor();
+			if ((wallpaper >>> 24) != 0) {
+				context.fill(contentX(), contentY(), contentX() + contentWidth(), contentY() + contentHeight(), wallpaper);
+			}
+		}
 
 		// Não existe versão centralizada sem sombra, então o x é calculado aqui. O título
 		// fica centralizado na área clara, na altura dos botões de canto.

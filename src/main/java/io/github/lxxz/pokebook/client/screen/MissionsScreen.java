@@ -1,7 +1,9 @@
 package io.github.lxxz.pokebook.client.screen;
 
+import io.github.lxxz.pokebook.client.phone.ClientPhone;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.MissionEntry;
+import io.github.lxxz.pokebook.network.TrackMissionPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -10,6 +12,7 @@ import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -39,6 +42,22 @@ public class MissionsScreen extends PokebookScreenBase {
 
 	private static final int CLAIM_WIDTH = 52;
 	private static final int CLAIM_HEIGHT = 18;
+
+	/**
+	 * O ◎ de "acompanhar no HUD", no fim da linha. Só em missão em andamento: a concluída já
+	 * não tem o que acompanhar, e é também onde mora o botão de resgate — os dois nunca
+	 * disputam o mesmo lugar.
+	 */
+	private static final int TRACK_WIDTH = 12;
+
+	/** A barra de rolagem ocupa os últimos 3 px; o ◎ fica antes dela, com folga. */
+	private static final int SCROLLBAR_SPACE = 5;
+
+	private static final Text TRACK_TOOLTIP_ON = Text.translatable("screen.pokebook.missions.track");
+	private static final Text TRACK_TOOLTIP_OFF = Text.translatable("screen.pokebook.missions.untrack");
+
+	/** A dica do ◎ sob o mouse neste quadro, desenhada depois do recorte da lista. */
+	private Text hoveredTrack;
 
 	/** Os três estados possíveis de uma missão, que são exatamente as três abas. */
 	private enum Tab {
@@ -123,6 +142,7 @@ public class MissionsScreen extends PokebookScreenBase {
 	protected void renderPanel(DrawContext context, int mouseX, int mouseY, float delta) {
 		List<MissionEntry> entries = visible();
 		int x = contentX();
+		hoveredTrack = null;
 
 		if (entries.isEmpty()) {
 			Text empty = Text.translatable("screen.pokebook.tab.empty");
@@ -148,6 +168,11 @@ public class MissionsScreen extends PokebookScreenBase {
 		if (maxScroll() > 0) {
 			renderScrollbar(context, x, entries.size());
 		}
+
+		// Fora do recorte: dentro dele a dica seria cortada na borda da lista.
+		if (hoveredTrack != null) {
+			context.drawTooltip(textRenderer, hoveredTrack, mouseX, mouseY);
+		}
 	}
 
 	private void renderRow(DrawContext context, MissionEntry entry, int x, int rowY, int mouseX, int mouseY) {
@@ -168,6 +193,22 @@ public class MissionsScreen extends PokebookScreenBase {
 			entry.claimed() ? COLOR_MUTED : COLOR_ACCENT, false);
 		outlineText(context, status, x + 22, rowY + 13, DEBUG_TEXT);
 
+		if (!entry.complete()) {
+			boolean tracked = ClientPhone.data().trackedMission().map(entry.id()::equals).orElse(false);
+			int trackX = trackX(x);
+			boolean hovered = mouseX >= trackX && mouseX < trackX + TRACK_WIDTH
+				&& mouseY >= rowY && mouseY < rowY + ROW_HEIGHT
+				&& mouseY >= listTop() && mouseY < listTop() + listHeight();
+			String glyph = "◎";
+			context.drawText(textRenderer, glyph, trackX + (TRACK_WIDTH - textRenderer.getWidth(glyph)) / 2,
+				rowY + (ROW_HEIGHT - textRenderer.fontHeight) / 2,
+				tracked ? COLOR_DONE : (hovered ? COLOR_ACCENT : COLOR_MUTED), false);
+			outline(context, trackX, rowY, TRACK_WIDTH, ROW_HEIGHT, DEBUG_HIT);
+			if (hovered) {
+				hoveredTrack = tracked ? TRACK_TOOLTIP_OFF : TRACK_TOOLTIP_ON;
+			}
+		}
+
 		if (entry.claimable() && !session.portable()) {
 			int buttonX = x + contentWidth() - CLAIM_WIDTH;
 			int buttonY = rowY + 3;
@@ -182,6 +223,10 @@ public class MissionsScreen extends PokebookScreenBase {
 				buttonX + (CLAIM_WIDTH - textRenderer.getWidth(label)) / 2, buttonY + 5, 0xFFFFFFFF, false);
 			outline(context, buttonX, buttonY, CLAIM_WIDTH, CLAIM_HEIGHT, DEBUG_HIT);
 		}
+	}
+
+	private int trackX(int rowX) {
+		return rowX + contentWidth() - SCROLLBAR_SPACE - TRACK_WIDTH;
 	}
 
 	/** Barra fina à direita, só para dizer que há mais coisa e onde estamos. */
@@ -215,6 +260,14 @@ public class MissionsScreen extends PokebookScreenBase {
 			int rowY = listTop() - scroll;
 
 			for (MissionEntry entry : visible()) {
+				// Acompanhar: o servidor guarda qual é, para valer entre sessões e ser por
+				// mundo. Clicar na que já está acompanhada deixa de acompanhar.
+				if (!entry.complete() && mouseX >= trackX(x) && mouseX < trackX(x) + TRACK_WIDTH
+					&& mouseY >= rowY && mouseY < rowY + ROW_HEIGHT) {
+					boolean tracked = ClientPhone.data().trackedMission().map(entry.id()::equals).orElse(false);
+					ClientPlayNetworking.send(new TrackMissionPayload(tracked ? Optional.empty() : Optional.of(entry.id())));
+					return true;
+				}
 				if (entry.claimable() && !session.portable()
 					&& mouseX >= buttonX && mouseX < buttonX + CLAIM_WIDTH
 					&& mouseY >= rowY + 3 && mouseY < rowY + 3 + CLAIM_HEIGHT) {

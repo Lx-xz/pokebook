@@ -1,13 +1,18 @@
 package io.github.lxxz.pokebook.client.screen;
 
-import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.call.CallService;
+import io.github.lxxz.pokebook.client.notify.ClientNotifications;
+import io.github.lxxz.pokebook.client.phone.ClientPhone;
+import io.github.lxxz.pokebook.client.radar.Radar;
+import io.github.lxxz.pokebook.config.ServerFeatures;
 import io.github.lxxz.pokebook.network.MissionEntry;
+import io.github.lxxz.pokebook.network.RequestRankingPayload;
 import io.github.lxxz.pokebook.network.RequestSocialPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,24 +22,46 @@ import java.util.List;
  *
  * <p>Substituiu botões de largura cheia empilhados. A grade não é só estética: com ícones,
  * acrescentar a quarta e a quinta função não empurra nada para fora da tela — elas caem na
- * linha seguinte sozinhas. Botões empilhados teriam esbarrado no fundo da moldura, que é o
- * mesmo problema que a lista de missões teve na quinta missão.
+ * linha seguinte sozinhas.
  *
- * <p>A grade serve aos <b>dois aparelhos</b>. O número de colunas é o mesmo; o que muda é
- * a largura disponível, e o tamanho do ícone sai dela. No pokébook os ícones ficam maiores,
- * no poképhone menores — sem nenhuma medida escrita duas vezes.
+ * <p><b>E quando a linha seguinte também não cabe, vira outra página</b>, como num celular.
+ * Com onze apps no poképhone a grade passava do fundo da moldura. Rolar não serve: os ícones
+ * são widgets, e widget não convive com o que rola (ver {@code CLAUDE.md}). Página serve —
+ * cada página monta os seus widgets e nada se move. Troca-se pela roda do mouse ou clicando
+ * nos pontinhos de baixo, e a página é lembrada entre uma abertura e outra.
  *
- * <p>O título vem da sessão: o mesmo menu é a tela inicial do pokébook e do poképhone, e
- * chamar os dois de "Pokébook" seria mentira na cara do jogador.
+ * <p>A grade serve aos <b>dois aparelhos</b>. O que muda é a largura disponível: três
+ * colunas em pé, quatro deitado. Quantas linhas cabem sai da altura, e quantas páginas sai
+ * das duas coisas — nenhum número de página escrito à mão.
+ *
+ * <p><b>Quem aparece em cada aparelho</b> segue a divisão do projeto: a estação administra, o
+ * bolso comunica. Ligar, avisos, radar, fotos e ajustes são do poképhone; ranking é do
+ * pokébook; o resto está nos dois. E o que o servidor desligou não aparece — ver
+ * {@link ServerFeatures}.
  */
 public class PokebookMenuScreen extends PokebookScreenBase {
-	/** Três por linha. Com a largura em pé, é o máximo em que o ícone ainda se lê. */
-	private static final int COLUMNS = 3;
+	private static final int PORTRAIT_COLUMNS = 3;
+	private static final int LANDSCAPE_COLUMNS = 4;
 
 	/** Folga entre ícones, na horizontal e na vertical. */
 	private static final int TILE_GAP = 6;
 
+	/** Os pontinhos de página: lado, distância entre eles, e a faixa que ocupam embaixo. */
+	private static final int DOT = 4;
+	private static final int DOT_SPACING = 8;
+	private static final int DOTS_HEIGHT = 8;
+
+	/**
+	 * A página em que o jogador estava. Estático para sobreviver a sair e voltar — a tela é
+	 * construída de novo a cada navegação, e um celular que volta sempre à primeira página
+	 * faz o jogador procurar o mesmo app toda vez.
+	 */
+	private static int lastPage;
+
 	private final List<MissionEntry> missions;
+
+	private List<Tile> tiles = List.of();
+	private int perPage = 1;
 
 	public PokebookMenuScreen(PokebookSession session, List<MissionEntry> missions) {
 		super(Text.translatable(session.portable()
@@ -46,25 +73,33 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 	/**
 	 * Uma função da tela inicial.
 	 *
-	 * <p>{@code sprite} nulo significa "ainda sem textura": o ícone cai no glifo. As
-	 * texturas chegam uma a uma, e a tela não pode esperar todas para funcionar.
+	 * <p>{@code sprite} nulo significa "ainda sem textura": o ícone cai no glifo. O glifo
+	 * continua escrito em cada app mesmo com o desenho reusado, para o dia em que alguém
+	 * preferir o glifo a um desenho repetido.
 	 */
-	private record Tile(String glyph, Identifier sprite, String labelKey, Runnable action) {
+	private record Tile(String glyph, Identifier sprite, Text label, Runnable action) {
 	}
 
-	/** Uma textura de ícone pelo nome do arquivo em {@code textures/gui/sprites/}. */
-	private static Identifier icon(String name) {
-		return Identifier.of(Pokebook.MOD_ID, name);
-	}
+	private List<Tile> buildTiles() {
+		boolean phone = session.portable();
+		ServerFeatures features = ClientPhone.features();
+		List<Tile> list = new ArrayList<>();
 
-	@Override
-	protected void initPanel() {
-		List<Tile> tiles = new ArrayList<>();
-
-		tiles.add(new Tile("◎", icon("icone_missoes"), "screen.pokebook.missions",
+		list.add(new Tile("◎", AppIcons.MISSIONS, Text.translatable("screen.pokebook.missions"),
 			() -> navigateTo(new MissionsScreen(session, missions))));
 
-		tiles.add(new Tile("✉", icon("icone_mensagens"), "screen.pokebook.social", () -> {
+		// Ligar é do aparelho de bolso, não da estação — ninguém liga de um notebook parado
+		// em cima da mesa. E sem o Simple Voice Chat toda a sinalização funcionaria e ninguém
+		// ouviria nada: um telefone mudo é pior do que um telefone que não está ali.
+		if (phone && CallService.available()) {
+			list.add(new Tile("☎", AppIcons.CALLS, Text.translatable("screen.pokebook.calls"),
+				() -> navigateTo(new CallScreen(session, missions))));
+		}
+
+		list.add(new Tile("☺", AppIcons.CONTACTS, Text.translatable("screen.pokebook.contacts"),
+			() -> navigateTo(new ContactsScreen(session))));
+
+		list.add(new Tile("✉", AppIcons.SOCIAL, Text.translatable("screen.pokebook.social"), () -> {
 			// O pedido sai junto com a navegação, e a tela nasce vazia até a resposta
 			// chegar. Pedir aqui e não ao abrir o aparelho evita mandar a lista de todo
 			// mundo em aberturas que nunca chegam a esta aba.
@@ -72,39 +107,154 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 			navigateTo(new SocialScreen(session, missions));
 		}));
 
-		// Ligar é do aparelho de bolso, não da estação. Reforça a divisão que o projeto
-		// persegue — o pokébook administra (é onde se resgata recompensa), o poképhone
-		// comunica — e também é o que faz sentido: ninguém liga de um notebook parado em
-		// cima de uma mesa.
-		//
-		// A segunda condição é outra coisa: sem o Simple Voice Chat toda a sinalização
-		// funcionaria e ninguém ouviria nada, e um telefone mudo é pior do que um telefone
-		// que não está ali. O servidor recusa de qualquer forma; esconder é para não
-		// oferecer o que não se pode cumprir.
-		if (session.portable() && CallService.available()) {
-			tiles.add(new Tile("☎", icon("icone_ligacoes"), "screen.pokebook.calls",
-				() -> navigateTo(new CallScreen(session, missions))));
+		if (!phone) {
+			list.add(new Tile("♛", AppIcons.RANKING, Text.translatable("screen.pokebook.ranking"), () -> {
+				ClientPlayNetworking.send(new RequestRankingPayload());
+				navigateTo(new RankingScreen(session));
+			}));
 		}
 
-		int tileSize = (contentWidth() - TILE_GAP * (COLUMNS - 1)) / COLUMNS;
-		int cellHeight = IconTileWidget.heightFor(textRenderer.fontHeight);
+		if (phone) {
+			int unread = ClientNotifications.unread();
+			Text label = unread > 0
+				? Text.translatable("screen.pokebook.notifications.unread", unread)
+				: Text.translatable("screen.pokebook.notifications");
+			list.add(new Tile("!", AppIcons.NOTIFICATIONS, label,
+				() -> navigateTo(new NotificationsScreen(session))));
+		}
 
-		for (int i = 0; i < tiles.size(); i++) {
+		list.add(new Tile("⚑", AppIcons.WAYPOINTS, Text.translatable("screen.pokebook.waypoints"),
+			() -> navigateTo(new WaypointsScreen(session))));
+
+		list.add(new Tile("✎", AppIcons.NOTES, Text.translatable("screen.pokebook.notes"),
+			() -> navigateTo(new NotesScreen(session))));
+
+		list.add(new Tile("◷", AppIcons.CLOCK, Text.translatable("screen.pokebook.clock"),
+			() -> navigateTo(new ClockScreen(session))));
+
+		// O radar só existe com o Cobblemon: é uma lista de Pokémon por perto, e sem ele não
+		// há Pokémon. A pergunta é por id de mod, sem mencionar classe nenhuma dele.
+		if (phone && features.radar() && Radar.available()) {
+			list.add(new Tile("◉", AppIcons.RADAR, Text.translatable("screen.pokebook.radar"),
+				() -> navigateTo(new RadarScreen(session))));
+		}
+
+		if (phone && features.photos()) {
+			list.add(new Tile("▣", AppIcons.PHOTOS, Text.translatable("screen.pokebook.photos"),
+				() -> navigateTo(new PhotosScreen(session))));
+		}
+
+		if (phone) {
+			list.add(new Tile("⚙", AppIcons.SETTINGS, Text.translatable("screen.pokebook.settings"),
+				() -> navigateTo(new SettingsScreen(session))));
+		}
+
+		return list;
+	}
+
+	// ------------------------------------------------------------------ grade e páginas
+
+	private int columns() {
+		return session.portrait() ? PORTRAIT_COLUMNS : LANDSCAPE_COLUMNS;
+	}
+
+	private int gridTop() {
+		return contentTop() + 6;
+	}
+
+	private int cellHeight() {
+		return IconTileWidget.heightFor(textRenderer.fontHeight);
+	}
+
+	private int pageCount() {
+		return Math.max(1, (tiles.size() + perPage - 1) / perPage);
+	}
+
+	@Override
+	protected void initPanel() {
+		tiles = buildTiles();
+
+		int columns = columns();
+		int tileSize = (contentWidth() - TILE_GAP * (columns - 1)) / columns;
+		int cellHeight = cellHeight();
+
+		// Quantas linhas cabem, já descontando a faixa dos pontinhos. Ela é descontada sempre,
+		// mesmo com uma página só: senão, a conta de linhas mudaria ao aparecer uma segunda
+		// página, e a primeira perderia uma linha no mesmo clique em que a segunda nasce.
+		int available = contentY() + contentHeight() - gridTop() - DOTS_HEIGHT;
+		int rows = Math.max(1, (available + TILE_GAP) / (cellHeight + TILE_GAP));
+		perPage = columns * rows;
+
+		lastPage = MathHelper.clamp(lastPage, 0, pageCount() - 1);
+		int first = lastPage * perPage;
+		int last = Math.min(tiles.size(), first + perPage);
+
+		for (int i = first; i < last; i++) {
 			Tile tile = tiles.get(i);
-			int column = i % COLUMNS;
-			int row = i / COLUMNS;
-
-			int x = contentX() + column * (tileSize + TILE_GAP);
-			int y = contentTop() + 6 + row * (cellHeight + TILE_GAP);
+			int slot = i - first;
+			int x = contentX() + (slot % columns) * (tileSize + TILE_GAP);
+			int y = gridTop() + (slot / columns) * (cellHeight + TILE_GAP);
 
 			addDrawableChild(new IconTileWidget(x, y, tileSize, cellHeight,
-				tile.glyph(), tile.sprite(), Text.translatable(tile.labelKey()),
-				button -> tile.action().run()));
+				tile.glyph(), tile.sprite(), tile.label(), button -> tile.action().run()));
 		}
+	}
+
+	private void turnTo(int page) {
+		int target = MathHelper.clamp(page, 0, pageCount() - 1);
+		if (target != lastPage) {
+			lastPage = target;
+			clearAndInit();
+		}
+	}
+
+	// ------------------------------------------------------------------ pontinhos
+
+	private int dotsY() {
+		return contentY() + contentHeight() - DOTS_HEIGHT + (DOTS_HEIGHT - DOT) / 2;
+	}
+
+	private int dotX(int page) {
+		int total = pageCount() * DOT_SPACING - (DOT_SPACING - DOT);
+		return contentX() + (contentWidth() - total) / 2 + page * DOT_SPACING;
 	}
 
 	@Override
 	protected void renderPanel(DrawContext context, int mouseX, int mouseY, float delta) {
-		// Sem conteúdo próprio: os ícones são widgets e se desenham sozinhos.
+		// Os ícones são widgets e se desenham sozinhos; aqui só os pontinhos, e só com mais
+		// de uma página — um pontinho sozinho não diz nada.
+		if (pageCount() < 2) {
+			return;
+		}
+		for (int page = 0; page < pageCount(); page++) {
+			int x = dotX(page);
+			int color = page == lastPage ? COLOR_ACCENT : COLOR_MUTED;
+			context.fill(x, dotsY(), x + DOT, dotsY() + DOT, color);
+		}
+	}
+
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (button == 0 && pageCount() > 1 && mouseY >= dotsY() - 2 && mouseY < dotsY() + DOT + 2) {
+			for (int page = 0; page < pageCount(); page++) {
+				int x = dotX(page);
+				// A área de clique é maior que o pontinho: quatro pixels é alvo pequeno demais.
+				if (mouseX >= x - 2 && mouseX < x + DOT + 2) {
+					turnTo(page);
+					return true;
+				}
+			}
+		}
+		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+		if (pageCount() > 1 && verticalAmount != 0) {
+			// Roda para baixo avança, como rolar uma lista para ver o que vem depois.
+			turnTo(lastPage + (verticalAmount < 0 ? 1 : -1));
+			return true;
+		}
+		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
 	}
 }

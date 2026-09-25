@@ -1,8 +1,9 @@
 package io.github.lxxz.pokebook.client.screen;
 
 import io.github.lxxz.pokebook.call.CallState;
-import io.github.lxxz.pokebook.client.call.CallFavorites;
 import io.github.lxxz.pokebook.client.call.ClientCalls;
+import io.github.lxxz.pokebook.client.phone.ClientPhone;
+import io.github.lxxz.pokebook.network.ContactActionPayload;
 import io.github.lxxz.pokebook.network.AnswerCallPayload;
 import io.github.lxxz.pokebook.network.DialCallPayload;
 import io.github.lxxz.pokebook.network.HangUpCallPayload;
@@ -25,6 +26,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * O telefone: para quem ligar, e o que fazer com a ligação em curso.
@@ -55,14 +57,19 @@ public class CallScreen extends PokebookScreenBase {
 	private static final String STAR_NOT_FAVORITE = "☆";
 
 	/**
-	 * Uma linha da lista: quem, se está conectado agora e se foi marcado como favorito.
+	 * Uma linha da lista: quem, se está conectado agora e se está nos contatos.
 	 *
-	 * <p>Existe porque a lista deixou de ser só "quem está online" — favoritos continuam
+	 * <p>Existe porque a lista deixou de ser só "quem está online" — contatos continuam
 	 * aparecendo desconectados, e {@link PlayerListEntry} não descreve alguém fora do
-	 * mundo. {@link #skinOf} já sabia resolver a skin nos dois casos, então só a linha
-	 * precisava de um tipo novo.
+	 * mundo.
+	 *
+	 * <p>A estrela era um favorito guardado num arquivo do cliente. Virou <b>contato</b>, que
+	 * mora no servidor: é o mesmo gesto ("esta pessoa importa"), e agora serve também de
+	 * consentimento — quem escolhe "só contatos" nos ajustes só recebe ligação de quem salvou.
+	 * Dois conceitos para a mesma ideia confundiriam: marcar a estrela e não conseguir ligar
+	 * porque "não é contato".
 	 */
-	private record Contact(String name, boolean online, boolean favorite) {
+	private record Contact(UUID uuid, String name, boolean online, boolean favorite) {
 	}
 
 	/** Guardadas só para reconstruir o menu ao voltar, como nas outras telas. */
@@ -277,7 +284,13 @@ public class CallScreen extends PokebookScreenBase {
 
 		Contact contact = roster.get(index);
 		if (mouseX < x + STAR_WIDTH) {
-			CallFavorites.toggle(contact.name());
+			// Salvar exige a pessoa online — é de lá que o servidor tira o nome. Tirar a
+			// estrela de quem está offline continua valendo.
+			if (contact.favorite() || contact.online()) {
+				ClientPlayNetworking.send(new ContactActionPayload(contact.favorite()
+					? ContactActionPayload.Action.REMOVE
+					: ContactActionPayload.Action.ADD, contact.uuid()));
+			}
 			return true;
 		}
 
@@ -316,29 +329,31 @@ public class CallScreen extends PokebookScreenBase {
 	}
 
 	/**
-	 * Quem dá para chamar, mais quem foi marcado como favorito mesmo sem estar aqui agora.
+	 * Quem dá para chamar, mais os contatos que não estão aqui agora.
 	 *
-	 * <p>Favoritos primeiro — é a razão de existir do botão — e dentro de cada grupo por
-	 * nome, para a lista não dançar entre um quadro e outro. Um favorito que também está
+	 * <p>Contatos primeiro — é a razão de existir da estrela — e dentro de cada grupo por
+	 * nome, para a lista não dançar entre um quadro e outro. Um contato que também está
 	 * conectado aparece uma vez só, com o rosto de verdade.
 	 */
 	private List<Contact> roster() {
 		ClientPlayNetworkHandler handler = client == null ? null : client.getNetworkHandler();
 		List<Contact> contacts = new ArrayList<>();
-		Set<String> onlineNames = new HashSet<>();
+		Set<UUID> onlineIds = new HashSet<>();
+		var data = ClientPhone.data();
 
 		if (handler != null) {
 			for (PlayerListEntry entry : handler.getPlayerList()) {
 				String name = entry.getProfile().getName();
+				UUID uuid = entry.getProfile().getId();
 				if (!name.equals(session.nick())) {
-					onlineNames.add(name);
-					contacts.add(new Contact(name, true, CallFavorites.isFavorite(name)));
+					onlineIds.add(uuid);
+					contacts.add(new Contact(uuid, name, true, data.hasContact(uuid)));
 				}
 			}
 		}
-		for (String favorite : CallFavorites.all()) {
-			if (!favorite.equals(session.nick()) && !onlineNames.contains(favorite)) {
-				contacts.add(new Contact(favorite, false, true));
+		for (var saved : data.contacts()) {
+			if (!onlineIds.contains(saved.uuid())) {
+				contacts.add(new Contact(saved.uuid(), saved.name(), false, true));
 			}
 		}
 
