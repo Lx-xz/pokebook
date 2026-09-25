@@ -17,6 +17,9 @@
 		],
 		"client": [
 			"io.github.lxxz.pokebook.client.PokebookClient"
+		],
+		"voicechat": [
+			"io.github.lxxz.pokebook.integration.VoicechatIntegration"
 		]
 	},
 	"depends": {
@@ -27,5 +30,8 @@
 	},
 	"mixins": [
 		"pokebook.mixins.json"
-	]
+	],
+	"suggests": {
+		"voicechat": "*"
+	}
 }

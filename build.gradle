@@ -14,6 +14,25 @@ repositories {
 		url = uri('https://maven.impactdev.net/repository/development/')
 	}
 
+	// Maven do autor do Simple Voice Chat: serve só o jar da API.
+	maven {
+		name = 'Maxhenkel'
+		url = uri('https://maven.maxhenkel.de/repository/public')
+	}
+
+	// O mod em si não está no maven do autor, só no do Modrinth.
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = 'Modrinth'
+				url = uri('https://api.modrinth.com/maven')
+			}
+		}
+		filter {
+			includeGroup 'maven.modrinth'
+		}
+	}
+
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -34,6 +53,14 @@ dependencies {
 	// Esta dependência vive nesta branch e não na main de propósito: com ela na main, a
 	// máquina do trabalho não conseguiria buildar o projeto (ver CLAUDE.md).
 	modImplementation "com.cobblemon:fabric:${project.cobblemon_version}"
+
+	// A API é só para compilar: quem a fornece em jogo é o próprio mod, que a empacota.
+	// Declarar como implementation faria o jar dela viajar junto no nosso.
+	modCompileOnly "de.maxhenkel.voicechat:voicechat-api:${project.voicechat_api_version}"
+
+	// O mod de verdade, só para o ambiente de teste. A dependência é OPCIONAL: sem o
+	// Simple Voice Chat instalado o pokébook tem de continuar funcionando, sem chamadas.
+	modRuntimeOnly "maven.modrinth:simple-voice-chat:${project.voicechat_mod_version}"
 }
 
 processResources {
