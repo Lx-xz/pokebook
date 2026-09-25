@@ -344,6 +344,41 @@ O jar também nunca pode ir para o git — o GitHub rejeita arquivos acima de 10
   projeto persegue — a estação administra (é onde se resgata recompensa), o aparelho de
   bolso comunica — e é o que faz sentido: ninguém liga de um notebook parado na mesa.
 
+## Aparelho — os apps
+
+- **Um anexo por jogador, imutável: `PhoneData`** (contatos, notas, pontos, ajustes, missão
+  acompanhada). Mudar é produzir um novo e reatribuir — é o que marca o save como sujo. Vai
+  **inteiro** ao cliente a cada mudança, com o mesmo codec do disco. A tela nunca aplica a
+  mudança sozinha: manda o pedido e mostra o que voltar.
+- **Consentimento é sempre de quem recebe.** Salvar alguém não dá nada sobre ele. A marca
+  "compartilhar localização" mora no contato do lado de quem é visto; "só contatos" libera
+  ligação de quem *eu* salvei. Salva-se só quem está online, porque é de lá que sai o nome.
+- **Tudo o que avisa passa por `Notifications` / `ClientNotifications`** e só chega a quem
+  carrega poképhone (`Pokephones.carries`). O não perturbe **recusa** no servidor (ligação,
+  localização) e **cala** no cliente (o aviso vai para o histórico sem toast). O alarme
+  fura o não perturbe, como em qualquer celular.
+- **Um dono só para o HUD: `PokebookHud`**, canto superior esquerdo, empilhado. Só com
+  poképhone no inventário; some com F1 e F3.
+- **Ranking em anexo no mundo principal**, não `PersistentState` à mão — a Fabric API já usa
+  um por baixo. É o armazenamento de quem está offline.
+- **O radar é da `main`**: Pokémon reconhecido pelo id `cobblemon:pokemon`, como os sons. Não
+  lê shiny nem lendário, que exigiria a classe dele.
+- **A tela inicial pagina**, não rola — ícones são widgets. Quantas linhas e páginas sai da
+  altura; nenhuma página escrita à mão. Quem aparece em cada aparelho: a estação administra
+  (ranking), o bolso comunica (ligar, avisos, radar, fotos, ajustes).
+- **Ícones reusados moram em `AppIcons`.** Dar arte a um app é desenhar o PNG em branco e
+  trocar uma linha ali.
+- **Lista rolável é `ScrollListScreen`.** Seis apps têm a mesma forma; a conta de rolagem e
+  clique existe uma vez.
+- **O botão central sobe até a raiz**, não um degrau — há telas netas.
+- ⚠️ **Nome de ponto passa por `StringHelper.stripInvalidChars`.** Ele vai parar dentro do
+  comando do texto clicável no chat, e um `§` ali faria o servidor expulsar quem clicou.
+- ⚠️ **`PositionedSoundInstance.master(som, TOM, volume)`** — o tom vem antes. Mesma armadilha
+  de ordem do `drawTexture`: tudo `float`, compila e toca errado.
+- **A capa do poképhone é o vanilla que tinge**: tag `#dyeable` + provedor de cor no
+  `tintindex` 0. O modelo tem `tintindex` em toda face **menos a tela** — se o autor
+  reexportar do Blockbench, isso some e precisa ser reposto.
+
 ## Técnica
 
 Quando um nome de API do Yarn não fechar, **leia os membros reais do jar remapeado** com

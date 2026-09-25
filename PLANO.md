@@ -676,6 +676,83 @@ máquina do autor.
 
 ---
 
+### Sessão de 25/09/2026 — os apps baixos e médios do levantamento
+
+Pedido: "todas as baixas e médias, reusando ícones por enquanto". Feito, **na `main`**
+(branch de trabalho criada a partir dela) — nada aqui importa Cobblemon nem SVC.
+
+**O que entrou**
+
+| | |
+|---|---|
+| Fundações | dados do aparelho por jogador (`PhoneData`, um anexo), config do servidor, central de notificações, camada de HUD, missões ao vivo, armazenamento de mundo, tela inicial paginada |
+| Contatos | lista no servidor, consentimento para ligar, substitui os favoritos locais da tela de ligações |
+| Localização | pontos de interesse com ícone, seta no HUD, local da última morte, mandar no chat, `/pokebook rastrear`, compartilhar com contatos e seguir |
+| Missões | acompanhar uma no HUD (◎ na lista) |
+| Apps | notas, relógio (hora, dia, lua, previsão, timer, alarme), fotos (câmera e galeria locais), ajustes (não perturbe, quem pode ligar, papel de parede), ranking (só pokébook), radar (só poképhone, só com Cobblemon), avisos |
+| Capa | o poképhone entra na tag `#dyeable` e tinge na mesa de trabalho como couro |
+
+**Fora, de propósito:** mensagens, mapa, compartilhar fotos, missões cooperativas (média/alta
+ou alta), lanterna (alta sozinha — o caminho barato exige um mod de luz dinâmica, que é
+dependência nova e portanto branch nova), e **PC remoto** e **desafio de batalha** — médias,
+mas precisam da API do Cobblemon e nasceriam na branch `cobblemon`, que esta sessão não
+podia empurrar.
+
+**Decisões que valem registro**
+
+- **Um anexo só, imutável.** `PhoneData` guarda contatos, notas, pontos, ajustes e missão
+  acompanhada. Imutável porque a API de anexos só marca sujo ao reatribuir — com registro
+  imutável não há como esquecer. Vai inteiro ao cliente a cada mudança, com o mesmo codec
+  que grava no disco.
+- **O consentimento é sempre de quem recebe.** Salvar alguém não te dá nada sobre ele. Só
+  contato liga se *ele* escolheu "só contatos"; só vê onde você está quem *você* marcou.
+- **O ranking usa anexo no mundo principal**, não um `PersistentState` à mão — a própria
+  Fabric API usa um por baixo (ver `ServerWorldMixin` dela). Mesmo mecanismo das missões.
+- **O radar vive na `main`**: reconhece Pokémon pelo id `cobblemon:pokemon` no registro,
+  como os sons emprestados. Não mostra shiny nem lendário — isso exigiria a classe dele.
+- **O não perturbe é decidido em dois lugares, e de propósito.** No servidor ele recusa
+  ligação e suspende localização (regra que outro jogador sente); no cliente ele só cala o
+  aviso, que vai para o histórico em silêncio.
+- **O botão central sobe até a raiz.** Com telas netas (editar nota, editar ponto), subir
+  um degrau faria dele um segundo "voltar" — o próprio comentário do código já avisava.
+- **Os ícones são reusados num lugar só**, `AppIcons`. Arte nova para um app é uma linha.
+
+**Os favoritos locais saíram.** A estrela da tela de ligações virou "contato". O arquivo
+`config/pokebook-favorites.txt` fica órfão e não é migrado — favorito guardava só o nome, e
+contato precisa do UUID, que só se obtém com a pessoa online.
+
+**Nada disso foi compilado nem visto em jogo.** A política de rede desta sessão bloqueava
+`maven.fabricmc.net` e o Mojang. O que substituiu o `javap`: os fontes da Fabric API na
+versão exata (0.116.17) e os mapeamentos Yarn da 1.21.1 clonados do GitHub, com um script
+que decodifica nomes e assinaturas. Todo nome vanilla usado foi conferido assim — com duas
+exceções que o script não alcança e ficaram por conhecimento: constantes nomeadas pelo id de
+registro (`DataComponentTypes.DYED_COLOR`, `ItemTags.DYEABLE`, `GameRules.DO_WEATHER_CYCLE`)
+e componentes de record (`GlobalPos.pos()`, `.dimension()`). Mais: `javac` sem classpath
+sem erro de sintaxe, e uma checagem de que toda chamada entre classes do projeto aponta para
+membro que existe.
+
+**Próxima ação:** `gradlew build` na `main`. Os erros prováveis, se houver, são de nome —
+um por linha, cada um consertável sem mexer no desenho. Depois, `runClient` com duas
+instâncias e:
+
+1. Tela inicial: onze apps no poképhone em duas páginas (roda do mouse e pontinhos);
+   sete no pokébook, com Ranking e sem Ligações/Avisos/Radar/Fotos/Ajustes.
+2. Contatos: salvar alguém online; o outro recebe o aviso. ◎ liga o compartilhamento, e o
+   outro vê a pessoa em verde e pode segui-la — a seta anda junto.
+3. Ajustes → "só contatos": quem não está salvo recebe "não está recebendo ligações".
+   Não perturbe: a ligação é recusada e aparece como perdida em Avisos, sem toast.
+4. Pontos: marcar aqui, renomear, trocar ícone, navegar — a seta aponta e some ao chegar.
+   Morrer e ver "Última morte" no topo. "No chat" gera texto clicável que liga a seta de
+   quem clica.
+5. Missões: ◎ numa em andamento, matar o alvo, ver o HUD contar e o toast de concluída.
+6. Relógio: hora bate com `/time query daytime`; `/weather rain 2400` (ticks, 2 min) e a
+   previsão diz "Chuva · para em ~2 min". Timer de 1 min toca com a tela fechada; alarme toca ao cruzar a hora.
+7. Fotos: tirar sai sem HUD e sem o celular; galeria navega e apaga.
+8. Capa: poképhone + corante na mesa de trabalho → chassi tingido, tela intacta.
+9. `config/pokebook-server.json` com `"radar": false` some com o radar ao reentrar.
+
+---
+
 # Cobblemon — o que aplicar em casa
 
 Estas três mudanças foram escritas, testadas e **revertidas**: a máquina do trabalho

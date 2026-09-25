@@ -277,6 +277,13 @@ o servidor manda as duas listas.
 
 ## Apps e funcionalidades — levantamento de 24/09
 
+> **Estado em 25/09:** todas as **baixas e médias** foram escritas na `main` — ver
+> `PLANO.md`, sessão de 25/09. Ainda não compiladas nem vistas em jogo. Ficaram de fora:
+> mensagens e mapa (média/alta), compartilhar fotos e missões cooperativas (alta),
+> lanterna (alta sozinha; o caminho barato exige dependência nova), e **PC remoto** e
+> **desafio de batalha**, que são médias mas nascem na branch `cobblemon`. O radar entrou
+> na `main`, sem shiny nem lendário.
+
 Lista do autor mais propostas, com complexidade estimada. **Baixa** cabe numa sessão;
 **média** leva algumas; **alta** leva dias e tem risco de desenho, não só de código.
 Nada aqui foi decidido — é inventário para escolher a ordem.

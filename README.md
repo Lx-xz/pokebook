@@ -52,6 +52,9 @@ Fechar o ciclo básico do mod, sem nenhuma dependência externa.
 - [ ] Poképhone: um irmão portátil do pokébook
 - [ ] Mensagens entre jogadores
 - [ ] Ligações por voz, integrando o [Simple Voice Chat](https://modrinth.com/plugin/simple-voice-chat)
+- [ ] Apps do aparelho: contatos, pontos de interesse com seta no HUD, notas, relógio com
+      previsão e alarme, fotos, ajustes, ranking, radar, central de avisos — escritos,
+      ainda não vistos em jogo
 
 A ideia por trás das ligações: com o Simple Voice Chat instalado para voz de
 proximidade, o Pokébook desabilitaria o sistema de grupos dele — e a única forma de
