@@ -97,6 +97,12 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 				() -> navigateTo(new CallScreen(session, missions))));
 		}
 
+		// Mensagens é do bolso: comunicar é do poképhone. Com o servidor desligando, some.
+		if (phone && features.messages()) {
+			list.add(new Tile("✉", AppIcons.MESSAGES, Text.translatable("screen.pokebook.messages"),
+				() -> navigateTo(new MessagesScreen(session))));
+		}
+
 		list.add(new Tile("☺", AppIcons.CONTACTS, Text.translatable("screen.pokebook.contacts"),
 			() -> navigateTo(new ContactsScreen(session))));
 

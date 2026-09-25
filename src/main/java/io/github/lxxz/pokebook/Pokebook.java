@@ -5,6 +5,9 @@ import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.command.PokebookCommand;
 import io.github.lxxz.pokebook.config.ServerConfig;
 import io.github.lxxz.pokebook.integration.CobblemonIntegration;
+import io.github.lxxz.pokebook.message.ContactDirectory;
+import io.github.lxxz.pokebook.message.MessageService;
+import io.github.lxxz.pokebook.message.PhotoShare;
 import io.github.lxxz.pokebook.mission.MissionLoader;
 import io.github.lxxz.pokebook.mission.MissionService;
 import io.github.lxxz.pokebook.mission.MissionTracker;
@@ -15,6 +18,15 @@ import io.github.lxxz.pokebook.network.OpenPcPayload;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import io.github.lxxz.pokebook.network.ContactActionPayload;
+import io.github.lxxz.pokebook.network.ConversationsPayload;
+import io.github.lxxz.pokebook.network.MessageArrivedPayload;
+import io.github.lxxz.pokebook.network.PhotoDataPayload;
+import io.github.lxxz.pokebook.network.PhotoUploadPayload;
+import io.github.lxxz.pokebook.network.RequestConversationsPayload;
+import io.github.lxxz.pokebook.network.RequestPhotoPayload;
+import io.github.lxxz.pokebook.network.RequestThreadPayload;
+import io.github.lxxz.pokebook.network.SendMessagePayload;
+import io.github.lxxz.pokebook.network.ThreadPayload;
 import io.github.lxxz.pokebook.network.DialCallPayload;
 import io.github.lxxz.pokebook.network.HangUpCallPayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
@@ -57,6 +69,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class Pokebook implements ModInitializer {
 	public static final String MOD_ID = "pokebook";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -75,6 +89,8 @@ public class Pokebook implements ModInitializer {
 		// inicialização — registrar um anexo depois do mundo aberto é tarde.
 		PhoneService.register();
 		Ranking.register();
+		MessageService.register();
+		ContactDirectory.register();
 
 		// Relida a cada início de servidor; num jogo solo, cada vez que o mundo abre.
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> ServerConfig.load());
@@ -114,6 +130,17 @@ public class Pokebook implements ModInitializer {
 		PayloadTypeRegistry.playC2S().register(RequestRankingPayload.ID, RequestRankingPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(OpenPcPayload.ID, OpenPcPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(ChallengePayload.ID, ChallengePayload.CODEC);
+
+		// Mensagens e fotos compartilhadas.
+		PayloadTypeRegistry.playS2C().register(ConversationsPayload.ID, ConversationsPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(ThreadPayload.ID, ThreadPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(MessageArrivedPayload.ID, MessageArrivedPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(PhotoDataPayload.ID, PhotoDataPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(SendMessagePayload.ID, SendMessagePayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestConversationsPayload.ID, RequestConversationsPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestThreadPayload.ID, RequestThreadPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(PhotoUploadPayload.ID, PhotoUploadPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestPhotoPayload.ID, RequestPhotoPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ClosePokebookPayload.ID, (payload, context) -> {
 			// Este pacote vem do cliente, que não é confiável. A validação não precisa ser
@@ -179,6 +206,21 @@ public class Pokebook implements ModInitializer {
 		ServerPlayNetworking.registerGlobalReceiver(ChallengePayload.ID, (payload, context) ->
 			BattleChallenges.challenge(context.player(), payload.target()));
 
+		ServerPlayNetworking.registerGlobalReceiver(SendMessagePayload.ID, (payload, context) ->
+			MessageService.send(context.player(), payload.to(), payload.text(), Optional.empty()));
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestConversationsPayload.ID, (payload, context) ->
+			MessageService.sendConversations(context.player()));
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestThreadPayload.ID, (payload, context) ->
+			MessageService.sendThread(context.player(), payload.other()));
+
+		ServerPlayNetworking.registerGlobalReceiver(PhotoUploadPayload.ID, (payload, context) ->
+			PhotoShare.onChunk(context.player(), payload));
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestPhotoPayload.ID, (payload, context) ->
+			PhotoShare.request(context.player(), payload.photoId()));
+
 		// Depois de um /reload a lista pode ter mudado, e quem está com o pokébook aberto
 		// continuaria vendo a lista velha — inclusive missões que deixaram de existir.
 		ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, resourceManager, success) -> {
@@ -200,6 +242,7 @@ public class Pokebook implements ModInitializer {
 			// acompanhada no HUD precisa aparecer antes de o jogador abrir qualquer coisa.
 			ServerPlayNetworking.send(player, new MissionsUpdatePayload(MissionService.snapshot(player)));
 			PhoneService.onJoin(player);
+			MessageService.onJoin(player);
 			Ranking.update(player);
 		});
 
@@ -210,6 +253,8 @@ public class Pokebook implements ModInitializer {
 			LocationSharing.disconnect(handler.getPlayer());
 			ChatLocation.disconnect(handler.getPlayer());
 			BattleChallenges.disconnect(handler.getPlayer());
+			MessageService.disconnect(handler.getPlayer());
+			PhotoShare.disconnect(handler.getPlayer());
 		});
 
 		// Por último, depois de todos os tipos de pacote registrados: a integração registra

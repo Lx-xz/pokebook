@@ -11,12 +11,19 @@ import io.github.lxxz.pokebook.client.photo.Photos;
 import io.github.lxxz.pokebook.client.render.EmissiveScreenModel;
 import io.github.lxxz.pokebook.client.screen.CallScreen;
 import io.github.lxxz.pokebook.client.screen.ClockScreen;
+import io.github.lxxz.pokebook.client.screen.ConversationScreen;
+import io.github.lxxz.pokebook.client.screen.MessagesScreen;
+import io.github.lxxz.pokebook.client.screen.SharedPhotoScreen;
 import io.github.lxxz.pokebook.client.screen.MissionsScreen;
 import io.github.lxxz.pokebook.client.screen.PokebookMenuScreen;
 import io.github.lxxz.pokebook.client.screen.PokebookSession;
 import io.github.lxxz.pokebook.client.screen.RankingScreen;
 import io.github.lxxz.pokebook.client.screen.SocialScreen;
 import io.github.lxxz.pokebook.network.CallStatePayload;
+import io.github.lxxz.pokebook.network.ConversationsPayload;
+import io.github.lxxz.pokebook.network.MessageArrivedPayload;
+import io.github.lxxz.pokebook.network.PhotoDataPayload;
+import io.github.lxxz.pokebook.network.ThreadPayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.network.NotificationPayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
@@ -161,6 +168,35 @@ public class PokebookClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(RankingPayload.ID, (payload, context) -> {
 			if (context.client().currentScreen instanceof RankingScreen screen) {
 				screen.update(payload.entries());
+			}
+		});
+
+		// Mensagens. Nenhum destes abre tela: cada um só alimenta a que estiver aberta.
+		ClientPlayNetworking.registerGlobalReceiver(ConversationsPayload.ID, (payload, context) -> {
+			if (context.client().currentScreen instanceof MessagesScreen screen) {
+				screen.update(payload.conversations());
+			}
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(ThreadPayload.ID, (payload, context) -> {
+			if (context.client().currentScreen instanceof ConversationScreen screen && screen.other().equals(payload.other())) {
+				screen.update(payload.messages());
+			}
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(MessageArrivedPayload.ID, (payload, context) -> {
+			// Chegou mensagem: a tela aberta pede de novo o que mostra. Com a tela fechada, o
+			// aviso já veio pela central de notificações.
+			if (context.client().currentScreen instanceof ConversationScreen screen && screen.other().equals(payload.other())) {
+				screen.refresh();
+			} else if (context.client().currentScreen instanceof MessagesScreen screen) {
+				screen.refresh();
+			}
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(PhotoDataPayload.ID, (payload, context) -> {
+			if (context.client().currentScreen instanceof SharedPhotoScreen screen && screen.photoId().equals(payload.photoId())) {
+				screen.show(payload.png());
 			}
 		});
 

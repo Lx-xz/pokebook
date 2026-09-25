@@ -44,6 +44,7 @@ public final class AppIcons {
 	public static final Identifier RANKING = SCROLL;
 	public static final Identifier SETTINGS = SCROLL;
 	public static final Identifier PC = SCROLL;
+	public static final Identifier MESSAGES = BUBBLE;
 
 	private AppIcons() {
 	}
@@ -62,6 +63,7 @@ public final class AppIcons {
 			case LOCATION -> WAYPOINTS;
 			case ALARM -> CLOCK;
 			case PHOTO -> PHOTOS;
+			case MESSAGE -> MESSAGES;
 		};
 	}
 }

@@ -64,11 +64,32 @@ public class PhotosScreen extends PokebookScreenBase {
 		photos = Photos.list();
 		lastIndex = photos.isEmpty() ? 0 : MathHelper.clamp(lastIndex, 0, photos.size() - 1);
 
+		// "Enviar" divide a fileira de cima com "tirar foto" quando o servidor permite
+		// compartilhar; sem isso, tirar foto ocupa a fileira inteira como antes.
+		boolean shareRow = ClientPhone.features().messages() && ClientPhone.features().photoSharing() && !photos.isEmpty();
+		int takeWidth = shareRow ? (contentWidth() - BUTTON_GAP) / 2 : contentWidth();
 		addDrawableChild(ButtonWidget.builder(Text.translatable("screen.pokebook.photos.take"), button -> {
 			// A foto nova entra no topo da lista, e é ela que o jogador quer ver ao voltar.
 			lastIndex = 0;
 			Photos.requestCapture(client);
-		}).dimensions(contentX(), buttonsY(1), contentWidth(), BUTTON_HEIGHT).build());
+		}).dimensions(contentX(), buttonsY(1), takeWidth, BUTTON_HEIGHT).build());
+
+		if (shareRow) {
+			int half = (contentWidth() - BUTTON_GAP) / 2;
+			Path current = photos.get(lastIndex);
+			addDrawableChild(ButtonWidget.builder(Text.translatable("screen.pokebook.photos.send"), button ->
+				navigateTo(new ContactPickerScreen(session, Text.translatable("screen.pokebook.photos.send"),
+					() -> new PhotosScreen(session),
+					(picker, contact) -> {
+						if (Photos.share(current, contact.uuid())) {
+							picker.go(new ConversationScreen(session, contact.uuid(), contact.name()));
+						} else if (client != null && client.player != null) {
+							client.player.sendMessage(Text.translatable("message.pokebook.photos.invalid"), true);
+						}
+					})))
+				.dimensions(contentX() + half + BUTTON_GAP, buttonsY(1), contentWidth() - half - BUTTON_GAP, BUTTON_HEIGHT)
+				.build());
+		}
 
 		int third = (contentWidth() - 2 * BUTTON_GAP) / 3;
 		int y = buttonsY(0);

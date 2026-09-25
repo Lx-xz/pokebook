@@ -17,7 +17,10 @@ public enum NotificationKind {
 	CONTACT,
 	LOCATION,
 	ALARM,
-	PHOTO;
+	PHOTO,
+	// Sempre no fim: o que viaja é o ordinal, e inserir no meio mudaria o significado dos
+	// que já existem para um cliente de versão anterior.
+	MESSAGE;
 
 	/** Viaja o ordinal; índice desconhecido vira aviso de missão, que é o mais inofensivo. */
 	public static final PacketCodec<ByteBuf, NotificationKind> PACKET_CODEC =

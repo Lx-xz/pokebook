@@ -2,6 +2,7 @@ package io.github.lxxz.pokebook.phone;
 
 import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.config.ServerConfig;
+import io.github.lxxz.pokebook.message.ContactDirectory;
 import io.github.lxxz.pokebook.mission.Missions;
 import io.github.lxxz.pokebook.network.ContactActionPayload;
 import io.github.lxxz.pokebook.network.PhoneDataPayload;
@@ -57,6 +58,9 @@ public final class PhoneService {
 	/** Grava e manda de volta. Toda mudança termina aqui. */
 	public static void set(ServerPlayerEntity player, PhoneData data) {
 		player.setAttached(DATA, data);
+		// O espelho dos contatos no mundo, para decidir consentimento de mensagem com o dono
+		// offline. Só grava se os contatos de fato mudaram.
+		ContactDirectory.update(player.server, player.getUuid(), data.contacts());
 		sync(player);
 	}
 
@@ -171,6 +175,8 @@ public final class PhoneService {
 			renameContact(other, joined.getUuid(), name);
 			renameContact(joined, other.getUuid(), other.getGameProfile().getName());
 		}
+		// Corrige o espelho de quem salvou contatos antes de ele existir.
+		ContactDirectory.update(joined.server, joined.getUuid(), get(joined).contacts());
 		sync(joined);
 	}
 

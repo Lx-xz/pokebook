@@ -2,7 +2,10 @@ package io.github.lxxz.pokebook.client.photo;
 
 import io.github.lxxz.pokebook.Pokebook;
 import io.github.lxxz.pokebook.client.notify.ClientNotifications;
+import io.github.lxxz.pokebook.network.MessageLimits;
+import io.github.lxxz.pokebook.network.PhotoUploadPayload;
 import io.github.lxxz.pokebook.notify.NotificationKind;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
@@ -11,12 +14,15 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 /**
@@ -102,6 +108,59 @@ public final class Photos {
 		} catch (IOException e) {
 			Pokebook.LOGGER.warn("Não deu para listar as fotos.", e);
 			return List.of();
+		}
+	}
+
+	/** Identifica cada envio, para o servidor não misturar pedaços de dois envios seguidos. */
+	private static int nextUpload = (int) (System.nanoTime() & 0x7FFFFFFF);
+
+	/**
+	 * Manda uma foto para um contato: reduz, codifica em PNG e sobe em pedaços.
+	 *
+	 * <p>Reduzida antes de sair, e não no servidor: o que viaja é o que importa, e uma captura
+	 * em tela cheia passaria de um megabyte. Se mesmo reduzida ao tamanho padrão ela passar do
+	 * limite — uma cena muito detalhada comprime mal —, reduz de novo, até caber.
+	 *
+	 * @return se a foto coube e foi mandada
+	 */
+	public static boolean share(Path photo, UUID to) {
+		try (InputStream input = Files.newInputStream(photo); NativeImage original = NativeImage.read(input)) {
+			int side = MessageLimits.PHOTO_MAX_SIDE;
+			byte[] png = null;
+			while (side >= 80) {
+				png = downscaled(original, side);
+				if (png.length <= MessageLimits.MAX_PHOTO_BYTES) {
+					break;
+				}
+				side = side * 3 / 4;
+				png = null;
+			}
+			if (png == null) {
+				return false;
+			}
+
+			int upload = nextUpload++;
+			int chunk = MessageLimits.PHOTO_CHUNK;
+			int total = (png.length + chunk - 1) / chunk;
+			for (int i = 0; i < total; i++) {
+				byte[] part = Arrays.copyOfRange(png, i * chunk, Math.min(png.length, (i + 1) * chunk));
+				ClientPlayNetworking.send(new PhotoUploadPayload(to, upload, i, total, part));
+			}
+			return true;
+		} catch (IOException e) {
+			Pokebook.LOGGER.warn("Não deu para preparar a foto {} para envio.", photo, e);
+			return false;
+		}
+	}
+
+	/** A imagem reduzida para caber num quadrado de {@code side}, sem deformar, em PNG. */
+	private static byte[] downscaled(NativeImage original, int side) throws IOException {
+		float scale = Math.min(1f, side / (float) Math.max(original.getWidth(), original.getHeight()));
+		int width = Math.max(1, Math.round(original.getWidth() * scale));
+		int height = Math.max(1, Math.round(original.getHeight() * scale));
+		try (NativeImage small = new NativeImage(width, height, false)) {
+			original.resizeSubRectTo(0, 0, original.getWidth(), original.getHeight(), small);
+			return small.getBytes();
 		}
 	}
 
