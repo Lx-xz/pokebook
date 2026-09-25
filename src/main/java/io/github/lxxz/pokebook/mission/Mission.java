@@ -16,6 +16,10 @@ import java.util.Optional;
  * <p>Carregada de datapack. O modelo nasceu em Java e só depois virou JSON — o contrário
  * (schema primeiro, missões depois) seria adivinhar quais campos existem.
  *
+ * <p><b>Cooperativa</b> ({@code "cooperative": true}) é a missão que só anda em grupo: o
+ * contador é do grupo inteiro, e ao concluir cada membro ganha o próprio resgate. Ver
+ * {@code group.Groups}.
+ *
  * <p>A recompensa é item + quantidade, e não um {@link ItemStack} pronto, porque
  * ItemStack é mutável: guardar um numa constante compartilhada é convite para alguém
  * alterá-lo sem querer e contaminar todos os resgates.
@@ -27,7 +31,8 @@ public record Mission(
 	int required,
 	Item rewardItem,
 	int rewardCount,
-	Optional<String> titleOverride
+	Optional<String> titleOverride,
+	boolean cooperative
 ) {
 	/**
 	 * O codec de um arquivo de missão.
@@ -46,9 +51,10 @@ public record Mission(
 			Codec.INT.optionalFieldOf("required", 1).forGetter(Mission::required),
 			Registries.ITEM.getCodec().optionalFieldOf("reward", net.minecraft.item.Items.AIR).forGetter(Mission::rewardItem),
 			Codec.INT.optionalFieldOf("reward_count", 1).forGetter(Mission::rewardCount),
-			Codec.STRING.optionalFieldOf("title").forGetter(Mission::titleOverride)
-		).apply(instance, (objective, target, required, rewardItem, rewardCount, title) ->
-			new Mission(id, objective, target, required, rewardItem, rewardCount, title)));
+			Codec.STRING.optionalFieldOf("title").forGetter(Mission::titleOverride),
+			Codec.BOOL.optionalFieldOf("cooperative", false).forGetter(Mission::cooperative)
+		).apply(instance, (objective, target, required, rewardItem, rewardCount, title, cooperative) ->
+			new Mission(id, objective, target, required, rewardItem, rewardCount, title, cooperative)));
 	}
 
 	/**
@@ -72,7 +78,10 @@ public record Mission(
 	 * próprio idioma.
 	 */
 	public Text title() {
-		return titleOverride.<Text>map(Text::literal).orElseGet(this::generatedTitle);
+		Text base = titleOverride.<Text>map(Text::literal).orElseGet(this::generatedTitle);
+		// A marca de grupo vai no título, e não num campo a mais do pacote: é o único lugar
+		// em que o jogador precisa vê-la, e assim a lista de missões não muda de forma.
+		return cooperative ? Text.translatable("mission.pokebook.cooperative", base) : base;
 	}
 
 	private Text generatedTitle() {

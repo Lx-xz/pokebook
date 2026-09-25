@@ -59,6 +59,19 @@ public final class MissionProgress {
 		return true;
 	}
 
+	/**
+	 * Marca como concluída de uma vez — a missão cooperativa, que o grupo concluiu.
+	 *
+	 * @return true se algo mudou
+	 */
+	public boolean fill(Mission mission) {
+		if (count(mission.id()) >= mission.required()) {
+			return false;
+		}
+		counts.put(mission.id(), mission.required());
+		return true;
+	}
+
 	public boolean isComplete(Mission mission) {
 		return count(mission.id()) >= mission.required();
 	}

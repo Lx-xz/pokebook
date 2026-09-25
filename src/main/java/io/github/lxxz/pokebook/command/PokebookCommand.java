@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.lxxz.pokebook.battle.BattleChallenges;
+import io.github.lxxz.pokebook.group.Groups;
 import io.github.lxxz.pokebook.network.TrackTargetPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.argument.BlockPosArgumentType;
@@ -46,6 +47,14 @@ public final class PokebookCommand {
 				.then(CommandManager.literal("recusar")
 					.then(CommandManager.argument("challenger", StringArgumentType.word())
 						.executes(context -> battle(context, false)))))
+			// O mesmo para o convite de grupo.
+			.then(CommandManager.literal("grupo")
+				.then(CommandManager.literal("aceitar")
+					.then(CommandManager.argument("inviter", StringArgumentType.word())
+						.executes(context -> group(context, true))))
+				.then(CommandManager.literal("recusar")
+					.then(CommandManager.argument("inviter", StringArgumentType.word())
+						.executes(context -> group(context, false)))))
 			.then(CommandManager.literal("rastrear")
 				.then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
 					.executes(context -> track(context, false, false))
@@ -65,6 +74,20 @@ public final class PokebookCommand {
 			BattleChallenges.accept(player, challenger);
 		} else {
 			BattleChallenges.decline(player, challenger);
+		}
+		return 1;
+	}
+
+	private static int group(CommandContext<ServerCommandSource> context, boolean accept) {
+		ServerPlayerEntity player = context.getSource().getPlayer();
+		if (player == null) {
+			return 0;
+		}
+		String inviter = StringArgumentType.getString(context, "inviter");
+		if (accept) {
+			Groups.accept(player, inviter);
+		} else {
+			Groups.decline(player, inviter);
 		}
 		return 1;
 	}

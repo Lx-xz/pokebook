@@ -1,0 +1,8 @@
+{
+	"objective": "kill",
+	"target": "minecraft:skeleton",
+	"required": 20,
+	"reward": "minecraft:diamond",
+	"reward_count": 1,
+	"cooperative": true
+}

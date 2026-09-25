@@ -108,6 +108,10 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 		list.add(new Tile("☺", AppIcons.CONTACTS, Text.translatable("screen.pokebook.contacts"),
 			() -> navigateTo(new ContactsScreen(session))));
 
+		// Nos dois aparelhos: o grupo é das missões, e as missões estão nos dois.
+		list.add(new Tile("☻", AppIcons.GROUP, Text.translatable("screen.pokebook.group"),
+			() -> navigateTo(new GroupScreen(session))));
+
 		list.add(new Tile("✉", AppIcons.SOCIAL, Text.translatable("screen.pokebook.social"), () -> {
 			// O pedido sai junto com a navegação, e a tela nasce vazia até a resposta
 			// chegar. Pedir aqui e não ao abrir o aparelho evita mandar a lista de todo

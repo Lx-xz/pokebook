@@ -4,6 +4,7 @@ import io.github.lxxz.pokebook.battle.BattleChallenges;
 import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.command.PokebookCommand;
 import io.github.lxxz.pokebook.config.ServerConfig;
+import io.github.lxxz.pokebook.group.Groups;
 import io.github.lxxz.pokebook.integration.CobblemonIntegration;
 import io.github.lxxz.pokebook.message.ContactDirectory;
 import io.github.lxxz.pokebook.message.MessageService;
@@ -15,6 +16,10 @@ import io.github.lxxz.pokebook.network.AnswerCallPayload;
 import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.ChallengePayload;
 import io.github.lxxz.pokebook.network.FlashlightPayload;
+import io.github.lxxz.pokebook.network.GroupInvitePayload;
+import io.github.lxxz.pokebook.network.GroupPayload;
+import io.github.lxxz.pokebook.network.LeaveGroupPayload;
+import io.github.lxxz.pokebook.network.RequestGroupPayload;
 import io.github.lxxz.pokebook.network.OpenPcPayload;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
@@ -96,6 +101,7 @@ public class Pokebook implements ModInitializer {
 		MessageService.register();
 		ContactDirectory.register();
 		Flashlight.register();
+		Groups.register();
 
 		// Relida a cada início de servidor; num jogo solo, cada vez que o mundo abre.
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> ServerConfig.load());
@@ -149,6 +155,10 @@ public class Pokebook implements ModInitializer {
 		// O mesmo tipo nos dois sentidos: pedido de lá, estado de cá.
 		PayloadTypeRegistry.playC2S().register(FlashlightPayload.ID, FlashlightPayload.CODEC);
 		PayloadTypeRegistry.playS2C().register(FlashlightPayload.ID, FlashlightPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(GroupPayload.ID, GroupPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestGroupPayload.ID, RequestGroupPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(GroupInvitePayload.ID, GroupInvitePayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(LeaveGroupPayload.ID, LeaveGroupPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ClosePokebookPayload.ID, (payload, context) -> {
 			// Este pacote vem do cliente, que não é confiável. A validação não precisa ser
@@ -211,6 +221,14 @@ public class Pokebook implements ModInitializer {
 		ServerTickEvents.END_SERVER_TICK.register(LocationSharing::tick);
 		ServerTickEvents.END_SERVER_TICK.register(BattleChallenges::tick);
 		ServerTickEvents.END_SERVER_TICK.register(Flashlight::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Groups::tick);
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestGroupPayload.ID, (payload, context) ->
+			Groups.send(context.player()));
+		ServerPlayNetworking.registerGlobalReceiver(GroupInvitePayload.ID, (payload, context) ->
+			Groups.invite(context.player(), payload.target()));
+		ServerPlayNetworking.registerGlobalReceiver(LeaveGroupPayload.ID, (payload, context) ->
+			Groups.leave(context.player()));
 
 		ServerPlayNetworking.registerGlobalReceiver(FlashlightPayload.ID, (payload, context) ->
 			Flashlight.set(context.player(), payload.on()));
@@ -262,6 +280,7 @@ public class Pokebook implements ModInitializer {
 			ServerPlayNetworking.send(player, new MissionsUpdatePayload(MissionService.snapshot(player)));
 			PhoneService.onJoin(player);
 			MessageService.onJoin(player);
+			Groups.onJoin(player);
 			Ranking.update(player);
 		});
 
@@ -275,6 +294,7 @@ public class Pokebook implements ModInitializer {
 			MessageService.disconnect(handler.getPlayer());
 			PhotoShare.disconnect(handler.getPlayer());
 			Flashlight.disconnect(handler.getPlayer());
+			Groups.disconnect(handler.getPlayer());
 		});
 
 		// Por último, depois de todos os tipos de pacote registrados: a integração registra

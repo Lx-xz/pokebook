@@ -47,6 +47,7 @@ public final class AppIcons {
 	public static final Identifier MESSAGES = BUBBLE;
 	public static final Identifier MAP = SCROLL;
 	public static final Identifier FLASHLIGHT = SCROLL;
+	public static final Identifier GROUP = PHONE;
 
 	private AppIcons() {
 	}

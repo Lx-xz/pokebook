@@ -1,5 +1,6 @@
 package io.github.lxxz.pokebook.mission;
 
+import io.github.lxxz.pokebook.group.Groups;
 import io.github.lxxz.pokebook.network.MissionEntry;
 import io.github.lxxz.pokebook.network.SocialEntry;
 import io.github.lxxz.pokebook.server.PokebookViewers;
@@ -28,7 +29,7 @@ public final class MissionService {
 			entries.add(new MissionEntry(
 				mission.id(),
 				mission.title(),
-				progress.count(mission.id()),
+				Groups.count(player, mission, progress),
 				mission.required(),
 				mission.reward(),
 				progress.isClaimed(mission.id())

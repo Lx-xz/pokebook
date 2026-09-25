@@ -14,6 +14,7 @@ import io.github.lxxz.pokebook.client.render.EmissiveScreenModel;
 import io.github.lxxz.pokebook.client.screen.CallScreen;
 import io.github.lxxz.pokebook.client.screen.ClockScreen;
 import io.github.lxxz.pokebook.client.screen.ConversationScreen;
+import io.github.lxxz.pokebook.client.screen.GroupScreen;
 import io.github.lxxz.pokebook.client.screen.MessagesScreen;
 import io.github.lxxz.pokebook.client.screen.SharedPhotoScreen;
 import io.github.lxxz.pokebook.client.screen.MissionsScreen;
@@ -24,6 +25,7 @@ import io.github.lxxz.pokebook.client.screen.SocialScreen;
 import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.ConversationsPayload;
 import io.github.lxxz.pokebook.network.FlashlightPayload;
+import io.github.lxxz.pokebook.network.GroupPayload;
 import io.github.lxxz.pokebook.network.MessageArrivedPayload;
 import io.github.lxxz.pokebook.network.PhotoDataPayload;
 import io.github.lxxz.pokebook.network.ThreadPayload;
@@ -202,6 +204,12 @@ public class PokebookClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(PhotoDataPayload.ID, (payload, context) -> {
 			if (context.client().currentScreen instanceof SharedPhotoScreen screen && screen.photoId().equals(payload.photoId())) {
 				screen.show(payload.png());
+			}
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(GroupPayload.ID, (payload, context) -> {
+			if (context.client().currentScreen instanceof GroupScreen screen) {
+				screen.update(payload.members());
 			}
 		});
 

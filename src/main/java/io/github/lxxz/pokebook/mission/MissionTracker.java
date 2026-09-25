@@ -1,6 +1,7 @@
 package io.github.lxxz.pokebook.mission;
 
 import io.github.lxxz.pokebook.Pokebook;
+import io.github.lxxz.pokebook.group.Groups;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.notify.NotificationKind;
 import io.github.lxxz.pokebook.notify.Notifications;
@@ -75,6 +76,13 @@ public final class MissionTracker {
 		boolean changed = false;
 		List<Mission> justCompleted = new ArrayList<>();
 		for (Mission mission : Missions.all()) {
+			// A cooperativa conta no grupo, não aqui. Ver Groups.
+			if (mission.cooperative()) {
+				if (mission.objective() == type && mission.target().matches(target)) {
+					Groups.advance(player, mission);
+				}
+				continue;
+			}
 			if (mission.objective() == type && mission.target().matches(target) && progress.advance(mission)) {
 				changed = true;
 				// advance() só devolve true quando a contagem sobe sem passar do necessário,
