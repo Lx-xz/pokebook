@@ -207,5 +207,9 @@
 	"notification.pokebook.message.title": "Message from %s",
 	"notification.pokebook.message.photo": "sent a photo",
 	"notification.pokebook.message.waiting.title": "Messages",
-	"notification.pokebook.message.waiting.body": "%s new while you were away."
+	"notification.pokebook.message.waiting.body": "%s new while you were away.",
+	"screen.pokebook.map": "Map",
+	"screen.pokebook.map.drawing": "Drawing the map...",
+	"screen.pokebook.map.coords": "X %s  Z %s",
+	"screen.pokebook.map.hint": "Click a waypoint to follow it."
 }

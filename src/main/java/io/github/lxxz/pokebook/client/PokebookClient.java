@@ -5,6 +5,7 @@ import io.github.lxxz.pokebook.client.call.ClientCalls;
 import io.github.lxxz.pokebook.client.clock.Alarms;
 import io.github.lxxz.pokebook.client.hud.Navigation;
 import io.github.lxxz.pokebook.client.hud.PokebookHud;
+import io.github.lxxz.pokebook.client.map.AreaMap;
 import io.github.lxxz.pokebook.client.notify.ClientNotifications;
 import io.github.lxxz.pokebook.client.phone.ClientPhone;
 import io.github.lxxz.pokebook.client.photo.Photos;
@@ -105,6 +106,7 @@ public class PokebookClient implements ClientModInitializer {
 			ClientPhone.reset();
 			ClientNotifications.clear();
 			Navigation.stop();
+			AreaMap.clear(client);
 		});
 
 		// Em 1.21.1 estes handlers já rodam na render thread, então dá para chamar métodos

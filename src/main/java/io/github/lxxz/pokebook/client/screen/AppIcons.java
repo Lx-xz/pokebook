@@ -45,6 +45,7 @@ public final class AppIcons {
 	public static final Identifier SETTINGS = SCROLL;
 	public static final Identifier PC = SCROLL;
 	public static final Identifier MESSAGES = BUBBLE;
+	public static final Identifier MAP = SCROLL;
 
 	private AppIcons() {
 	}

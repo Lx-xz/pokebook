@@ -121,6 +121,12 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 				() -> session.pos().ifPresent(pos -> ClientPlayNetworking.send(new OpenPcPayload(pos)))));
 		}
 
+		// O mapa é da estação: tela grande, e o entorno de onde ela está.
+		if (!phone) {
+			list.add(new Tile("▦", AppIcons.MAP, Text.translatable("screen.pokebook.map"),
+				() -> navigateTo(new MapScreen(session))));
+		}
+
 		if (!phone) {
 			list.add(new Tile("♛", AppIcons.RANKING, Text.translatable("screen.pokebook.ranking"), () -> {
 				ClientPlayNetworking.send(new RequestRankingPayload());
