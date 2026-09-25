@@ -3,6 +3,7 @@ package io.github.lxxz.pokebook.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import io.github.lxxz.pokebook.battle.BattleChallenges;
 import io.github.lxxz.pokebook.network.TrackTargetPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.command.argument.BlockPosArgumentType;
@@ -36,6 +37,15 @@ public final class PokebookCommand {
 
 	public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
 		dispatcher.register(CommandManager.literal("pokebook")
+			// O alvo do texto clicável de um desafio de batalha. Só age sobre um desafio que
+			// o servidor registrou para quem roda; digitar à mão não inventa nada.
+			.then(CommandManager.literal("batalha")
+				.then(CommandManager.literal("aceitar")
+					.then(CommandManager.argument("challenger", StringArgumentType.word())
+						.executes(context -> battle(context, true))))
+				.then(CommandManager.literal("recusar")
+					.then(CommandManager.argument("challenger", StringArgumentType.word())
+						.executes(context -> battle(context, false)))))
 			.then(CommandManager.literal("rastrear")
 				.then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
 					.executes(context -> track(context, false, false))
@@ -43,6 +53,20 @@ public final class PokebookCommand {
 						.executes(context -> track(context, true, false))
 						.then(CommandManager.argument("label", StringArgumentType.greedyString())
 							.executes(context -> track(context, true, true)))))));
+	}
+
+	private static int battle(CommandContext<ServerCommandSource> context, boolean accept) {
+		ServerPlayerEntity player = context.getSource().getPlayer();
+		if (player == null) {
+			return 0;
+		}
+		String challenger = StringArgumentType.getString(context, "challenger");
+		if (accept) {
+			BattleChallenges.accept(player, challenger);
+		} else {
+			BattleChallenges.decline(player, challenger);
+		}
+		return 1;
 	}
 
 	private static int track(CommandContext<ServerCommandSource> context, boolean hasDimension, boolean hasLabel)

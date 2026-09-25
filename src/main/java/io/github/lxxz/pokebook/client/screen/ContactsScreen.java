@@ -2,6 +2,7 @@ package io.github.lxxz.pokebook.client.screen;
 
 import io.github.lxxz.pokebook.client.hud.Navigation;
 import io.github.lxxz.pokebook.client.phone.ClientPhone;
+import io.github.lxxz.pokebook.network.ChallengePayload;
 import io.github.lxxz.pokebook.network.ContactActionPayload;
 import io.github.lxxz.pokebook.phone.Contact;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -121,6 +122,14 @@ public class ContactsScreen extends ScrollListScreen<ContactsScreen.Row> {
 		return ClientPhone.features().locationSharing();
 	}
 
+	/**
+	 * Desafio de batalha: só com o Cobblemon no servidor, e só pelo celular — é convite à
+	 * distância, coisa de bolso.
+	 */
+	private boolean battlesAllowed() {
+		return ClientPhone.features().cobblemon() && session.portable();
+	}
+
 	// ------------------------------------------------------------------ desenho
 
 	@Override
@@ -154,6 +163,14 @@ public class ContactsScreen extends ScrollListScreen<ContactsScreen.Row> {
 					tooltip(Text.translatable(person.iShare()
 						? "screen.pokebook.contacts.share_on"
 						: "screen.pokebook.contacts.share_off"));
+				}
+			}
+
+			if (battlesAllowed() && person.online()) {
+				right -= ACTION;
+				glyph(context, "⚔", right, textY, hovered && isOver(right, y, ACTION, ROW_HEIGHT) ? COLOR_ACCENT : COLOR_MUTED);
+				if (hovered && isOver(right, y, ACTION, ROW_HEIGHT)) {
+					tooltip(Text.translatable("screen.pokebook.contacts.challenge"));
 				}
 			}
 		} else {
@@ -203,9 +220,17 @@ public class ContactsScreen extends ScrollListScreen<ContactsScreen.Row> {
 			return;
 		}
 
-		if (sharingAllowed() && localX >= width - ACTION * 2) {
-			ClientPlayNetworking.send(new ContactActionPayload(
-				ContactActionPayload.Action.TOGGLE_SHARE_LOCATION, person.uuid()));
+		int slot = 2;
+		if (sharingAllowed()) {
+			if (localX >= width - ACTION * slot) {
+				ClientPlayNetworking.send(new ContactActionPayload(
+					ContactActionPayload.Action.TOGGLE_SHARE_LOCATION, person.uuid()));
+				return;
+			}
+			slot++;
+		}
+		if (battlesAllowed() && person.online() && localX >= width - ACTION * slot) {
+			ClientPlayNetworking.send(new ChallengePayload(person.uuid()));
 			return;
 		}
 

@@ -1,5 +1,6 @@
 package io.github.lxxz.pokebook;
 
+import io.github.lxxz.pokebook.battle.BattleChallenges;
 import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.command.PokebookCommand;
 import io.github.lxxz.pokebook.config.ServerConfig;
@@ -9,6 +10,8 @@ import io.github.lxxz.pokebook.mission.MissionService;
 import io.github.lxxz.pokebook.mission.MissionTracker;
 import io.github.lxxz.pokebook.network.AnswerCallPayload;
 import io.github.lxxz.pokebook.network.CallStatePayload;
+import io.github.lxxz.pokebook.network.ChallengePayload;
+import io.github.lxxz.pokebook.network.OpenPcPayload;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
 import io.github.lxxz.pokebook.network.ContactActionPayload;
@@ -79,12 +82,6 @@ public class Pokebook implements ModInitializer {
 		CommandRegistrationCallback.EVENT.register(
 			(dispatcher, registryAccess, environment) -> PokebookCommand.register(dispatcher));
 
-		// A classe só é tocada depois desta checagem. Ver o comentário dentro dela: a
-		// fronteira é a classe, não este if -- o if sozinho não salvaria nada.
-		if (FabricLoader.getInstance().isModLoaded("cobblemon")) {
-			CobblemonIntegration.register();
-		}
-
 		// Os codecs têm que ser registrados nos DOIS lados, senão o pacote não decodifica.
 		// Este entrypoint roda tanto no cliente quanto no servidor, então é o lugar certo.
 		PayloadTypeRegistry.playS2C().register(OpenPokebookPayload.ID, OpenPokebookPayload.CODEC);
@@ -115,6 +112,8 @@ public class Pokebook implements ModInitializer {
 		PayloadTypeRegistry.playC2S().register(ShareLocationPayload.ID, ShareLocationPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(RequestWeatherPayload.ID, RequestWeatherPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(RequestRankingPayload.ID, RequestRankingPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(OpenPcPayload.ID, OpenPcPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(ChallengePayload.ID, ChallengePayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ClosePokebookPayload.ID, (payload, context) -> {
 			// Este pacote vem do cliente, que não é confiável. A validação não precisa ser
@@ -175,6 +174,10 @@ public class Pokebook implements ModInitializer {
 		// que desiste de quem não atende. Sai barato — sem ligação nenhuma, não faz nada.
 		ServerTickEvents.END_SERVER_TICK.register(CallService::tick);
 		ServerTickEvents.END_SERVER_TICK.register(LocationSharing::tick);
+		ServerTickEvents.END_SERVER_TICK.register(BattleChallenges::tick);
+
+		ServerPlayNetworking.registerGlobalReceiver(ChallengePayload.ID, (payload, context) ->
+			BattleChallenges.challenge(context.player(), payload.target()));
 
 		// Depois de um /reload a lista pode ter mudado, e quem está com o pokébook aberto
 		// continuaria vendo a lista velha — inclusive missões que deixaram de existir.
@@ -206,7 +209,16 @@ public class Pokebook implements ModInitializer {
 			CallService.disconnect(handler.getPlayer());
 			LocationSharing.disconnect(handler.getPlayer());
 			ChatLocation.disconnect(handler.getPlayer());
+			BattleChallenges.disconnect(handler.getPlayer());
 		});
+
+		// Por último, depois de todos os tipos de pacote registrados: a integração registra
+		// receptores próprios, e a Fabric exige o tipo registrado antes do receptor.
+		// A classe só é tocada depois desta checagem. Ver o comentário dentro dela: a
+		// fronteira é a classe, não este if -- o if sozinho não salvaria nada.
+		if (FabricLoader.getInstance().isModLoaded("cobblemon")) {
+			CobblemonIntegration.register();
+		}
 
 		LOGGER.info("Pokébook carregado.");
 	}

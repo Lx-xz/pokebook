@@ -175,5 +175,19 @@
 	"screen.pokebook.waypoints.mark_here": "Mark here",
 	"screen.pokebook.waypoints.name": "Waypoint name",
 	"screen.pokebook.waypoints.share": "To chat",
-	"screen.pokebook.waypoints.share_here": "To chat"
+	"screen.pokebook.waypoints.share_here": "To chat",
+	"screen.pokebook.pc": "PC",
+	"screen.pokebook.contacts.challenge": "Challenge to a battle",
+	"message.pokebook.battle.not_accepting": "%s is not taking challenges right now.",
+	"message.pokebook.battle.busy": "%s already has a challenge waiting.",
+	"message.pokebook.battle.sent": "Challenge sent to %s.",
+	"message.pokebook.battle.received": "%s challenged you to a battle! %s %s",
+	"message.pokebook.battle.accept": "Accept",
+	"message.pokebook.battle.decline": "Decline",
+	"message.pokebook.battle.none": "There is no challenge from %s waiting.",
+	"message.pokebook.battle.failed": "The battle could not start — someone is already battling or has no Pokémon.",
+	"message.pokebook.battle.declined": "%s declined the challenge.",
+	"message.pokebook.battle.expired": "The challenge expired with no answer.",
+	"notification.pokebook.battle.title": "Battle challenge",
+	"notification.pokebook.battle.body": "%s wants to battle — answer in chat."
 }

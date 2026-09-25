@@ -175,5 +175,19 @@
 	"screen.pokebook.waypoints.mark_here": "Marcar aqui",
 	"screen.pokebook.waypoints.name": "Nome do ponto",
 	"screen.pokebook.waypoints.share": "No chat",
-	"screen.pokebook.waypoints.share_here": "No chat"
+	"screen.pokebook.waypoints.share_here": "No chat",
+	"screen.pokebook.pc": "PC",
+	"screen.pokebook.contacts.challenge": "Desafiar para uma batalha",
+	"message.pokebook.battle.not_accepting": "%s não está aceitando desafios agora.",
+	"message.pokebook.battle.busy": "%s já tem um desafio esperando resposta.",
+	"message.pokebook.battle.sent": "Desafio mandado para %s.",
+	"message.pokebook.battle.received": "%s te desafiou para uma batalha! %s %s",
+	"message.pokebook.battle.accept": "Aceitar",
+	"message.pokebook.battle.decline": "Recusar",
+	"message.pokebook.battle.none": "Não há desafio de %s esperando.",
+	"message.pokebook.battle.failed": "A batalha não pôde começar — alguém já está em batalha ou sem Pokémon.",
+	"message.pokebook.battle.declined": "%s recusou o desafio.",
+	"message.pokebook.battle.expired": "O desafio expirou sem resposta.",
+	"notification.pokebook.battle.title": "Desafio de batalha",
+	"notification.pokebook.battle.body": "%s quer batalhar — responda no chat."
 }

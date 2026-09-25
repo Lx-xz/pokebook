@@ -43,6 +43,7 @@ public final class AppIcons {
 	public static final Identifier PHOTOS = SCROLL;
 	public static final Identifier RANKING = SCROLL;
 	public static final Identifier SETTINGS = SCROLL;
+	public static final Identifier PC = SCROLL;
 
 	private AppIcons() {
 	}

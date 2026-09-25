@@ -42,7 +42,7 @@ public final class ServerConfig {
 
 	public static void load() {
 		if (!Files.exists(FILE)) {
-			features = ServerFeatures.ALL;
+			features = withCobblemon(ServerFeatures.ALL);
 			write(features);
 			return;
 		}
@@ -52,14 +52,30 @@ public final class ServerConfig {
 				flag(json, "location_sharing"),
 				flag(json, "chat_location"),
 				flag(json, "radar"),
-				flag(json, "photos")
+				flag(json, "photos"),
+				flag(json, "messages"),
+				flag(json, "photo_sharing"),
+				flag(json, "flashlight"),
+				cobblemonPresent()
 			);
+			// Um arquivo de versão antiga ganha as chaves novas, para o dono as encontrar.
+			write(features);
 		} catch (IOException | RuntimeException e) {
 			// RuntimeException pega JSON malformado e raiz que não é objeto, que o Gson
 			// lança como exceções não verificadas.
 			Pokebook.LOGGER.warn("Não deu para ler {}; seguindo com tudo ligado.", FILE, e);
-			features = ServerFeatures.ALL;
+			features = withCobblemon(ServerFeatures.ALL);
 		}
+	}
+
+	/** Se o servidor tem o Cobblemon. Não é chave do arquivo: é fato da instalação. */
+	private static boolean cobblemonPresent() {
+		return FabricLoader.getInstance().isModLoaded("cobblemon");
+	}
+
+	private static ServerFeatures withCobblemon(ServerFeatures base) {
+		return new ServerFeatures(base.locationSharing(), base.chatLocation(), base.radar(), base.photos(),
+			base.messages(), base.photoSharing(), base.flashlight(), cobblemonPresent());
 	}
 
 	private static boolean flag(JsonObject json, String key) {
@@ -73,6 +89,9 @@ public final class ServerConfig {
 		json.addProperty("chat_location", current.chatLocation());
 		json.addProperty("radar", current.radar());
 		json.addProperty("photos", current.photos());
+		json.addProperty("messages", current.messages());
+		json.addProperty("photo_sharing", current.photoSharing());
+		json.addProperty("flashlight", current.flashlight());
 		try {
 			Files.writeString(FILE, GSON.toJson(json), StandardCharsets.UTF_8);
 		} catch (IOException e) {

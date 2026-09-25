@@ -6,6 +6,7 @@ import io.github.lxxz.pokebook.client.phone.ClientPhone;
 import io.github.lxxz.pokebook.client.radar.Radar;
 import io.github.lxxz.pokebook.config.ServerFeatures;
 import io.github.lxxz.pokebook.network.MissionEntry;
+import io.github.lxxz.pokebook.network.OpenPcPayload;
 import io.github.lxxz.pokebook.network.RequestRankingPayload;
 import io.github.lxxz.pokebook.network.RequestSocialPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -106,6 +107,13 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 			ClientPlayNetworking.send(new RequestSocialPayload());
 			navigateTo(new SocialScreen(session, missions));
 		}));
+
+		// PC remoto: só na estação, e só se o SERVIDOR tem o Cobblemon — é lá que o PC mora.
+		// A tela do PC é a dele; abrir o nosso pedido fecha esta.
+		if (!phone && features.cobblemon()) {
+			list.add(new Tile("▤", AppIcons.PC, Text.translatable("screen.pokebook.pc"),
+				() -> session.pos().ifPresent(pos -> ClientPlayNetworking.send(new OpenPcPayload(pos)))));
+		}
 
 		if (!phone) {
 			list.add(new Tile("♛", AppIcons.RANKING, Text.translatable("screen.pokebook.ranking"), () -> {

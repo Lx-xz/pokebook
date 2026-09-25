@@ -1,0 +1,6 @@
+-Xmaxerrs
+100000
+-d
+/tmp/claude-0/-home-user-pokebook/e6e2f8e0-81a1-50b6-ba47-0eadc20bfd8d/scratchpad/out
+-proc:none
+@/tmp/claude-0/-home-user-pokebook/e6e2f8e0-81a1-50b6-ba47-0eadc20bfd8d/scratchpad/files.txt
