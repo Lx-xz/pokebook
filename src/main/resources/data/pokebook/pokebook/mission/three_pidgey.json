@@ -1,0 +1,9 @@
+{
+	"objective": "capture",
+	"target": {
+		"species": "pidgey"
+	},
+	"required": 3,
+	"reward": "minecraft:gold_ingot",
+	"reward_count": 4
+}

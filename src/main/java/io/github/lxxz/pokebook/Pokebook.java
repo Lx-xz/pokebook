@@ -3,6 +3,7 @@ package io.github.lxxz.pokebook;
 import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.command.PokebookCommand;
 import io.github.lxxz.pokebook.config.ServerConfig;
+import io.github.lxxz.pokebook.integration.CobblemonIntegration;
 import io.github.lxxz.pokebook.mission.MissionLoader;
 import io.github.lxxz.pokebook.mission.MissionService;
 import io.github.lxxz.pokebook.mission.MissionTracker;
@@ -43,6 +44,7 @@ import io.github.lxxz.pokebook.registry.ModItems;
 import io.github.lxxz.pokebook.server.PokebookViewers;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -76,6 +78,12 @@ public class Pokebook implements ModInitializer {
 
 		CommandRegistrationCallback.EVENT.register(
 			(dispatcher, registryAccess, environment) -> PokebookCommand.register(dispatcher));
+
+		// A classe só é tocada depois desta checagem. Ver o comentário dentro dela: a
+		// fronteira é a classe, não este if -- o if sozinho não salvaria nada.
+		if (FabricLoader.getInstance().isModLoaded("cobblemon")) {
+			CobblemonIntegration.register();
+		}
 
 		// Os codecs têm que ser registrados nos DOIS lados, senão o pacote não decodifica.
 		// Este entrypoint roda tanto no cliente quanto no servidor, então é o lugar certo.

@@ -1,0 +1,9 @@
+{
+	"objective": "capture",
+	"target": {
+		"element": "fire"
+	},
+	"required": 2,
+	"reward": "minecraft:blaze_powder",
+	"reward_count": 4
+}

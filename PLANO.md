@@ -356,10 +356,9 @@ uma vez só, e uma tela nova nasce com os dois no lugar. O `init()` da base viro
 > A tela de destino do "voltar" é criada **no clique**, não guardada: precisa nascer com
 > os dados do momento, não com os de quando a tela atual abriu.
 
-**Cobblemon — na branch `cobblemon`, não na `main`.** As mudanças de build foram
-aplicadas, o jar de 141 MB baixou e o jogo sobe com ele. Mas elas **não** entram na
-`main`, e a razão é prática: com o Cobblemon na `main`, a máquina do trabalho não
-conseguiria nem buildar o projeto — o FortiGate trava no jar (ver `CLAUDE.md`). A
+**Cobblemon — esta é a branch `cobblemon`.** As mudanças de build estão aqui, o jar de
+141 MB baixou e o jogo sobe com ele. Elas **não** entram na `main`, e a razão é prática:
+com o Cobblemon na `main`, a máquina do trabalho não conseguiria nem buildar o projeto — o FortiGate trava no jar (ver `CLAUDE.md`). A
 separação é o que mantém a `main` utilizável nas duas máquinas, e é o que permite fazer
 o redesenho da interface no trabalho enquanto a integração com o Cobblemon espera por
 casa.
@@ -387,19 +386,90 @@ código**, e por isso ele também não entrou no `depends` do `fabric.mod.json`.
 
 Tudo verificado em jogo.
 
-**Próxima ação**, na ordem imposta pelas duas máquinas — o que toca o Cobblemon só
-acontece em casa, o resto acontece em qualquer lugar:
+### Integração com o Cobblemon — feita (nesta branch)
 
-1. **Redesenho da interface** (pode ser no trabalho, na `main`) — o autor mandou um conceito com cara de macOS: barra de
-   título com ← e ✕, botões de ícone, linhas de missão como cartões arredondados, abas
-   "novas/completas". Ver `IDEIAS.md`. Decisão pendente: as abas mudam o modelo da tela,
-   não só o desenho — filtro no cliente ou duas listas do servidor?
-2. **Integração com o Cobblemon** (só em casa, na branch `cobblemon`) —
-   `POKEMON_CAPTURED`. Traz o `ObjectiveType.CAPTURE`, que é o segundo valor do enum, e
-   um alvo por espécie, que é o **segundo caso concreto** de `TargetMatcher` — é aí que
-   o codec de alvo vira despachado por `"type"`, como previsto. A classe que toca o
-   Cobblemon fica isolada, pelo mesmo padrão de fronteira usado para cliente/servidor.
-3. **Aba social, degrau 1** — ler o progresso dos outros; o dado já é persistido.
+A captura conta progresso. `ObjectiveType.CAPTURE` e um alvo por espécie entraram, e com
+eles o **segundo caso concreto** de `TargetMatcher` — o eixo de alvos deixou de ter uma
+implementação só.
+
+**O desenho mudou por uma assimetria da API.** `POKEMON_CAPTURED` entrega um
+`Pokemon` — o objeto de dados — e não a entidade, que a essa altura já saiu do mundo.
+Um alvo que só soubesse olhar `Entity` não decidiria nada sobre uma captura. Daí o
+`MissionTarget`, que carrega o que se sabe em cada caso: a entidade, ao matar; o id da
+espécie, ao capturar.
+
+> A peça que faz tudo funcionar é a **espécie viajar como `Identifier` simples**. Com
+> isso, `SpeciesMatcher` e todo o resto do sistema de missões **não mencionam o
+> Cobblemon** e vivem na `main` — compilam na máquina do trabalho. Só
+> `CobblemonIntegration` importa o mod, e é a única classe que precisaria de conserto
+> quando a API quebrar num update.
+
+Uma missão de captura **carrega numa instalação sem o Cobblemon**; ela apenas nunca
+progride, em vez de quebrar o carregamento do datapack.
+
+**Fronteira de classe, não condicional.** A JVM resolve referências ao *carregar* a
+classe, então um `if (temCobblemon)` dentro de um método já falharia — a classe que o
+contém não carregaria. É o terceiro lugar onde este padrão aparece no projeto.
+
+**Sons emprestados do Cobblemon** (`pc.on`, `pc.off`, `gui.click`), procurados no
+registro **por id**: nenhum arquivo dele é copiado para o nosso jar — copiar seria
+redistribuir asset alheio, referenciar não é — e nenhuma classe dele é mencionada, então
+isso também vive na `main`. Sem o Cobblemon, a busca devolve `null` e o mod fica em
+silêncio. O som toca só no primeiro passo de cada transição; um por nível viraria
+metralhadora.
+
+**Nada disso foi visto em jogo.**
+
+### Abas, rolagem e os três objetivos — feito
+
+**A lista estourou a moldura** ao chegar na quinta missão. A correção não foi rolagem
+sozinha: as **abas por estado** — em andamento, a resgatar, concluídas — foram o que
+resolveu o problema de fundo, porque tiram da lista principal justamente as linhas que
+não pedem nada.
+
+> **Por que por estado e não por assunto.** Toda missão está num dos três estados, e
+> separar assim põe a única coisa acionável — resgatar — numa aba própria. Abas por
+> assunto (matar, capturar, derrotar) seriam **taxonomia**: organizam, mas não dizem o
+> que fazer a seguir. Com poucas missões, taxonomia é enfeite. Se um dia forem dezenas,
+> aí um filtro por assunto *dentro* de cada aba de estado faz sentido — é adição, não
+> troca.
+
+Filtro no **cliente**, como decidido: o servidor já manda tudo e cada linha já carrega o
+que a classifica, então trocar de aba não toca a rede.
+
+**As linhas deixaram de ser widgets.** Widget tem posição fixa, e numa lista que rola a
+posição muda a cada quadro — um widget por linha exigiria reposicionar todos a cada
+rolagem. Desenhar à mão e tratar o clique com o deslocamento aplicado é menos código e
+não pode dessincronizar. As abas, que não rolam, continuam widgets. `enableScissor`
+recorta a lista para a linha que sai por cima não invadir o título.
+
+**Três objetivos e quatro alvos**, que é o eixo desenhado lá atrás finalmente pagando:
+`KILL`, `CAPTURE` e `BATTLE_WIN` × entidade, espécie, tipo elemental e geração. Cinco
+missões de exemplo cobrem cada combinação nova sem uma linha de Java por missão.
+
+> **Geração é etiqueta, não campo.** O Cobblemon não guarda número de geração: guarda
+> rótulos na espécie, entre eles `gen1`. Modelar como etiqueta espelha o dado real em vez
+> de inventar um paralelo — e abre `legendary` e `paradox` de graça, se um dia quisermos.
+
+> **Tipo elemental usa `showdownId`, não `getName()`.** O segundo é nome de exibição e
+> mudaria com o idioma, fazendo a mesma missão casar numa máquina e não noutra.
+
+> **Captura selvagem também encerra batalha em vitória.** Sem o `getWasWildCapture()`, a
+> mesma ação contaria duas vezes: como captura *e* como vitória.
+
+**Nada disso foi visto em jogo.**
+
+**Próxima ação:** `gradlew runClient` nesta branch e conferir:
+
+1. As três abas, e que a lista rola quando passa de quatro linhas.
+2. Resgatar dentro de uma lista rolada acerta a missão certa.
+3. Capturar um Pokémon de fogo avança `catch_fire_type`; vencer batalha contra um de
+   água avança `beat_water_type`; e os de geração 1.
+4. Capturar um Pokémon selvagem **não** avança nenhuma missão de `battle_win`.
+5. Na `main`, sem o Cobblemon, tudo sobe — só sem som e sem progresso de Pokémon.
+
+Depois: o **redesenho visual** (sprites com nine-slice, cara de macOS) e a **aba social,
+degrau 1**.
 
 Nota de ambiente: além do `PATH` de terminais antigos, a máquina tem um **JRE 8 da
 Oracle** cujo atalho (`C:\Program Files (x86)\Common Files\Oracle\Java\java8path`)

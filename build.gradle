@@ -1,9 +1,19 @@
 plugins {
 	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	// Ver o comentário no gradle.properties: está aqui pelo remapeamento de metadados,
+	// não porque haja Kotlin neste projeto.
+	id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
 	id 'maven-publish'
 }
 
 repositories {
+	// Espelho do ImpactDev, e não o artefacts.cobblemon.com oficial: aquele responde
+	// 403 (corpo vazio, sem cabeçalho Server) a clientes que não são navegador.
+	maven {
+		name = 'ImpactDev'
+		url = uri('https://maven.impactdev.net/repository/development/')
+	}
+
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -19,6 +29,11 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Só para testar em jogo por ora: nenhuma classe do Cobblemon é mencionada no código.
+	// Esta dependência vive nesta branch e não na main de propósito: com ela na main, a
+	// máquina do trabalho não conseguiria buildar o projeto (ver CLAUDE.md).
+	modImplementation "com.cobblemon:fabric:${project.cobblemon_version}"
 }
 
 processResources {

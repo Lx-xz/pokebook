@@ -1,0 +1,9 @@
+{
+	"objective": "battle_win",
+	"target": {
+		"element": "water"
+	},
+	"required": 3,
+	"reward": "minecraft:prismarine_shard",
+	"reward_count": 6
+}

@@ -1,0 +1,9 @@
+{
+	"objective": "capture",
+	"target": {
+		"generation": 1
+	},
+	"required": 5,
+	"reward": "minecraft:diamond",
+	"reward_count": 1
+}
