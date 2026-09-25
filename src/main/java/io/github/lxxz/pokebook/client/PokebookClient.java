@@ -7,6 +7,7 @@ import io.github.lxxz.pokebook.client.hud.Navigation;
 import io.github.lxxz.pokebook.client.hud.PokebookHud;
 import io.github.lxxz.pokebook.client.map.AreaMap;
 import io.github.lxxz.pokebook.client.notify.ClientNotifications;
+import io.github.lxxz.pokebook.client.phone.ClientFlashlight;
 import io.github.lxxz.pokebook.client.phone.ClientPhone;
 import io.github.lxxz.pokebook.client.photo.Photos;
 import io.github.lxxz.pokebook.client.render.EmissiveScreenModel;
@@ -22,6 +23,7 @@ import io.github.lxxz.pokebook.client.screen.RankingScreen;
 import io.github.lxxz.pokebook.client.screen.SocialScreen;
 import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.ConversationsPayload;
+import io.github.lxxz.pokebook.network.FlashlightPayload;
 import io.github.lxxz.pokebook.network.MessageArrivedPayload;
 import io.github.lxxz.pokebook.network.PhotoDataPayload;
 import io.github.lxxz.pokebook.network.ThreadPayload;
@@ -107,6 +109,7 @@ public class PokebookClient implements ClientModInitializer {
 			ClientNotifications.clear();
 			Navigation.stop();
 			AreaMap.clear(client);
+			ClientFlashlight.set(false);
 		});
 
 		// Em 1.21.1 estes handlers já rodam na render thread, então dá para chamar métodos
@@ -199,6 +202,14 @@ public class PokebookClient implements ClientModInitializer {
 		ClientPlayNetworking.registerGlobalReceiver(PhotoDataPayload.ID, (payload, context) -> {
 			if (context.client().currentScreen instanceof SharedPhotoScreen screen && screen.photoId().equals(payload.photoId())) {
 				screen.show(payload.png());
+			}
+		});
+
+		ClientPlayNetworking.registerGlobalReceiver(FlashlightPayload.ID, (payload, context) -> {
+			boolean changed = ClientFlashlight.on() != payload.on();
+			ClientFlashlight.set(payload.on());
+			if (changed && context.client().currentScreen instanceof PokebookMenuScreen screen) {
+				screen.refreshTiles();
 			}
 		});
 

@@ -211,5 +211,7 @@
 	"screen.pokebook.map": "Map",
 	"screen.pokebook.map.drawing": "Drawing the map...",
 	"screen.pokebook.map.coords": "X %s  Z %s",
-	"screen.pokebook.map.hint": "Click a waypoint to follow it."
+	"screen.pokebook.map.hint": "Click a waypoint to follow it.",
+	"screen.pokebook.flashlight.on": "Light: on",
+	"screen.pokebook.flashlight.off": "Flashlight"
 }

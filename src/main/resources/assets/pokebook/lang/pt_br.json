@@ -211,5 +211,7 @@
 	"screen.pokebook.map": "Mapa",
 	"screen.pokebook.map.drawing": "Desenhando o mapa...",
 	"screen.pokebook.map.coords": "X %s  Z %s",
-	"screen.pokebook.map.hint": "Clique num ponto para segui-lo."
+	"screen.pokebook.map.hint": "Clique num ponto para segui-lo.",
+	"screen.pokebook.flashlight.on": "Lanterna: acesa",
+	"screen.pokebook.flashlight.off": "Lanterna"
 }

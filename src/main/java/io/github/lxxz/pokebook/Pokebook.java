@@ -14,6 +14,7 @@ import io.github.lxxz.pokebook.mission.MissionTracker;
 import io.github.lxxz.pokebook.network.AnswerCallPayload;
 import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.ChallengePayload;
+import io.github.lxxz.pokebook.network.FlashlightPayload;
 import io.github.lxxz.pokebook.network.OpenPcPayload;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
@@ -49,6 +50,7 @@ import io.github.lxxz.pokebook.network.UpdateSettingsPayload;
 import io.github.lxxz.pokebook.network.WaypointActionPayload;
 import io.github.lxxz.pokebook.network.WeatherPayload;
 import io.github.lxxz.pokebook.phone.ChatLocation;
+import io.github.lxxz.pokebook.phone.Flashlight;
 import io.github.lxxz.pokebook.phone.Forecast;
 import io.github.lxxz.pokebook.phone.LocationSharing;
 import io.github.lxxz.pokebook.phone.PhoneService;
@@ -60,6 +62,8 @@ import io.github.lxxz.pokebook.server.PokebookViewers;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -91,6 +95,7 @@ public class Pokebook implements ModInitializer {
 		Ranking.register();
 		MessageService.register();
 		ContactDirectory.register();
+		Flashlight.register();
 
 		// Relida a cada início de servidor; num jogo solo, cada vez que o mundo abre.
 		ServerLifecycleEvents.SERVER_STARTING.register(server -> ServerConfig.load());
@@ -141,6 +146,9 @@ public class Pokebook implements ModInitializer {
 		PayloadTypeRegistry.playC2S().register(RequestThreadPayload.ID, RequestThreadPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(PhotoUploadPayload.ID, PhotoUploadPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(RequestPhotoPayload.ID, RequestPhotoPayload.CODEC);
+		// O mesmo tipo nos dois sentidos: pedido de lá, estado de cá.
+		PayloadTypeRegistry.playC2S().register(FlashlightPayload.ID, FlashlightPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(FlashlightPayload.ID, FlashlightPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ClosePokebookPayload.ID, (payload, context) -> {
 			// Este pacote vem do cliente, que não é confiável. A validação não precisa ser
@@ -202,6 +210,17 @@ public class Pokebook implements ModInitializer {
 		ServerTickEvents.END_SERVER_TICK.register(CallService::tick);
 		ServerTickEvents.END_SERVER_TICK.register(LocationSharing::tick);
 		ServerTickEvents.END_SERVER_TICK.register(BattleChallenges::tick);
+		ServerTickEvents.END_SERVER_TICK.register(Flashlight::tick);
+
+		ServerPlayNetworking.registerGlobalReceiver(FlashlightPayload.ID, (payload, context) ->
+			Flashlight.set(context.player(), payload.on()));
+		// A luz é um bloco num lugar do mundo: mudar de mundo ou renascer a deixaria para trás.
+		ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) ->
+			Flashlight.relocated(player));
+		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) ->
+			Flashlight.relocated(newPlayer));
+		ServerLifecycleEvents.SERVER_STARTED.register(Flashlight::cleanUp);
+		ServerLifecycleEvents.SERVER_STOPPING.register(Flashlight::shutdown);
 
 		ServerPlayNetworking.registerGlobalReceiver(ChallengePayload.ID, (payload, context) ->
 			BattleChallenges.challenge(context.player(), payload.target()));
@@ -255,6 +274,7 @@ public class Pokebook implements ModInitializer {
 			BattleChallenges.disconnect(handler.getPlayer());
 			MessageService.disconnect(handler.getPlayer());
 			PhotoShare.disconnect(handler.getPlayer());
+			Flashlight.disconnect(handler.getPlayer());
 		});
 
 		// Por último, depois de todos os tipos de pacote registrados: a integração registra

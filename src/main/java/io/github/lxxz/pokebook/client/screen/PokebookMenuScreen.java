@@ -2,9 +2,11 @@ package io.github.lxxz.pokebook.client.screen;
 
 import io.github.lxxz.pokebook.call.CallService;
 import io.github.lxxz.pokebook.client.notify.ClientNotifications;
+import io.github.lxxz.pokebook.client.phone.ClientFlashlight;
 import io.github.lxxz.pokebook.client.phone.ClientPhone;
 import io.github.lxxz.pokebook.client.radar.Radar;
 import io.github.lxxz.pokebook.config.ServerFeatures;
+import io.github.lxxz.pokebook.network.FlashlightPayload;
 import io.github.lxxz.pokebook.network.MissionEntry;
 import io.github.lxxz.pokebook.network.OpenPcPayload;
 import io.github.lxxz.pokebook.network.RequestRankingPayload;
@@ -164,6 +166,17 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 				() -> navigateTo(new PhotosScreen(session))));
 		}
 
+		// A lanterna não abre tela: o ícone é o interruptor, e o rótulo diz o estado.
+		if (phone && features.flashlight()) {
+			boolean lit = ClientFlashlight.on();
+			list.add(new Tile("☀", AppIcons.FLASHLIGHT,
+				Text.translatable(lit ? "screen.pokebook.flashlight.on" : "screen.pokebook.flashlight.off"), () -> {
+					ClientFlashlight.set(!lit);
+					ClientPlayNetworking.send(new FlashlightPayload(!lit));
+					clearAndInit();
+				}));
+		}
+
 		if (phone) {
 			list.add(new Tile("⚙", AppIcons.SETTINGS, Text.translatable("screen.pokebook.settings"),
 				() -> navigateTo(new SettingsScreen(session))));
@@ -218,6 +231,11 @@ public class PokebookMenuScreen extends PokebookScreenBase {
 			addDrawableChild(new IconTileWidget(x, y, tileSize, cellHeight,
 				tile.glyph(), tile.sprite(), tile.label(), button -> tile.action().run()));
 		}
+	}
+
+	/** Remonta os ícones — quando um estado mostrado no rótulo muda de fora da tela. */
+	public void refreshTiles() {
+		clearAndInit();
 	}
 
 	private void turnTo(int page) {
