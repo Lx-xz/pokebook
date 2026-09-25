@@ -1,6 +1,8 @@
 package io.github.lxxz.pokebook;
 
 import io.github.lxxz.pokebook.call.CallService;
+import io.github.lxxz.pokebook.command.PokebookCommand;
+import io.github.lxxz.pokebook.config.ServerConfig;
 import io.github.lxxz.pokebook.mission.MissionLoader;
 import io.github.lxxz.pokebook.mission.MissionService;
 import io.github.lxxz.pokebook.mission.MissionTracker;
@@ -8,18 +10,39 @@ import io.github.lxxz.pokebook.network.AnswerCallPayload;
 import io.github.lxxz.pokebook.network.CallStatePayload;
 import io.github.lxxz.pokebook.network.ClaimRewardPayload;
 import io.github.lxxz.pokebook.network.ClosePokebookPayload;
+import io.github.lxxz.pokebook.network.ContactActionPayload;
 import io.github.lxxz.pokebook.network.DialCallPayload;
 import io.github.lxxz.pokebook.network.HangUpCallPayload;
 import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
 import io.github.lxxz.pokebook.network.MuteCallPayload;
+import io.github.lxxz.pokebook.network.NoteActionPayload;
+import io.github.lxxz.pokebook.network.NotificationPayload;
 import io.github.lxxz.pokebook.network.OpenPokebookPayload;
+import io.github.lxxz.pokebook.network.PhoneDataPayload;
+import io.github.lxxz.pokebook.network.RankingPayload;
+import io.github.lxxz.pokebook.network.RequestRankingPayload;
 import io.github.lxxz.pokebook.network.RequestSocialPayload;
+import io.github.lxxz.pokebook.network.RequestWeatherPayload;
+import io.github.lxxz.pokebook.network.ServerFeaturesPayload;
+import io.github.lxxz.pokebook.network.ShareLocationPayload;
+import io.github.lxxz.pokebook.network.SharedLocationsPayload;
 import io.github.lxxz.pokebook.network.SocialUpdatePayload;
+import io.github.lxxz.pokebook.network.TrackMissionPayload;
+import io.github.lxxz.pokebook.network.TrackTargetPayload;
+import io.github.lxxz.pokebook.network.UpdateSettingsPayload;
+import io.github.lxxz.pokebook.network.WaypointActionPayload;
+import io.github.lxxz.pokebook.network.WeatherPayload;
+import io.github.lxxz.pokebook.phone.ChatLocation;
+import io.github.lxxz.pokebook.phone.Forecast;
+import io.github.lxxz.pokebook.phone.LocationSharing;
+import io.github.lxxz.pokebook.phone.PhoneService;
+import io.github.lxxz.pokebook.ranking.Ranking;
 import io.github.lxxz.pokebook.registry.ModBlocks;
 import io.github.lxxz.pokebook.registry.ModItemGroups;
 import io.github.lxxz.pokebook.registry.ModItems;
 import io.github.lxxz.pokebook.server.PokebookViewers;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -43,6 +66,16 @@ public class Pokebook implements ModInitializer {
 
 		MissionTracker.register();
 		MissionLoader.register();
+		// Os dois só carregam a classe, para os anexos serem registrados agora, durante a
+		// inicialização — registrar um anexo depois do mundo aberto é tarde.
+		PhoneService.register();
+		Ranking.register();
+
+		// Relida a cada início de servidor; num jogo solo, cada vez que o mundo abre.
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> ServerConfig.load());
+
+		CommandRegistrationCallback.EVENT.register(
+			(dispatcher, registryAccess, environment) -> PokebookCommand.register(dispatcher));
 
 		// Os codecs têm que ser registrados nos DOIS lados, senão o pacote não decodifica.
 		// Este entrypoint roda tanto no cliente quanto no servidor, então é o lugar certo.
@@ -57,6 +90,23 @@ public class Pokebook implements ModInitializer {
 		PayloadTypeRegistry.playC2S().register(AnswerCallPayload.ID, AnswerCallPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(HangUpCallPayload.ID, HangUpCallPayload.CODEC);
 		PayloadTypeRegistry.playC2S().register(MuteCallPayload.ID, MuteCallPayload.CODEC);
+
+		// Os do aparelho: dados, avisos, localização, relógio e ranking.
+		PayloadTypeRegistry.playS2C().register(PhoneDataPayload.ID, PhoneDataPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(ServerFeaturesPayload.ID, ServerFeaturesPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(NotificationPayload.ID, NotificationPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(SharedLocationsPayload.ID, SharedLocationsPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(TrackTargetPayload.ID, TrackTargetPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(WeatherPayload.ID, WeatherPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(RankingPayload.ID, RankingPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(ContactActionPayload.ID, ContactActionPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(NoteActionPayload.ID, NoteActionPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(WaypointActionPayload.ID, WaypointActionPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(UpdateSettingsPayload.ID, UpdateSettingsPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(TrackMissionPayload.ID, TrackMissionPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(ShareLocationPayload.ID, ShareLocationPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestWeatherPayload.ID, RequestWeatherPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(RequestRankingPayload.ID, RequestRankingPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(ClosePokebookPayload.ID, (payload, context) -> {
 			// Este pacote vem do cliente, que não é confiável. A validação não precisa ser
@@ -86,9 +136,37 @@ public class Pokebook implements ModInitializer {
 		ServerPlayNetworking.registerGlobalReceiver(MuteCallPayload.ID, (payload, context) ->
 			CallService.toggleMute(context.player()));
 
+		// Os do aparelho. Mesmo princípio: nenhum confia no que veio, e todos terminam
+		// devolvendo ao cliente o que de fato ficou gravado.
+		ServerPlayNetworking.registerGlobalReceiver(ContactActionPayload.ID, (payload, context) ->
+			PhoneService.onContactAction(context.player(), payload.action(), payload.target()));
+
+		ServerPlayNetworking.registerGlobalReceiver(NoteActionPayload.ID, (payload, context) ->
+			PhoneService.onNoteAction(context.player(), payload.index(), payload.text()));
+
+		ServerPlayNetworking.registerGlobalReceiver(WaypointActionPayload.ID, (payload, context) ->
+			PhoneService.onWaypointAction(context.player(), payload.index(), payload.waypoint()));
+
+		ServerPlayNetworking.registerGlobalReceiver(UpdateSettingsPayload.ID, (payload, context) ->
+			PhoneService.updateSettings(context.player(), payload.settings()));
+
+		ServerPlayNetworking.registerGlobalReceiver(TrackMissionPayload.ID, (payload, context) ->
+			PhoneService.trackMission(context.player(), payload.missionId()));
+
+		ServerPlayNetworking.registerGlobalReceiver(ShareLocationPayload.ID, (payload, context) ->
+			ChatLocation.share(context.player(), payload.waypoint()));
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestWeatherPayload.ID, (payload, context) ->
+			Forecast.send(context.player()));
+
+		ServerPlayNetworking.registerGlobalReceiver(RequestRankingPayload.ID, (payload, context) ->
+			ServerPlayNetworking.send(context.player(),
+				new RankingPayload(Ranking.snapshot(context.player().server))));
+
 		// O telefone precisa de tempo passando: é o que repete o aviso acima da hotbar e o
 		// que desiste de quem não atende. Sai barato — sem ligação nenhuma, não faz nada.
 		ServerTickEvents.END_SERVER_TICK.register(CallService::tick);
+		ServerTickEvents.END_SERVER_TICK.register(LocationSharing::tick);
 
 		// Depois de um /reload a lista pode ter mudado, e quem está com o pokébook aberto
 		// continuaria vendo a lista velha — inclusive missões que deixaram de existir.
@@ -103,13 +181,23 @@ public class Pokebook implements ModInitializer {
 		// Quem entra pode ter chegado depois de a última transição de ligação ter passado.
 		// Mandar o estado aqui é o que faz o cliente nascer sabendo — e IDLE é o caso
 		// normal, então isto é quase sempre um pacote de nada.
-		ServerPlayConnectionEvents.JOIN.register(
-			(handler, sender, server) -> CallService.sendState(handler.getPlayer()));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			ServerPlayerEntity player = handler.getPlayer();
+			CallService.sendState(player);
+			ServerPlayNetworking.send(player, new ServerFeaturesPayload(ServerConfig.features()));
+			// As missões vão já na entrada, e não só ao abrir o pokébook: a missão
+			// acompanhada no HUD precisa aparecer antes de o jogador abrir qualquer coisa.
+			ServerPlayNetworking.send(player, new MissionsUpdatePayload(MissionService.snapshot(player)));
+			PhoneService.onJoin(player);
+			Ranking.update(player);
+		});
 
 		// Quem desconecta nunca vai mandar o pacote de fechamento — nem desligar o telefone.
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
 			PokebookViewers.removePlayer(handler.getPlayer());
 			CallService.disconnect(handler.getPlayer());
+			LocationSharing.disconnect(handler.getPlayer());
+			ChatLocation.disconnect(handler.getPlayer());
 		});
 
 		LOGGER.info("Pokébook carregado.");

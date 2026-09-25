@@ -1,7 +1,10 @@
 package io.github.lxxz.pokebook.call;
 
 import io.github.lxxz.pokebook.network.CallStatePayload;
-import io.github.lxxz.pokebook.registry.ModItems;
+import io.github.lxxz.pokebook.notify.NotificationKind;
+import io.github.lxxz.pokebook.notify.Notifications;
+import io.github.lxxz.pokebook.phone.PhoneService;
+import io.github.lxxz.pokebook.phone.Pokephones;
 import io.github.lxxz.pokebook.sound.PokebookSounds;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
@@ -199,6 +202,18 @@ public final class CallService {
 			caller.sendMessage(Text.translatable("message.pokebook.call.busy", displayName(target)), false);
 			return;
 		}
+		if (!PhoneService.acceptsCallFrom(target, caller)) {
+			// A mesma mensagem para "não perturbe" e para "não aceito ligação sua": dizer qual
+			// dos dois revelaria a quem ligou que ele não está nos contatos do outro.
+			caller.sendMessage(Text.translatable("message.pokebook.call.not_accepting", displayName(target)), false);
+			// Só o "não perturbe" deixa rastro para quem recebe. Quem está no modo avião quer
+			// saber depois quem tentou; quem escolheu "só contatos" escolheu justamente não
+			// ser incomodado por quem não é — nem por uma notificação.
+			if (PhoneService.get(target).settings().doNotDisturb()) {
+				missedCall(target, caller);
+			}
+			return;
+		}
 
 		Call call = new Call(caller.getUuid(), target.getUuid());
 		BY_PLAYER.put(caller.getUuid(), call);
@@ -260,6 +275,10 @@ public final class CallService {
 			noticeToOther = Text.translatable("message.pokebook.call.declined", displayName(player));
 		} else {
 			noticeToOther = Text.translatable("message.pokebook.call.gave_up");
+			// Quem ligou desistiu antes de atenderem: para o outro, é uma ligação perdida.
+			if (other != null) {
+				missedCall(other, player);
+			}
 		}
 
 		end(call);
@@ -364,7 +383,7 @@ public final class CallService {
 
 		if (caller != null && callee != null) {
 			caller.sendMessage(Text.translatable("message.pokebook.call.dialing", displayName(callee)), true);
-			if (hasPhone(callee)) {
+			if (Pokephones.carries(callee)) {
 				callee.sendMessage(Text.translatable("message.pokebook.call.ringing", displayName(caller)), true);
 				// Só para quem é chamado: o toque é o que chama a atenção de quem não está
 				// esperando nada. Quem ligou já sabe que ligou.
@@ -377,19 +396,17 @@ public final class CallService {
 	}
 
 	/**
-	 * Tem como este jogador perceber que está sendo chamado?
+	 * Avisa, pela central de notificações, que alguém tentou ligar.
 	 *
-	 * <p>O aviso acima da hotbar e o toque só fazem sentido para quem tem <b>um poképhone
-	 * em algum lugar do inventário</b> — sem ele não há como abrir a tela e atender. A
-	 * pokébook (o bloco) não entra aqui: o aviso soa longe de qualquer estação, e andar até
-	 * uma para atender não é o que o desenho da ligação pede.
-	 *
-	 * <p>Continuar aparecendo na lista de quem chamar, mesmo sem aparelho, é decisão de
-	 * propósito por ora — tirar quem não tem celular da lista é outra mudança, registrada
-	 * à parte.
+	 * <p>Quem decide se o aviso chega é {@link Notifications}: só com poképhone no
+	 * inventário, pela mesma razão do toque — sem aparelho não há onde receber. A regra que
+	 * antes vivia aqui como {@code hasPhone} passou para {@link Pokephones}, porque virou de
+	 * todo mundo: notificação, HUD e alarme fazem a mesma pergunta.
 	 */
-	private static boolean hasPhone(ServerPlayerEntity player) {
-		return player.getInventory().contains(stack -> stack.isOf(ModItems.POKEPHONE));
+	private static void missedCall(ServerPlayerEntity callee, ServerPlayerEntity caller) {
+		Notifications.send(callee, NotificationKind.CALL,
+			Text.translatable("notification.pokebook.call.missed.title"),
+			Text.translatable("notification.pokebook.call.missed.body", displayName(caller)));
 	}
 
 	/** Tocou meio minuto e ninguém atendeu. */
@@ -407,6 +424,9 @@ public final class CallService {
 		}
 		if (callee != null) {
 			sendState(callee);
+			if (caller != null) {
+				missedCall(callee, caller);
+			}
 		}
 	}
 

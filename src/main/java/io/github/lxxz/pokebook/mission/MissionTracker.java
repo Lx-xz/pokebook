@@ -1,12 +1,21 @@
 package io.github.lxxz.pokebook.mission;
 
 import io.github.lxxz.pokebook.Pokebook;
+import io.github.lxxz.pokebook.network.MissionsUpdatePayload;
+import io.github.lxxz.pokebook.notify.NotificationKind;
+import io.github.lxxz.pokebook.notify.Notifications;
+import io.github.lxxz.pokebook.ranking.Ranking;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Liga os eventos do jogo ao progresso das missões.
@@ -64,14 +73,35 @@ public final class MissionTracker {
 	private static void advance(ServerPlayerEntity player, ObjectiveType type, MissionTarget target) {
 		MissionProgress progress = player.getAttachedOrCreate(PROGRESS);
 		boolean changed = false;
+		List<Mission> justCompleted = new ArrayList<>();
 		for (Mission mission : Missions.all()) {
 			if (mission.objective() == type && mission.target().matches(target) && progress.advance(mission)) {
 				changed = true;
+				// advance() só devolve true quando a contagem sobe sem passar do necessário,
+				// então "completa depois de avançar" quer dizer "completou agora".
+				if (progress.isComplete(mission)) {
+					justCompleted.add(mission);
+				}
 			}
 		}
+		if (!changed) {
+			return;
+		}
+
 		// O anexo só é marcado como sujo ao ser reatribuído; mutar o objeto não basta.
-		if (changed) {
-			player.setAttached(PROGRESS, progress);
+		player.setAttached(PROGRESS, progress);
+
+		// Atualização ao vivo: o cliente fica sabendo na hora, com ou sem tela aberta. Antes
+		// o retrato só saía ao abrir o pokébook; a missão acompanhada no HUD precisa andar
+		// enquanto o jogador joga, e é a mesma lista — são poucas missões, sai inteira.
+		ServerPlayNetworking.send(player, new MissionsUpdatePayload(MissionService.snapshot(player)));
+
+		for (Mission mission : justCompleted) {
+			Notifications.send(player, NotificationKind.MISSION,
+				Text.translatable("notification.pokebook.mission.completed"), mission.title());
+		}
+		if (!justCompleted.isEmpty()) {
+			Ranking.update(player);
 		}
 	}
 }

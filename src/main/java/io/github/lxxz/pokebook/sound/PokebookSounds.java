@@ -42,6 +42,12 @@ public final class PokebookSounds {
 	 */
 	public static final Identifier RING = Identifier.of("minecraft", "block.note_block.bell");
 
+	/**
+	 * O aviso de uma notificação. Vanilla pelo mesmo motivo do toque: é som que informa, e
+	 * não pode depender de outro mod estar instalado.
+	 */
+	public static final Identifier NOTIFY = Identifier.of("minecraft", "block.note_block.pling");
+
 	private PokebookSounds() {
 	}
 
